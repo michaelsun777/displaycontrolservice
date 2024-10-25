@@ -190,7 +190,7 @@ CSpdlog* CSpdlog::GetInstance()
     if ( m_instance == NULL )
     {
         m_instance = new CSpdlog;
-        m_instance->Init("rdc","./var"); //初始化日志
+        m_instance->Init("dpc","./var"); //初始化日志
         m_instance->SetConsoleLogLevel(spdlog::level::trace); //设置终端界面输出级别
         m_instance->SetFileLogLevel(spdlog::level::trace);     //设置log文件输出级别
 

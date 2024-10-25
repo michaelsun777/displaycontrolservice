@@ -24,6 +24,15 @@
 
 #include "cspdlog.h"
 #include <list>
+#include <vector>
+
+#include "common.h"
+#include "cmyxrandr.h"
+#include "3rd/json/include/nlohmann/json.hpp"
+#include "config.h"
+
+//#include <nlohmann/json.hpp>
+using json = nlohmann::json;
 
 
 using namespace std;
@@ -44,6 +53,9 @@ private:
     int m_nAvailableMonitorsCount;
     std::map<XID,XRRMonitorInfo *> m_mMonitors;
     std::map<XID,MY_OutputInfo *> m_mOutputsInfo;
+    int m_nWidth;
+    int m_nHight;
+
 public:
     cdataProcess(/* args */);
     ~cdataProcess();
@@ -53,8 +65,10 @@ public:
     bool GetMonitorsInfo_N();
 public://xrandr
     bool Output(string args);
-    bool GetMonitorsInfo();
-    bool SetMonitorsInfo();
+    bool GetMonitorsInfo(string & strInfo);
+    bool GetMonitorsInfo_shell(string & strInfo);
+    bool SetMonitorsInfo(vector<MONITORSETTINGINFO> *vSetInfo);
+    bool TestMonitorInfo();
     
     
 };

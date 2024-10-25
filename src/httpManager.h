@@ -9,6 +9,7 @@
 #include <memory>
 #include <boost/thread/shared_mutex.hpp>
 #include <boost/thread.hpp>
+#include <errno.h>
 
 using namespace httplib;
 using namespace std;
@@ -19,12 +20,8 @@ class HttpManager
 {
 private:
     int m_nPort;
-    Server m_svr;
-    int m_nTimes;
-    int m_nUniformity_w;
-    int m_nUniformity_h;
-    int m_nSum_w;
-    int m_nSum_h;
+    string m_Ip;
+    Server m_svr;  
     static std::shared_ptr<HttpManager> m_pHttpManager;
 private:
     HttpManager(/* args */);
@@ -35,7 +32,9 @@ public:
     bool start();
     bool close();
     std::string dump_headers(const Headers &headers);
-    void msgParse(const Request &req, Response &res);
+    void getMonitorInfo(const Request &req, Response &res);
+    void setMonitorInfo(const Request &req, Response &res);
+    void getTestMonitorInfo(const Request &req, Response &res);
 
 public:
     

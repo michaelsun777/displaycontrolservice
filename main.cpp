@@ -22,47 +22,18 @@ int main(int argc, char *argv[])
 {
     std::shared_ptr<CSpdlog> splog(CSpdlog::GetInstance());
 
-    cdataProcess pro;
-    pro.GetMonitorsInfo();
-    pro.SetMonitorsInfo();
+    //cmyxrandr cr(":0");
+    // cr.getScreenInfo();
+    // XRRScreenSize * psize = cr.getCurrentConfigSizes();
+    // delete psize;
 
-    string strDisplayName = ":0";
-    cmyxrandr xr(strDisplayName);
-    list<RROutput> outputs = xr.getOutputs();
-
+    //cdataProcess dataProcess;
+    //string strJons;
+    //dataProcess.GetMonitorsInfo(strJons);
     
-    for (list<RRCrtc>::iterator it = outputs.begin(); it != outputs.end(); it++)   
-    {
-        RROutput output = *it;
-        cmyxrandr rroutput(strDisplayName, output);
-
-        string strStatus = (rroutput.isConnected()) ? "Connected" : "Not connected";
-        string strPrimary = (rroutput.isPrimary()) ? "Primary" : "";
-        XINFO("{},{},{}",rroutput.getName(),strStatus ,strPrimary);
-
-        if (strStatus == "Connected")
-        {
-            list<CMYSIZE> modes = rroutput.getOutputModes();
-            for (list<CMYSIZE>::iterator it = modes.begin(); it != modes.end(); it++)
-            {
-                XINFO("w={},h={}",it->width,it->height);
-            }           
-            //QList<QSize> modes = rroutput.getOutputModes();
-            // foreach (QSize item, modes)
-            // {
-            //     qDebug() << item.width() << "x" << item.height();
-            // }
-        }
-    }
-
     std::shared_ptr<HttpManager> pHttpManager = HttpManager::GetInstance();
 
 
-   
-
-
-    
-    
     
 
     

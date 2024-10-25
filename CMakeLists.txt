@@ -107,8 +107,10 @@ endif()
 # INCLUDE_DIRECTORIES(hidapi/hidapi)
 # INCLUDE_DIRECTORIES(hidapi/linux)
 # include_directories(/usr/local/include/osgEarth)
-include_directories(/usr/include/spdlog)
-include_directories(/usr/include/X11)
+INCLUDE_DIRECTORIES(3rd/json/include/nlohmann)
+INCLUDE_DIRECTORIES(3rd/json/include)
+INCLUDE_DIRECTORIES(/usr/include/spdlog)
+INCLUDE_DIRECTORIES(/usr/include/X11)
 INCLUDE_DIRECTORIES(3rd/cpp-httplib/cpp-httplib-base/)
 INCLUDE_DIRECTORIES(3rd/cpp-subprocess/)
 INCLUDE_DIRECTORIES(3rd/nvidia-settings/src/libXNVCtrl)
@@ -152,7 +154,7 @@ link_directories(/usr/local/lib/)
 
 aux_source_directory(src/ SRC_SRC)
 
-add_executable(DisplayCtrlServer
+add_executable(dpcs
 main.cpp
 ${SRC_SRC}
 3rd/nvidia-settings/src/libXNVCtrl/NVCtrl.c
@@ -184,7 +186,7 @@ ${spdlog_SRC}
 )
 
 
-target_link_libraries(DisplayCtrlServer 
+target_link_libraries(dpcs 
 pthread
 #  -lusb -ludev -lhidapi-hidraw
 -lboost_system -lboost_thread -lboost_filesystem -lboost_iostreams -lboost_chrono

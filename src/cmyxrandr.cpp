@@ -1,8 +1,9 @@
 #include "cmyxrandr.h"
 
-cmyxrandr::cmyxrandr(string strDisplayName, RROutput output) : m_screen(0),m_output (output)
+cmyxrandr::cmyxrandr(string strDisplayName, RROutput output) : m_screen(0), m_output(output), m_psConfig(NULL)
 {
-    m_pDpy = XOpenDisplay(strDisplayName.c_str());
+    m_strDisplayName = strDisplayName;
+    m_pDpy = XOpenDisplay(m_strDisplayName.c_str());
     m_screen = DefaultScreen(m_pDpy);
     m_root = RootWindow(m_pDpy, m_screen);
     m_pRes = XRRGetScreenResources(m_pDpy, m_root);
@@ -15,7 +16,37 @@ cmyxrandr::~cmyxrandr()
     if (m_pRes)
         XRRFreeScreenResources(m_pRes);
 
+    XRRFreeScreenConfigInfo(m_psConfig);
+    m_psConfig = NULL;
     XCloseDisplay(m_pDpy);
+}
+
+bool cmyxrandr::update()
+{
+    XSync(m_pDpy, false);
+    if (m_pRes)
+        XRRFreeScreenResources(m_pRes);
+
+    XRRFreeScreenConfigInfo(m_psConfig);
+    m_psConfig = NULL;
+    XCloseDisplay(m_pDpy);
+
+    m_pDpy = XOpenDisplay(m_strDisplayName.c_str());
+    m_screen = DefaultScreen(m_pDpy);
+    m_root = RootWindow(m_pDpy, m_screen);
+    m_pRes = XRRGetScreenResources(m_pDpy, m_root);
+    m_crtc = getCrtc();
+
+}
+
+void cmyxrandr::setOutPut(RROutput output)
+{
+    m_output = output;
+}
+
+void cmyxrandr::setCrtc(RRCrtc crtc)
+{
+    m_crtc = crtc;
 }
 
 XRRScreenResources *cmyxrandr::pRes() const
@@ -98,6 +129,20 @@ RRMode cmyxrandr::getMode() const
         }
     }
     return mode;
+}
+
+XRRCrtcInfo *cmyxrandr::getCrtcInfo()
+{
+    RRMode mode = 0;
+    if (m_crtc)
+    {
+        XRRCrtcInfo *pInfo = XRRGetCrtcInfo(m_pDpy, m_pRes, m_crtc);
+        if (pInfo)
+        {
+            return pInfo;
+        }
+    }
+    return NULL;
 }
 
 CMYSIZE cmyxrandr::getScreenSize() const
@@ -219,7 +264,7 @@ int cmyxrandr::setOffset(CMYPOINT offset)
     return ret;
 }
 
-int cmyxrandr::setMode(CMYSIZE size)
+int cmyxrandr::setMode(CMYSIZE size,RRMode rrmode)
 {
     int ret = -1;
     if (m_crtc)
@@ -228,7 +273,11 @@ int cmyxrandr::setMode(CMYSIZE size)
 
         if (crtc_info)
         {
-            RRMode rrmode = getXRRModeInfo(size.width, size.height);
+            if(rrmode == 0)
+            {
+                rrmode = getXRRModeInfo(size.width, size.height);
+            }
+            //RRMode rrmode = getXRRModeInfo(size.width, size.height);
             if (rrmode)
             {
 
@@ -251,7 +300,7 @@ int cmyxrandr::setMode(CMYSIZE size)
                 XRRFreeCrtcInfo(crtc_info);
             }
             else
-                XINFO("Modo width={},height={},{No soportado}", size.width,size.height);
+                XINFO("Modo width={},height={},{No soportado}", size.width, size.height);
         }
     }
     this->feedScreen();
@@ -391,7 +440,7 @@ int cmyxrandr::feedScreen()
         }
     }
     this->setScreenSize(size.width, size.height, true);
-    XINFO("Modo width={},height={},{No soportado}", size.width,size.height);
+    XINFO("Modo width={},height={},{No soportado}", size.width, size.height);
     return 0;
 }
 
@@ -431,9 +480,9 @@ XRROutputInfo *cmyxrandr::GetOutputInfo()
     return XRRGetOutputInfo(m_pDpy, m_pRes, m_output);
 }
 
-list<CMYSIZE> cmyxrandr::getOutputModes()
+list<MyModelInfoEX *> cmyxrandr::getOutputModes()
 {
-    list<CMYSIZE> modes;
+    list<MyModelInfoEX *> modes;
 
     if (m_output)
     {
@@ -447,7 +496,8 @@ list<CMYSIZE> cmyxrandr::getOutputModes()
                     if (pOutputInfo->modes[j] == m_pRes->modes[m].id)
                     {
                         XRRModeInfo *mode = &m_pRes->modes[m];
-                        modes.push_back(CMYSIZE(mode->width, mode->height));
+                        MyModelInfoEX *modex = new MyModelInfoEX(mode);
+                        modes.push_back(modex);
                     }
                 }
             }
@@ -701,4 +751,373 @@ RROutput cmyxrandr::getOutputByName(string strName)
         XRRFreeOutputInfo(pInfo);
     }
     return output;
+}
+
+XRRMonitorInfo *cmyxrandr::getScreenInfo()
+{
+    // Display *display;
+    int major, minor;
+
+    // display = XOpenDisplay(NULL);
+    // Window window = DefaultRootWindow(display);
+
+    int nRet = XRRQueryVersion(m_pDpy, &major, &minor);
+    XINFO("xrandr version:{}.{}", major, minor);
+    if (m_psConfig == NULL)
+        m_psConfig = XRRGetScreenInfo(m_pDpy, m_root);
+
+    int monitors = 0;
+    XRRMonitorInfo *info = XRRGetMonitors(m_pDpy, m_root, True, &monitors);
+    for (int i = 0; i < monitors; i++)
+    {
+        XID id;
+        RROutput *out = info[i].outputs;
+        memcpy(&id, out, sizeof(RROutput));
+        // XRRMonitorInfo * m = new XRRMonitorInfo;
+        // memcpy(m,&info[i],sizeof(XRRMonitorInfo));
+        // m_mMonitors.insert(make_pair(id,m));
+
+        XINFO("XRRMonitorInfo:{}{}, {}{}, {}{}, {}{}, {}{}, {}{}, {}{}, {}{}, {}{}", "index:", i,
+              " primary:", info[i].primary,
+              " noutput:", info[i].noutput,
+              " x:", info[i].x,
+              " y:", info[i].y,
+              " width:", info[i].width,
+              " height:", info[i].height,
+              " widthmm:", info[i].mwidth,
+              " heightm:", info[i].mheight,
+              " outputs:", id);
+    }
+
+    // XRRFreeScreenConfigInfo(psConfig);
+    XRRFreeMonitors(info);
+    // XFree(display);
+}
+
+XRRScreenSize *cmyxrandr::getCurrentConfigSizes()
+{
+    if (m_psConfig == NULL)
+        m_psConfig = XRRGetScreenInfo(m_pDpy, m_root);
+    // int major, minor;
+    // int nRet = XRRQueryVersion(m_pDpy,&major, &minor);
+    // XINFO("xrandr version:{}.{}",major,minor);
+    // XRRScreenConfiguration * psConfig = XRRGetScreenInfo (m_pDpy,m_root);
+
+    int nsizes = 0;
+    XRRScreenSize *pssz = XRRConfigSizes(m_psConfig, &nsizes);
+    XINFO("XRRScreenSize nsizes:{},all-width:{},all-height:{},all-widthmm:{},all-heightm:{}", nsizes, pssz->width, pssz->height, pssz->mwidth, pssz->mheight);
+
+    return pssz;
+}
+
+unsigned short cmyxrandr::getCurrentConfigRotation()
+{
+    if (m_psConfig == NULL)
+        m_psConfig = XRRGetScreenInfo(m_pDpy, m_root);
+
+    Rotation current_rotation;
+    SizeID sid = XRRConfigCurrentConfiguration(m_psConfig, &current_rotation);
+    XINFO("rotation:{}", current_rotation);
+    return current_rotation;
+}
+
+short cmyxrandr::getAllScreenInfoEx(vector<MOutputInfo> & vOutputInfo,CMYSIZE & currentSize,CMYSIZE & maxSize)
+{
+    CMDEXEC::CmdRes res;
+    bool bret = CMDEXEC::Execute("xrandr --verbose",res);
+    printf("%s\n",res.StdoutString.c_str());
+    vector<string> vString;
+    CMDEXEC::Stringsplit(res.StdoutString,'\n',vString);
+    // vector<string> screens;
+    // vector<string> devices;
+    // vector<string> items;
+    // vector<string> vItems;
+    // vector<string> hItems;
+
+    vector<string> array[5][50][64][5];
+    //std::vector<std::vector<std::vector<std::string>>> array;
+    int current_w = 0,current_h = 0,maximum_w = 0,maximum_h = 0;
+
+    for (size_t i = 0,j = 0,l = 0,m = 0; i < vString.size(); i++)
+    {
+        if(vString[i].find("\tIdentifier") != string::npos)
+        {
+            string str(vString[i].c_str());
+            str = CMDEXEC::Strip(str);  
+            str = CMDEXEC::Lstrip(str,'\t'); 
+            array[1][j][l-1][m-1][0].append(" ");
+            array[1][j][l-1][m-1][0].append(str.c_str());            
+            continue;
+        }
+        else if(CMDEXEC::StartsWith(vString[i].c_str(), "\t"))
+            continue;
+        if(CMDEXEC::StartsWith(vString[i].c_str(), "Screen "))
+        {
+            string strScreenLine = vString[i].c_str();
+            vector<string> vScreenLineTmp = CMDEXEC::Split(strScreenLine,',');
+            if(vScreenLineTmp.size() < 3)
+            {
+                return -1;
+            }
+
+            vector<string> vScreenLineTmp2 = CMDEXEC::Split(vScreenLineTmp[1],' ');
+            current_w = atoi(vScreenLineTmp2[1].c_str());
+            current_h = atoi(vScreenLineTmp2[3].c_str());
+            vector<string> vScreenLineTmp3 = CMDEXEC::Split(vScreenLineTmp[2],' ');
+            maximum_w = atoi(vScreenLineTmp3[1].c_str());
+            maximum_h = atoi(vScreenLineTmp3[3].c_str());
+            currentSize.width = current_w;
+            currentSize.height = current_h;
+            maxSize.width = maximum_w;
+            maxSize.height = maximum_h;
+
+            //screens.push_back(vString[i].c_str());            
+            array[0][0][0][m].push_back(vString[i].c_str());
+            m++;
+            j = 0;
+            l = 0;
+        }
+        else if(CMDEXEC::StartsWith(vString[i].c_str(), "  "))
+        {
+            string str(vString[i].c_str());
+            str = CMDEXEC::Strip(str);            
+            //items.push_back(str);
+            array[2][j][l-1][m-1].push_back(str.c_str());
+
+            string strTempH(vString[i+1].c_str());
+            strTempH = CMDEXEC::Lstrip(strTempH);
+            bool bbrh = CMDEXEC::StartsWith(strTempH, "h:");
+            string strTempV(vString[i+2].c_str());
+            strTempV = CMDEXEC::Lstrip(strTempV);
+            bool bbrv = CMDEXEC::StartsWith(strTempV, "v:");
+            if(bbrh)
+            {
+                //hItems.push_back(strTempH);
+                i++;
+                array[3][j][l-1][m-1].push_back(strTempH.c_str());
+                //j++;
+
+            }
+            if(bbrv)
+            {
+                //vItems.push_back(strTempV);
+                i++;
+                array[4][j][l-1][m-1].push_back(strTempV.c_str());
+                //j++;
+            }
+            j++;
+        }
+        else
+        {
+            j = 0;
+            //devices.push_back(vString[i].c_str());
+            array[1][j][l][m-1].push_back(vString[i].c_str());//[hv][name][device][screen]
+            l++;
+                       
+        }
+    }
+
+    for (size_t m = 0; m < 5; m++)//[hv][name][device][screen]
+    {
+        for (size_t l = 0; l < 64; l++)
+        {
+            if(array[1][0][l][m].size() == 0) continue;
+            MOutputInfo testl;
+            string strTmpLong(array[1][0][l][m][0]);
+            
+            string strTmp = strTmpLong;
+            if(strTmpLong.find("Identifier") != string::npos)
+            {   int pos = strTmpLong.find("Identifier");
+                strTmp = strTmpLong.substr(0, pos);
+                string strOutputid = strTmpLong.substr(pos,strTmpLong.length() - 1);
+
+                vector<string> vOutputid = CMDEXEC::Split(strOutputid.c_str(),": ");
+                testl.outputId = std::stoi(vOutputid[1], nullptr, 16);
+                
+            }
+
+            strTmp = CMDEXEC::replaceAll(strTmp,"unknown connection","unknown-connection");
+
+            vector<string> vItemsTmp = CMDEXEC::Split(strTmp.c_str()," ");
+            string output = vItemsTmp[0];
+            testl.name = output;
+
+            if (CMDEXEC::StartsWith(vItemsTmp[1], "connected"))
+                testl.connected = 1;
+            else if (CMDEXEC::StartsWith(vItemsTmp[1], "disconnected"))
+                testl.connected = 2;
+            else if (CMDEXEC::StartsWith(vItemsTmp[1], "unknown-connection"))
+                testl.connected = 3;
+            else
+                testl.connected = 0;
+            
+            if(testl.connected != 1)
+                continue;
+
+            testl.primary = false;
+
+            for (int i = 0; i < vItemsTmp.size(); i++)
+            {
+                if (vItemsTmp[i].find("primary") != string::npos)
+                {
+                    testl.primary = true;
+                    vItemsTmp.erase(vItemsTmp.begin() + i);
+                    break;
+                }
+            }
+
+            if (!CMDEXEC::StartsWith(vItemsTmp[2], "("))
+            {
+                testl.geometry = vItemsTmp[2].c_str();
+
+                vector<string> vTmp = CMDEXEC::Split(vItemsTmp[2].c_str(),'+');
+                vector<string> vTmpt = CMDEXEC::Split(vTmp[0].c_str(),'x');
+
+                testl.pos.xPos = atoi(vTmp[1].c_str());
+                testl.pos.yPos = atoi(vTmp[2].c_str());
+                testl.size.width = atoi(vTmpt[0].c_str());
+                testl.size.height = atoi(vTmpt[1].c_str());
+
+                //string outputId = vItemsTmp[3];
+                //outputId = CMDEXEC::StripBrackets(outputId,'(',')'); 
+                //testl.outputId = std::stoi(outputId, nullptr, 16);
+
+
+                if (CMDEXEC::StartsWith(vItemsTmp[4], "normal"))
+                    testl.current_rotation = 1;
+                else if (CMDEXEC::StartsWith(vItemsTmp[4], "right"))
+                    testl.current_rotation = 2;
+                else if (CMDEXEC::StartsWith(vItemsTmp[4], "inverted"))
+                    testl.current_rotation = 3;
+                else if (CMDEXEC::StartsWith(vItemsTmp[4], "left"))
+                    testl.current_rotation = 4;
+                else
+                    testl.current_rotation = 1;
+                
+                
+                //vector<string> vTmpmm = CMDEXEC::Split(vItemsTmp[3].c_str(),'x');
+                string mmW = vItemsTmp[vItemsTmp.size()-3].c_str();
+                string mmH = vItemsTmp[vItemsTmp.size()-1].c_str();
+                mmW = CMDEXEC::replaceAll(mmW,"mm"," ");
+                mmH = CMDEXEC::replaceAll(mmH,"mm"," ");
+                testl.mmsize.width = atoi(mmW.c_str());
+                testl.mmsize.height = atoi(mmH.c_str());
+                
+            }
+
+
+            for (size_t j = 0; j < 50; j++)
+            {
+                if(array[2][j][l][m].size() == 0) 
+                    continue;
+
+                MyModelInfoEX mode;
+                string strResolution(array[2][j][l][m][0]);
+                if(strResolution.empty()) continue;
+                bool bIsCurrent = false,bIsPreferred = false;
+                if(strResolution.find("*current") !=string::npos) bIsCurrent = true;
+                if(strResolution.find("+preferred") !=string::npos) bIsPreferred = true;
+                if(strResolution.find("Interlace") !=string::npos) mode.interlace = true;
+
+                vector<string> vItemsTmpT = CMDEXEC::Split(strResolution.c_str()," ");
+                mode.name = vItemsTmpT[0].c_str();
+                string modeId = vItemsTmpT[1];
+                modeId = CMDEXEC::StripBrackets(modeId,'(',')'); 
+                mode.id = std::stoi(modeId, nullptr, 16);
+                mode.hSync = vItemsTmpT[3].c_str();
+                mode.vSync = vItemsTmpT[4].c_str();
+
+                vector<string> vWH = CMDEXEC::Split(vItemsTmpT[0].c_str(),'x');
+                mode.width = atoi(vWH[0].c_str());
+                mode.height = atoi(vWH[1].c_str());
+
+                //string strResolutionH(array[3][j][l][m][0]);                
+                string strResolutionV(array[4][j][l][m][0]);//v:
+                vector<string> vItemsTmpV = CMDEXEC::Split(strResolutionV.c_str()," ");
+                string strRate = vItemsTmpV[vItemsTmpV.size()-1];
+                strRate = CMDEXEC::Rstrip(strRate,'z');
+                strRate = CMDEXEC::Rstrip(strRate,'H');
+                mode.rate = strRate;
+                XINFO("modeId={},{}_{}",modeId,mode.name,mode.rate);
+                //float fRate = atof(strRate.c_str());
+                //XINFO("nRate:{:.2f}",fRate);
+                             
+                
+                //
+                if(bIsCurrent)
+                {
+                    testl.currentMode = mode;         
+                  
+                }
+                testl.modes.push_back(mode);                
+                
+            }
+            vOutputInfo.push_back(testl);
+        }
+    }
+
+    return 0;
+
+
+    // MONITORINFO test;
+    // for(int i = 0;i<devices.size();i++)
+    // {
+    //     string strTmp(devices[i].c_str());
+    //     strTmp = CMDEXEC::replaceAll(strTmp,"unknown connection","unknown-connection");
+    //     devices[i] = strTmp.c_str();
+    //     vector<string> vItemsTmp = CMDEXEC::Split(devices[i].c_str()," ");
+    //     string output = vItemsTmp[0];
+    //     test.name = output;
+    //     if(CMDEXEC::StartsWith(vItemsTmp[1],"connected"))
+    //         test.connected = 1;
+    //     else if(CMDEXEC::StartsWith(vItemsTmp[1],"disconnected"))
+    //         test.connected = 2;
+    //     else if(CMDEXEC::StartsWith(vItemsTmp[1],"unknown-connection"))
+    //         test.connected = 3;
+    //     else
+    //         test.connected = 0;
+    //     test.primary = false;
+
+    //     for(int i = 0;i < vItemsTmp.size(); i++)
+    //     {
+    //         if (vItemsTmp[i].find("primary") != string::npos)
+    //         {
+    //             test.primary = true;
+    //             vItemsTmp.erase(vItemsTmp.begin() + i);
+    //             break;
+    //         }
+    //     }
+
+    //     if(!CMDEXEC::StartsWith(vItemsTmp[2],"("))
+    //     {            
+    //         test.geometry = vItemsTmp[2].c_str();
+
+    //         if (CMDEXEC::StartsWith(vItemsTmp[4], "normal"))
+    //             test.current_rotation = 1;
+    //         else if (CMDEXEC::StartsWith(vItemsTmp[4], "right"))
+    //             test.connected = 2;
+    //         else if (CMDEXEC::StartsWith(vItemsTmp[4], "inverted"))
+    //             test.connected = 3;
+    //         else if (CMDEXEC::StartsWith(vItemsTmp[4], "left"))
+    //             test.connected = 4;
+    //         else 
+    //             test.connected = 1;
+    //     }
+    // }
+
+    //return 0;
+}
+
+
+int cmyxrandr::getScreenSizeRange(CMYSIZE & min,CMYSIZE & max)
+{
+    int minWidth = 0, minHeight = 0, maxWidth = 0, maxHeight = 0;
+
+    Status state = XRRGetScreenSizeRange(m_pDpy, m_root, &minWidth,&minHeight,&maxWidth,&maxHeight);
+    min.width = minWidth;
+    min.height = minHeight;
+    max.width = maxWidth;
+    max.height = maxHeight;
+    XINFO("state:{},minWidth:{},minHeight:{},maxWidth:{},maxHeight:{}", state,minWidth,minHeight,maxWidth,maxHeight);
+    return state;
 }

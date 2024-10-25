@@ -6,45 +6,14 @@
 #include <string>
 
 #include "cspdlog.h"
+#include "common.h"
+
+#include "exec_cmd.h"
 
 
 using namespace std;
 
-struct CMYSIZE
-{
-public:
-    CMYSIZE(int _width = 0,int _height = 0){
-        width = _width;
-        height = _height;
-    }
-    void setWidth(int _width)
-    {
-        width = _width;
-    }
 
-    void setHeight(int _height)
-    {
-        height = _height;
-    }
-
-
-public:
-    int width;
-    int height;    
-};
-struct CMYPOINT
-{
-public:
-    CMYPOINT(int _x = 0,int _y = 0)
-    {
-        xPos = _x;
-        yPos = _y;
-
-    }
-public:
-    int xPos;
-    int yPos; 
-};
 
 
 
@@ -59,9 +28,11 @@ private:
     int                  m_screen;
     RRCrtc               m_crtc;
     RROutput             m_output;
+    XRRScreenConfiguration * m_psConfig;
+    string m_strDisplayName;
 
 
-private:
+public:
     int                 screen          () const;
     list<RRCrtc>        getAllCrtc      ();
     XRRScreenResources *pRes            () const;
@@ -73,7 +44,7 @@ private:
     RRCrtc              getCrtc         ();
 
 public:
-    list<CMYSIZE>        getOutputModes  ();
+    list<MyModelInfoEX *>        getOutputModes  ();
     bool                isConnected     ();
     bool                isEnabled       ();
     string             getName         ();
@@ -93,7 +64,7 @@ public:
     Status              setScreenSize   (const int &width, const int &height, bool bForce = false);
     int                 setReflect      (Rotation reflection);
     Status              setOffset       (CMYPOINT offset);
-    int                 setMode         (CMYSIZE size);
+    int                 setMode         (CMYSIZE size,RRMode rrmode = 0);
     int                 setRotate       (Rotation rotation);
     int                 setPanning      (CMYSIZE size);
     void                startEvents     ();
@@ -101,12 +72,24 @@ public:
     CMYSIZE             getPreferredMode();
     bool                isPrimary       ();
     void                setPrimary      ();
+    XRRCrtcInfo *       getCrtcInfo();
+
+
    
 private:
     /* data */
 public:
     cmyxrandr(string strDisplayName,RROutput output = NULL);
     ~cmyxrandr();
+    void setOutPut(RROutput output);
+    void setCrtc(RRCrtc crtc);
+    XRRMonitorInfo * getScreenInfo();
+    XRRScreenSize * getCurrentConfigSizes();
+    unsigned short getCurrentConfigRotation();
+    short getAllScreenInfoEx(vector<MOutputInfo> & vOutputInfo,CMYSIZE & currentSize,CMYSIZE & maxSize);
+    int getScreenInfoEx(MOutputInfo & vOutputInfo);
+    int getScreenSizeRange(CMYSIZE & min,CMYSIZE & max);
+    bool update();
 };
 
 
