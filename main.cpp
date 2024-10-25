@@ -27,7 +27,8 @@ int main(int argc, char *argv[])
     // XRRScreenSize * psize = cr.getCurrentConfigSizes();
     // delete psize;
 
-    //cdataProcess dataProcess;
+    cdataProcess dataProcess;
+    dataProcess.InitOutputInfo();
     //string strJons;
     //dataProcess.GetMonitorsInfo(strJons);
     

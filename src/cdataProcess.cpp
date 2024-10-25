@@ -8,18 +8,28 @@ cdataProcess::cdataProcess(/* args */)
     config.SetFilePath("config.ini");
     string value = "";
 	string error = "";
-    config.GetValue("common","width",value,error);
+    config.GetValue("screen","width",value,error);
     m_nWidth = atoi(value.c_str());
     value.clear();
-    config.GetValue("common","height",value,error);
+    config.GetValue("screen","height",value,error);
     m_nHight = atoi(value.c_str());
     if(m_nWidth == 0)
     {
         m_nWidth = 1920;
         m_nHight = 1080;
     }
-    
-    
+    value.clear();
+    config.GetValue("screen","distribution_horizontal",value,error);
+    m_ndistribution_w =  atoi(value.c_str());
+    value.clear();
+    config.GetValue("screen","distribution_vertical",value,error);
+    m_ndistribution_h =  atoi(value.c_str());
+    if(m_ndistribution_w ==  0 || m_ndistribution_h == 0)
+    {
+        XERROR("Please set up the Configuration file first!");
+        exit(0);
+    }
+        
 }
 
 cdataProcess::~cdataProcess()
@@ -158,7 +168,8 @@ bool cdataProcess::GetMonitorsInfo(string & strInfo)
             string strStatus = outinfo->connection ? "Not connected":"Connected";
             //string strPrimary = cxr.isPrimary() ? "Primary" : "";
             // XINFO("{},{},{}",cxr.getName(),strStatus ,strPrimary);
-            node["primary"] = cxr.isPrimary();  
+            node["primary"] = cxr.isPrimary();
+
 
 
             if (strStatus == "Connected")
@@ -262,6 +273,8 @@ bool cdataProcess::GetMonitorsInfo_shell(string & strInfo)
             node["yVirtual"] = vOutputInfo[i].pos.yPos / m_nHight;
             node["primary"] = vOutputInfo[i].primary;
             node["currentModeId"] = vOutputInfo[i].currentMode.id;
+            node["preferredModeId"] = vOutputInfo[i].preferredMode.id;
+
             if(vOutputInfo[i].connected)
             {
                 node["connected"] = true;
@@ -365,6 +378,116 @@ bool cdataProcess::TestMonitorInfo()
 
     return false;
 }
+
+
+bool cdataProcess::InitOutputInfo()
+{
+    string strDisplayName = ":0";
+    cmyxrandr cxr(strDisplayName);
+    vector<MOutputInfo> vOutputInfo;
+    CMYSIZE currentSize, maxSize;
+    cxr.getAllScreenInfoEx(vOutputInfo,currentSize, maxSize);
+
+    unsigned long currentModeId = 0,preferredModeId = 0,lastDeterminedModeId = 0;
+    string lastDeterminedModeName = "",lastDeterminedModeRate = "";
+    int size_w = 0,size_h = 0;
+
+
+    for (size_t i = 0; i < vOutputInfo.size(); i++)
+    {
+        
+        currentModeId = vOutputInfo[i].currentMode.id;
+        preferredModeId = vOutputInfo[i].preferredMode.id;
+        if(lastDeterminedModeId == 0)
+        {
+            if (vOutputInfo[i].connected && vOutputInfo[i].primary)
+            {
+                for (size_t j = 0; j < vOutputInfo[i].modes.size(); j++)
+                {
+                    MyModelInfoEX &modex = vOutputInfo[i].modes[j];
+                    if(currentModeId == modex.id)
+                    {
+                        size_w = modex.width;
+                        size_h = modex.height;
+                        lastDeterminedModeName = modex.name;
+                        lastDeterminedModeRate = modex.rate;
+                        XINFO("preferred OutputName={}, modeName={}, OutputId={}, modeId={}, width:{}, height:{}, rate:{}",
+                        vOutputInfo[i].name,modex.name,vOutputInfo[i].outputId,modex.id,modex.width,modex.height,modex.rate);
+                        break;
+                    }                  
+                }
+
+                if(size_w != m_nWidth || size_h != m_nHight)
+                {
+                    XCRITICAL("Setting width_height:{}x{},preferred width_height:{}x{},there is significant defferenc,We will try using the set values.",
+                    m_nWidth,m_nHight,size_w,size_h);
+                    for (size_t j = 0; j < vOutputInfo[i].modes.size(); j++)
+                    {
+                        if(vOutputInfo[i].modes[j].width == m_nWidth && vOutputInfo[i].modes[j].height == m_nHight)
+                        {
+                            lastDeterminedModeId = vOutputInfo[i].modes[j].id;
+                            lastDeterminedModeName = vOutputInfo[i].modes[j].name;
+                            lastDeterminedModeRate = vOutputInfo[i].modes[j].rate;
+                            XINFO("we find a mode,Name={}, modeId={}, width:{}, height:{}, rate:{}",vOutputInfo[i].modes[j].name,
+                            vOutputInfo[i].modes[j].id,vOutputInfo[i].modes[j].width,vOutputInfo[i].modes[j].height,vOutputInfo[i].modes[j].rate);
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    lastDeterminedModeId = currentModeId;
+                    break;
+                }
+                      
+            }
+        }
+    }
+
+    int start_x = 0,start_y = 0;
+
+
+    for (size_t i = 0; i < vOutputInfo.size(); i++)
+    {
+        if(vOutputInfo[i].currentMode.id != lastDeterminedModeId)
+        {
+            start_x = i*m_nWidth;
+            char buf[20] = {0};
+            sprintf(buf,"%dx%d",start_x,start_y);
+            string strPos = buf;
+
+            string strOutputName = vOutputInfo[i].name;            
+            string strCmd = "xrandr --output ";
+            strCmd += strOutputName;
+            strCmd += " --mode ";
+            strCmd += lastDeterminedModeName;
+            strCmd += " --pos ";
+            strCmd += strPos;
+            strCmd += " --rate ";      
+            strCmd += lastDeterminedModeRate;
+            if(vOutputInfo[i].primary)
+            {
+                strCmd += " --primary"; 
+            }
+            XINFO("exec :{}",strCmd.c_str());
+            CMDEXEC::CmdRes res;
+            bool bRet = CMDEXEC::Execute(strCmd,res);
+            if(!bRet)
+            {
+                XERROR("cdataProcess::InitOutputInfo CMDEXEC::Execute errono:{},error:{}",res.ExitCode,res.StderrString);
+            }
+
+        }
+        else
+            continue;        
+    }
+    
+
+
+}
+
+
+
 
 
 bool cdataProcess::GetMonitorsInfo_N()

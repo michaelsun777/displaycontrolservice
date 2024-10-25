@@ -55,6 +55,9 @@ private:
     std::map<XID,MY_OutputInfo *> m_mOutputsInfo;
     int m_nWidth;
     int m_nHight;
+    int m_ndistribution_w;
+    int m_ndistribution_h;
+
 
 public:
     cdataProcess(/* args */);
@@ -69,6 +72,8 @@ public://xrandr
     bool GetMonitorsInfo_shell(string & strInfo);
     bool SetMonitorsInfo(vector<MONITORSETTINGINFO> *vSetInfo);
     bool TestMonitorInfo();
+public:
+    bool InitOutputInfo();
     
     
 };

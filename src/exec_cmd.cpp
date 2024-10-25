@@ -70,7 +70,7 @@ namespace CMDEXEC
                 CommandConvert(buffer, args);
                 execvp(args[0], args);
                 perror("execvp");
-                return -1;
+                return false;
             }
             else if (pid > 0)
             {

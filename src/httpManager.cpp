@@ -191,10 +191,8 @@ bool HttpManager::start()
     m_svr.Get("/displayctrlserver/get/monitor/info",funcPtrGet);   
     m_svr.Post("/displayctrlserver/set/monitor/info",funcPtrSet);
     m_svr.Get("/displayctrlserver/get/test",funcPtrTest); 
-
-    m_svr.listen(m_Ip, m_nPort);
-    
-    XINFO("开启监听端口");
+    XINFO("http开启监听,IP:{},Port:{}",m_Ip,m_nPort);
+    m_svr.listen(m_Ip, m_nPort);   
     
     return true;
 }

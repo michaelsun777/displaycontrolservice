@@ -178,6 +178,7 @@ struct MOutputInfo
     std::string geometry;
     std::vector<MyModelInfoEX> modes;
     MyModelInfoEX currentMode;
+    MyModelInfoEX preferredMode;
     
 };
 

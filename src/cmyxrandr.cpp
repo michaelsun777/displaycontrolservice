@@ -1041,7 +1041,11 @@ short cmyxrandr::getAllScreenInfoEx(vector<MOutputInfo> & vOutputInfo,CMYSIZE & 
                 XINFO("modeId={},{}_{}",modeId,mode.name,mode.rate);
                 //float fRate = atof(strRate.c_str());
                 //XINFO("nRate:{:.2f}",fRate);
-                             
+
+                if(bIsPreferred)
+                {
+                    testl.preferredMode = mode;
+                }
                 
                 //
                 if(bIsCurrent)
