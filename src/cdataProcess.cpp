@@ -225,9 +225,9 @@ bool cdataProcess::GetMonitorsInfo(string & strInfo)
     return true;
 }
 
-bool cdataProcess::GetMonitorsInfo_shell(string & strInfo)
+bool cdataProcess::GetMonitorsInfo_shell(json & js)
 {
-    json js;
+    //json js;
     string strDisplayName = ":0";
     cmyxrandr cxr(strDisplayName);
     //XRRScreenSize * psize = cxr.getCurrentConfigSizes();
@@ -251,7 +251,8 @@ bool cdataProcess::GetMonitorsInfo_shell(string & strInfo)
         int nNum = vOutputInfo.size();
         if(nNum <= 0)
         {
-            strInfo = "";
+            js.clear();
+            //strInfo = "";
             return false;
         }
         
@@ -269,8 +270,8 @@ bool cdataProcess::GetMonitorsInfo_shell(string & strInfo)
             node["mm_width"] = vOutputInfo[i].mmsize.width;
             node["mm_height"] = vOutputInfo[i].mmsize.height;
 
-            node["xVirtual"] = vOutputInfo[i].pos.xPos / m_nWidth;
-            node["yVirtual"] = vOutputInfo[i].pos.yPos / m_nHight;
+            node["xVirtual"] = (vOutputInfo[i].pos.xPos / m_nWidth);
+            node["yVirtual"] = (vOutputInfo[i].pos.yPos / m_nHight);
             node["primary"] = vOutputInfo[i].primary;
             node["currentModeId"] = vOutputInfo[i].currentMode.id;
             node["preferredModeId"] = vOutputInfo[i].preferredMode.id;
@@ -292,6 +293,7 @@ bool cdataProcess::GetMonitorsInfo_shell(string & strInfo)
                     //char buffer[10] = {0};
                     //sprintf(buffer, "%.2f", modex.rate);
                     //mode["rate"] = buffer;
+                    mode["rate"] = modex.rate;
                     mode["hSync"] = modex.hSync;
                     mode["vSync"] = modex.vSync;
 
@@ -309,7 +311,7 @@ bool cdataProcess::GetMonitorsInfo_shell(string & strInfo)
         }
         js["output"] = jsdata;
         js["num"] = nNum;
-        strInfo = js.dump().c_str();
+        //strInfo = js.dump().c_str();
         XINFO("{}",js.dump().c_str());
         return true;
     }
@@ -324,6 +326,7 @@ bool cdataProcess::SetMonitorsInfo(vector<MONITORSETTINGINFO> * vSetInfo)
     {
         std::cout<< (*vSetInfo)[i].name << std::endl;
         std::cout<< (*vSetInfo)[i].pos.xPos<<std::endl;
+        std::cout<< (*vSetInfo)[i].pos.yPos<<std::endl;
     }
 
     if(vSetInfo->size() > 0)
@@ -346,7 +349,7 @@ bool cdataProcess::SetMonitorsInfo(vector<MONITORSETTINGINFO> * vSetInfo)
             RRCrtc rrcrtc = cxr.getCrtc();
             cxr.setCrtc(rrcrtc);
             //CMYSIZE size((*vSetInfo)[i].size.width, (*vSetInfo)[i].size.height);
-            CMYPOINT offset((*vSetInfo)[i].pos.xPos, (*vSetInfo)[i].pos.yPos);
+            CMYPOINT offset((*vSetInfo)[i].pos.xPos * m_nWidth, (*vSetInfo)[i].pos.yPos * m_nHight);
             cxr.setOffset(offset);
         }
         
@@ -370,12 +373,42 @@ bool cdataProcess::SetMonitorsInfo(vector<MONITORSETTINGINFO> * vSetInfo)
 
 bool cdataProcess::TestMonitorInfo()
 {
-    string strDisplayName = ":0";
-    cmyxrandr cxr(strDisplayName);
-    vector<MOutputInfo> vOutputInfo;
-    CMYSIZE currentSize, maxSize;
-    cxr.getAllScreenInfoEx(vOutputInfo,currentSize, maxSize);
+    // string strDisplayName = ":0";
+    // cmyxrandr cxr(strDisplayName);
+    // vector<MOutputInfo> vOutputInfo;
+    // CMYSIZE currentSize, maxSize;
+    // cxr.getAllScreenInfoEx(vOutputInfo,currentSize, maxSize);
+    nvControlInfo nv;
+    MGPUINFOEX  gpu;
+    nv.getGpuInfo(gpu);
 
+    return false;
+}
+
+bool cdataProcess::GetGpuInfo(json & js)
+{
+    //json js;
+    MGPUINFOEX gpu;
+    nvControlInfo nv;
+    if(nv.getGpuInfo(gpu))
+    {
+        for (size_t i = 0; i < gpu.vgpus.size(); i++)
+        {
+            MGPUINFO info = gpu.vgpus[i];
+            json node;
+            node["gpuId"] = info.id;
+            node["fan"] = info.Fan;
+            node["mem"] = info.Mem;
+            node["name"] = info.name;
+            node["perf"] = info.Perf;
+            node["pwr"] = info.Pwr;
+            node["tempture"] = info.Temp;
+            node["util"] = info.Util;
+            js["gpus"].push_back(node);            
+        }
+        //strInfo = js.dump().c_str();
+        return true;
+    }
     return false;
 }
 

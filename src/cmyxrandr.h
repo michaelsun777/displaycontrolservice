@@ -30,6 +30,10 @@ private:
     RROutput             m_output;
     XRRScreenConfiguration * m_psConfig;
     string m_strDisplayName;
+    int                 m_major;
+    int                 m_minor;
+    int                 m_event_base; 
+    int                 m_error_base;
 
 
 public:

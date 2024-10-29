@@ -31,6 +31,8 @@
 #include "3rd/json/include/nlohmann/json.hpp"
 #include "config.h"
 
+#include "nvControlInfo.h"
+
 //#include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
@@ -69,7 +71,8 @@ public:
 public://xrandr
     bool Output(string args);
     bool GetMonitorsInfo(string & strInfo);
-    bool GetMonitorsInfo_shell(string & strInfo);
+    bool GetMonitorsInfo_shell(json & js);
+    bool GetGpuInfo(json & js);
     bool SetMonitorsInfo(vector<MONITORSETTINGINFO> *vSetInfo);
     bool TestMonitorInfo();
 public:

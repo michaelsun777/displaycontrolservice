@@ -2,12 +2,18 @@
 
 cmyxrandr::cmyxrandr(string strDisplayName, RROutput output) : m_screen(0), m_output(output), m_psConfig(NULL)
 {
+    m_major = 0;
+    m_minor = 0;
+
     m_strDisplayName = strDisplayName;
     m_pDpy = XOpenDisplay(m_strDisplayName.c_str());
     m_screen = DefaultScreen(m_pDpy);
     m_root = RootWindow(m_pDpy, m_screen);
     m_pRes = XRRGetScreenResources(m_pDpy, m_root);
     m_crtc = getCrtc();
+    Bool bRet = XRRQueryExtension (m_pDpy, &m_event_base, &m_error_base);
+    int nRet = XRRQueryVersion(m_pDpy, &m_major, &m_minor);
+    XINFO("xrandr version:{}.{}", m_major, m_minor);
 }
 
 cmyxrandr::~cmyxrandr()
@@ -756,13 +762,11 @@ RROutput cmyxrandr::getOutputByName(string strName)
 XRRMonitorInfo *cmyxrandr::getScreenInfo()
 {
     // Display *display;
-    int major, minor;
+   
 
     // display = XOpenDisplay(NULL);
     // Window window = DefaultRootWindow(display);
 
-    int nRet = XRRQueryVersion(m_pDpy, &major, &minor);
-    XINFO("xrandr version:{}.{}", major, minor);
     if (m_psConfig == NULL)
         m_psConfig = XRRGetScreenInfo(m_pDpy, m_root);
 

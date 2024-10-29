@@ -8,6 +8,7 @@
 #include "httpManager.h"
 #include "cdataProcess.h"
 #include "cmyxrandr.h"
+#include "nvControlInfo.h"
 
 
 #define VER_AUTO
@@ -21,6 +22,10 @@ std::string g_NOTE = "XXX";
 int main(int argc, char *argv[])
 {
     std::shared_ptr<CSpdlog> splog(CSpdlog::GetInstance());
+
+    //nvControlInfo nvctrl;
+    //MGPUINFOEX  gpu;
+    //nvctrl.getGpuInfo(gpu);
 
     //cmyxrandr cr(":0");
     // cr.getScreenInfo();

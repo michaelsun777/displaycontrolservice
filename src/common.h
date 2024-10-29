@@ -184,6 +184,29 @@ struct MOutputInfo
 
 
 
+struct MGPUINFO
+{
+    int id;
+    std::string name;
+    std::string Fan;
+    std::string Temp;
+    std::string Perf;
+    std::string Pwr;
+    std::string Mem;
+    std::string Util;
+
+};
+
+struct MGPUINFOEX
+{
+    std::string videoBIOS;
+    std::string driverVersion;
+    std::vector<MGPUINFO> vgpus;
+};
+
+
+
+
 
 
 
