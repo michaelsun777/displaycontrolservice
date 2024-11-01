@@ -1,3 +1,4 @@
+#include "dlgManager.h"
 #include "cdataProcess.h"
 
 
@@ -36,10 +37,10 @@ cdataProcess::~cdataProcess()
 {
 }
 
-
-
-
-
+void cdataProcess::SetMainWindow(MainWindow * p)
+{
+    m_pMainWindow = p;
+}
 
 void cdataProcess::print_display_name(Display *dpy, int target_id, int attr,char *name)
 {
@@ -246,6 +247,8 @@ bool cdataProcess::GetMonitorsInfo_shell(json & js)
         js["maxHeight"] = maxSize.height;
         js["output_width"] = m_nWidth;
         js["output_height"] = m_nHight;
+        js["horizontal"] = m_ndistribution_w;
+        js["vertial"] = m_ndistribution_h;
 
         json jsdata;
         int nNum = vOutputInfo.size();
@@ -309,6 +312,33 @@ bool cdataProcess::GetMonitorsInfo_shell(json & js)
             }
             jsdata.push_back(node);
         }
+
+        if(vOutputInfo.size() < m_ndistribution_w * m_ndistribution_h)
+        {
+            for (size_t i = vOutputInfo.size(); i < m_ndistribution_w * m_ndistribution_h; i++)
+            {
+                json node;
+                node["rroutputId"] = 0;
+                node["name"] = "";
+                node["xPos"] = 0;
+                node["yPos"] = 0;
+                node["width"] = 0;
+                node["height"] = 0;
+                node["rotation"] = 0;
+                node["mm_width"] = 0;
+                node["mm_height"] = 0;
+
+                node["xVirtual"] = 0;
+                node["yVirtual"] = 0;
+                node["primary"] = false;
+                node["currentModeId"] = 0;
+                node["preferredModeId"] = 0;
+                node["connected"] = false;
+                node["data"]="";
+                jsdata.push_back(node);
+            }
+        }
+
         js["output"] = jsdata;
         js["num"] = nNum;
         //strInfo = js.dump().c_str();
@@ -349,7 +379,8 @@ bool cdataProcess::SetMonitorsInfo(vector<MONITORSETTINGINFO> * vSetInfo)
             RRCrtc rrcrtc = cxr.getCrtc();
             cxr.setCrtc(rrcrtc);
             //CMYSIZE size((*vSetInfo)[i].size.width, (*vSetInfo)[i].size.height);
-            CMYPOINT offset((*vSetInfo)[i].pos.xPos * m_nWidth, (*vSetInfo)[i].pos.yPos * m_nHight);
+            //CMYPOINT offset((*vSetInfo)[i].pos.xPos * m_nWidth, (*vSetInfo)[i].pos.yPos * m_nHight);
+            CMYPOINT offset((*vSetInfo)[i].pos.xPos, (*vSetInfo)[i].pos.yPos);
             cxr.setOffset(offset);
         }
         
@@ -378,9 +409,26 @@ bool cdataProcess::TestMonitorInfo()
     // vector<MOutputInfo> vOutputInfo;
     // CMYSIZE currentSize, maxSize;
     // cxr.getAllScreenInfoEx(vOutputInfo,currentSize, maxSize);
-    nvControlInfo nv;
-    MGPUINFOEX  gpu;
-    nv.getGpuInfo(gpu);
+    // nvControlInfo nv;
+    // MGPUINFOEX  gpu;
+    // nv.getGpuInfo(gpu);
+
+    DLGINFO dlg;
+    dlg.height = 1080;
+    dlg.width = 3840;
+    dlg.postype = 1;
+    dlg.name = "test";
+    dlg.xPos = 200;
+    dlg.yPos = 50;
+    dlg.url = "https://www.baidu.com";
+
+    std::shared_ptr<dlgManager> pdlgManager = dlgManager::GetInstance();
+    pdlgManager->addDlg(dlg);
+
+    //m_pMainWindow->test();
+    
+    
+
 
     return false;
 }
@@ -480,11 +528,22 @@ bool cdataProcess::InitOutputInfo()
     int start_x = 0,start_y = 0;
 
 
-    for (size_t i = 0; i < vOutputInfo.size(); i++)
+    for (size_t i = 0,j = 0; i < vOutputInfo.size(); i++)
     {
         if(vOutputInfo[i].currentMode.id != lastDeterminedModeId)
         {
-            start_x = i*m_nWidth;
+            if((i - j*m_nWidth) < m_nWidth)
+            {
+                start_x = i*m_nWidth;
+                start_y = j*m_nHight;
+            }
+            else
+            {
+                start_y++;
+                start_x = (i - j*m_nWidth)*m_nWidth;
+                start_y = j*m_nHight;
+            }
+            
             char buf[20] = {0};
             sprintf(buf,"%dx%d",start_x,start_y);
             string strPos = buf;

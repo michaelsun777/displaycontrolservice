@@ -8,7 +8,9 @@ project(DisplayCtrlServer)
 #     set(USING_VCPKG ON)
 #     set(VCPKG_OVERLAY_TRIPLETS ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/triplets)
 # endif()
-
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
 
 SET(CMAKE_BUILD_TYPE "Debug")
 SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g2 -ggdb")
@@ -20,15 +22,11 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON) #相当于-fpic
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+#set(CMAKE_CXX_EXTENSIONS OFF)
 
-# set(CMAKE_CXX_STANDARD 11)
-# set(CMAKE_AUTOUIC ON)
-# set(CMAKE_AUTOMOC ON)
-# set(CMAKE_AUTORCC ON)
 
-# set(CMAKE_CXX_STANDARD_REQUIRED ON)
-# set(CMAKE_CXX_STANDARD 11)
-# set(CMAKE_CXX_EXTENSIONS OFF)
+
+
 
 #Check C++11
 # include(CheckCXXCompilerFlag)
@@ -77,21 +75,21 @@ endif()
 # INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS}) # opencv
 
 
-# find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
-# find_package(Qt5Core REQUIRED)
-# find_package(Qt5Widgets REQUIRED)
-# find_package(Qt5Network REQUIRED)
-# find_package(Qt5Gui REQUIRED)
-# find_package(Qt5OpenGL REQUIRED)
+find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
+find_package(Qt5Core REQUIRED)
+find_package(Qt5Widgets REQUIRED)
+find_package(Qt5Network REQUIRED)
+find_package(Qt5Gui REQUIRED)
+find_package(Qt5OpenGL REQUIRED)
+find_package(Qt5WebEngineWidgets REQUIRED)
 ## Set the QT_LIBRARIES variable for Qt5, so it can be used below.
-#set(QT_LIBRARIES Qt5::Core Qt5::Widgets Qt5::Network)
-# SET(QT_LIBRARIES ${Qt5Core_LIBRARIES} ${Qt5Gui_LIBRARIES} ${Qt5Widgets_LIBRARIES} ${Qt5OpenGL_LIBRARIES}
-#         ${Qt5Network_LIBRARIES} ${Qt5Xml_LIBRARIES} ${Qt5Qml_LIBRARIES})
+# set(QT_LIBRARIES Qt5::Core Qt5::Widgets Qt5::Network)
+SET(QT_LIBRARIES ${Qt5Core_LIBRARIES} ${Qt5Gui_LIBRARIES} ${Qt5Widgets_LIBRARIES} ${Qt5OpenGL_LIBRARIES}
+        ${Qt5Network_LIBRARIES} ${Qt5Xml_LIBRARIES} ${Qt5Qml_LIBRARIES} ${Qt5WebEngineWidgets_LIBRARIES} )
 
-# include_directories(${Qt5Core_INCLUDE_DIRS} ${Qt5Gui_INCLUDE_DIRS}
-#         ${Qt5Widgets_INCLUDE_DIRS} ${Qt5OpenGL_INCLUDE_DIRS} ${Qt5Network_INCLUDE_DIRS}
-#         ${Qt5Xml_INCLUDE_DIRS} ${Qt5Qml_INCLUDE_DIRS}
-#         )
+INCLUDE_DIRECTORIES(${Qt5Core_INCLUDE_DIRS} ${Qt5Gui_INCLUDE_DIRS}
+        ${Qt5Widgets_INCLUDE_DIRS} ${Qt5OpenGL_INCLUDE_DIRS} ${Qt5Network_INCLUDE_DIRS}
+        ${Qt5Xml_INCLUDE_DIRS} ${Qt5Qml_INCLUDE_DIRS} ${Qt5WebEngineWidgets_INCLUDE_DIRS})
 
 
 # MESSAGE(STATUS "OpenCV library status:")
@@ -120,10 +118,12 @@ INCLUDE_DIRECTORIES(/usr/include/X11)
 # INCLUDE_DIRECTORIES(/usr/include/cairo)
 # INCLUDE_DIRECTORIES(/usr/include/pango-1.0)
 # INCLUDE_DIRECTORIES(/usr/include/harfbuzz)
-INCLUDE_DIRECTORIES(3rd/cpp-httplib/cpp-httplib-base/)
+# INCLUDE_DIRECTORIES(3rd/cpp-httplib/cpp-httplib-base/)
 INCLUDE_DIRECTORIES(3rd/cpp-subprocess/)
 INCLUDE_DIRECTORIES(3rd/nvidia-settings/src/libXNVCtrl)
 INCLUDE_DIRECTORIES(3rd/nvidia-settings/src/libXNVCtrlAttributes)
+INCLUDE_DIRECTORIES(3rd/httpserver/)
+INCLUDE_DIRECTORIES(src/UI)
 
 INCLUDE_DIRECTORIES(src)
 # INCLUDE_DIRECTORIES(src/communication)
@@ -149,13 +149,14 @@ INCLUDE_DIRECTORIES(src)
 # aux_source_directory(src/include_hk include_hk_SRC)
 # aux_source_directory(src/other other_SRC)
 # aux_source_directory(src/spdlog spdlog_SRC)
-# aux_source_directory(src/dlp dlp_SRC)
+
+aux_source_directory(3rd/httpserver http_SRC)
 
 ##find_path(CPPUNIT_INCLUDE_DIR PATHS "/usr/include/x86_64-linux-gnu" NO_DEFAULT_PATH)       
 ##find_library(CPPUNIT_LIBRARY PATHS "/usr/lib/x86_64-linux-gnu" NO_DEFAULT_PATH)
 
-#link_directories(/opt/Qt5.14.2/5.14.2/gcc_64/lib/)
-#link_directories(${QT_LIBRARIES})
+# link_directories(/opt/Qt5.14.2/5.14.2/gcc_64/lib/)
+link_directories(${QT_LIBRARIES})
 link_directories(/usr/lib/x86_64-linux-gnu)
 # link_directories(/opt/MVS/lib/64/)
 # link_directories(hidapi/linux/.libs)
@@ -164,46 +165,45 @@ link_directories(/usr/local/lib/)
 
 
 aux_source_directory(src/ SRC_SRC)
+# aux_source_directory(src/UI SRC_SRC_UI)
 
 add_executable(dpcs
 main.cpp
-${SRC_SRC}
-3rd/nvidia-settings/src/libXNVCtrl/NVCtrl.c
+# ${SRC_SRC}
+src/build_date_time.cpp
+src/cspdlog.cpp
+src/dlgManager.cpp
+src/cmyxrandr.cpp
+src/exec_cmd.cpp
 
+# 3rd/nvidia-settings/src/libXNVCtrl/NVCtrl.c
+src/UI/dlgurl.cpp
+src/UI/dlgurl.h
+src/UI/dlgurl.ui
+src/UI/mainwindow.cpp
+src/UI/mainwindow.h
+src/UI/mainwindow.ui
+src/cdataProcess.cpp
+src/config.cpp
+# src/httpManager.cpp
+src/nvControlInfo.cpp
+######dlg
+src/dialogController.cpp
+src/requesthandler.cpp
 
-# src/comm.cpp
-#src/dlpManager.cpp
-#src/dlpsetdlg.cpp
-#src/dlpsetdlg.ui
-#src/hkcamera.cpp
-#src/hkImage.cpp
-#src/imagepixelcalculate.cpp
-#src/MsgDataProcess.cpp
-#src/MvCamera.cpp
-#src/paddlePredictThread.cpp
-#src/paddlexmodel.cpp
-#./hidapi/linux/hid.c
-#Fast-DDS/to_camera.cxx
-#Fast-DDS/to_cameraSubscriber.cxx
-#Fast-DDS/to_robot.cxx
-#Fast-DDS/to_robotPublisher.cxx
-#Fast-DDS/to_cameraSubscriber.cxx
-#Fast-DDS/to_cameraPubSubTypes.cxx
-#Fast-DDS/to_robotPubSubTypes.cxx
-# ${communication_SRC}
-${spdlog_SRC} 
-#${hidapi_SRC} ${hidapi_linux_SRC}
-#${include_bd_SRC} ${include_hk_SRC} ${other_SRC} ${dlp_SRC}} 
+${http_SRC}
+
+# ${spdlog_SRC} 
 )
 
 
-target_link_libraries(dpcs 
+target_link_libraries(dpcs PRIVATE
 pthread
 #  -lusb -ludev -lhidapi-hidraw
--lboost_system -lboost_thread -lboost_filesystem -lboost_iostreams -lboost_chrono
+# -lboost_system -lboost_thread -lboost_filesystem -lboost_iostreams -lboost_chrono
 # -lMvCameraControl -luuid -lcurl -lstdc++fs
 -lspdlog 
--lX11 -lXext -lXrandr -lm  # -lXNVCtrl
+-lX11 -lXrandr -lm -lXext -lXNVCtrl #  // 
 -ldl
 ${QT_LIBRARIES}
 

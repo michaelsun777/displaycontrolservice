@@ -1,6 +1,7 @@
 #ifndef _COMMON_H_
 #define _COMMON_H_
 
+// #include <QApplication>
 #include <X11/extensions/Xrandr.h>
 #include <list>
 #include <string>
@@ -205,7 +206,24 @@ struct MGPUINFOEX
 };
 
 
-
+struct DLGINFO
+{
+    std::string name;
+    std::string dlgId;
+    int type;//dlg type
+    std::string url;
+    std::string path;
+    std::string param;
+    int postype;//1需要转换比例，2真实屏幕坐标
+    int xVirtual;
+    int yVirtual;
+    int xPos;
+    int yPos;
+    int width;
+    int height;
+    bool titleEnable; //是否显示标题
+    
+};
 
 
 

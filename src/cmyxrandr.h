@@ -53,26 +53,26 @@ public:
     bool                isEnabled       ();
     string             getName         ();
     list<CMYSIZE>        getModes        ();
-    Status               enable          (CMYSIZE size);
+    int               enable          (CMYSIZE size);
     CMYSIZE               getOutputSize   ();
     RROutput            getOutputByName (string strName);
     list<RROutput>     getOutputs();
 
-    Status              getXRandrVersion (int *ver, int *rev) const;
+    int              getXRandrVersion (int *ver, int *rev) const;
     Rotation            getRotate       () const;
     Rotation            getReflect      () const;
     CMYPOINT            getOffset       () const;
     RRMode              getMode         () const;
-    Status              disable         ();
+    int              disable         ();
     CMYSIZE             getScreenSize   () const;
-    Status              setScreenSize   (const int &width, const int &height, bool bForce = false);
+    int              setScreenSize   (const int &width, const int &height, bool bForce = false);
     int                 setReflect      (Rotation reflection);
-    Status              setOffset       (CMYPOINT offset);
+    int              setOffset       (CMYPOINT offset);
     int                 setMode         (CMYSIZE size,RRMode rrmode = 0);
     int                 setRotate       (Rotation rotation);
     int                 setPanning      (CMYSIZE size);
     void                startEvents     ();
-    Status              feedScreen      ();
+    int              feedScreen      ();
     CMYSIZE             getPreferredMode();
     bool                isPrimary       ();
     void                setPrimary      ();
@@ -83,7 +83,7 @@ public:
 private:
     /* data */
 public:
-    cmyxrandr(string strDisplayName,RROutput output = NULL);
+    cmyxrandr(string strDisplayName,RROutput output = 0);
     ~cmyxrandr();
     void setOutPut(RROutput output);
     void setCrtc(RRCrtc crtc);

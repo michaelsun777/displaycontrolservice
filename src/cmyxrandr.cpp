@@ -1,6 +1,6 @@
 #include "cmyxrandr.h"
 
-cmyxrandr::cmyxrandr(string strDisplayName, RROutput output) : m_screen(0), m_output(output), m_psConfig(NULL)
+cmyxrandr::cmyxrandr(string strDisplayName, RROutput output) : m_screen(0), m_output(output), m_psConfig(0)
 {
     m_major = 0;
     m_minor = 0;
@@ -23,7 +23,7 @@ cmyxrandr::~cmyxrandr()
         XRRFreeScreenResources(m_pRes);
 
     XRRFreeScreenConfigInfo(m_psConfig);
-    m_psConfig = NULL;
+    m_psConfig = 0;
     XCloseDisplay(m_pDpy);
 }
 
@@ -34,7 +34,7 @@ bool cmyxrandr::update()
         XRRFreeScreenResources(m_pRes);
 
     XRRFreeScreenConfigInfo(m_psConfig);
-    m_psConfig = NULL;
+    m_psConfig = 0;
     XCloseDisplay(m_pDpy);
 
     m_pDpy = XOpenDisplay(m_strDisplayName.c_str());
@@ -227,7 +227,7 @@ int cmyxrandr::setReflect(Rotation reflection)
 
 int cmyxrandr::setOffset(CMYPOINT offset)
 {
-    Status ret = -1;
+    int ret = -1;
     CMYSIZE screenSize(0, 0);
     CMYSIZE crtcSize(0, 0);
 
@@ -306,7 +306,7 @@ int cmyxrandr::setMode(CMYSIZE size,RRMode rrmode)
                 XRRFreeCrtcInfo(crtc_info);
             }
             else
-                XINFO("Modo width={},height={},{No soportado}", size.width, size.height);
+                XINFO("Modo width={},height={},No soportado", size.width, size.height);
         }
     }
     this->feedScreen();
@@ -316,7 +316,7 @@ int cmyxrandr::setMode(CMYSIZE size,RRMode rrmode)
 
 int cmyxrandr::disable()
 {
-    Status ret = -1;
+    int ret = -1;
     ret = XRRSetCrtcConfig(m_pDpy,
                            m_pRes,
                            m_crtc,
@@ -446,7 +446,7 @@ int cmyxrandr::feedScreen()
         }
     }
     this->setScreenSize(size.width, size.height, true);
-    XINFO("Modo width={},height={},{No soportado}", size.width, size.height);
+    XINFO("Modo width={},height={}, No soportado ", size.width, size.height);
     return 0;
 }
 
@@ -653,9 +653,9 @@ void cmyxrandr::setPrimary()
         XRRSetOutputPrimary(m_pDpy, m_root, m_output);
 }
 
-Status cmyxrandr::enable(CMYSIZE size)
+int cmyxrandr::enable(CMYSIZE size)
 {
-    Status ret = -1;
+    int ret = -1;
     if (m_output)
     {
 
@@ -1121,7 +1121,7 @@ int cmyxrandr::getScreenSizeRange(CMYSIZE & min,CMYSIZE & max)
 {
     int minWidth = 0, minHeight = 0, maxWidth = 0, maxHeight = 0;
 
-    Status state = XRRGetScreenSizeRange(m_pDpy, m_root, &minWidth,&minHeight,&maxWidth,&maxHeight);
+    int state = XRRGetScreenSizeRange(m_pDpy, m_root, &minWidth,&minHeight,&maxWidth,&maxHeight);
     min.width = minWidth;
     min.height = minHeight;
     max.width = maxWidth;

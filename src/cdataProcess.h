@@ -1,11 +1,10 @@
 #ifndef CDATA_PROCESS_H
 #define CDATA_PROCESS_H
 
+#include <QApplication>
+#include "UI/mainwindow.h"
+
 #include <X11/Xlib.h>
-/* we need to be able to manipulate the Display structure on events */
-// #include <X11/Xlibint.h>
-// #include <X11/extensions/render.h>
-// #include <X11/extensions/Xrender.h>
 #include <X11/extensions/Xrandr.h>
 
 
@@ -49,8 +48,9 @@ struct MY_OutputInfo
 
 
 
-class cdataProcess
+class cdataProcess :public QObject
 {     
+    Q_OBJECT
 private:
     int m_nAvailableMonitorsCount;
     std::map<XID,XRRMonitorInfo *> m_mMonitors;
@@ -59,6 +59,7 @@ private:
     int m_nHight;
     int m_ndistribution_w;
     int m_ndistribution_h;
+    MainWindow * m_pMainWindow;
 
 
 public:
@@ -75,8 +76,12 @@ public://xrandr
     bool GetGpuInfo(json & js);
     bool SetMonitorsInfo(vector<MONITORSETTINGINFO> *vSetInfo);
     bool TestMonitorInfo();
+    void SetMainWindow(MainWindow * p);
 public:
     bool InitOutputInfo();
+
+signals:
+    void testSignal(int type);
     
     
 };
