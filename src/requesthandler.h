@@ -9,6 +9,7 @@
 #include "cspdlog.h"
 #include <cstring>
 #include "../qtcommon.h"
+#include "UI/mainwindow.h"
 
 
 using namespace stefanfrings;
@@ -17,19 +18,21 @@ using namespace std;
 The request handler receives incoming HTTP requests and generates responses.
 */
 
+
 class RequestHandler : public HttpRequestHandler
 {
   Q_OBJECT
   Q_DISABLE_COPY(RequestHandler)
 private:
   std::map<int, std::string> m_mCodeMsg;
+  MainWindow * m_pMain;
 
 public:
   /**
     Constructor.
     @param parent Parent object
   */
-  RequestHandler(QObject *parent = 0);
+  RequestHandler(MainWindow * pMain,QObject *parent = 0);
 
   /**
     Destructor

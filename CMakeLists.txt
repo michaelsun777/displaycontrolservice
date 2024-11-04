@@ -172,7 +172,7 @@ main.cpp
 # ${SRC_SRC}
 src/build_date_time.cpp
 src/cspdlog.cpp
-src/dlgManager.cpp
+# src/dlgManager.cpp
 src/cmyxrandr.cpp
 src/exec_cmd.cpp
 

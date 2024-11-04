@@ -10,10 +10,11 @@
 
 #include "dialogController.h"
 
-RequestHandler::RequestHandler(QObject* parent)
+RequestHandler::RequestHandler(MainWindow * pMain,QObject* parent)
     :HttpRequestHandler(parent)
 {
     XINFO("RequestHandler: created");
+    m_pMain = pMain;
     m_mCodeMsg[200] = "success";//请求成功,资源已成功返回
     m_mCodeMsg[201] = "Created";//请求已成功,且服务器创建了新的资源
     m_mCodeMsg[202] = "Accepted";//请求已接受，但处理尚未完成
@@ -65,7 +66,7 @@ void RequestHandler::service(HttpRequest& request, HttpResponse& response)
     }
     else if(path.startsWith("/displayctrlserver/dialog"))
     {        
-        DialogController().service(this,request, response);
+        DialogController().service(this,m_pMain,request, response);
     }
     else
     {

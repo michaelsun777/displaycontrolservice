@@ -14,7 +14,7 @@
 #include "UI/mainwindow.h"
 
 #include "build_date_time.h"
-#include "dlgManager.h"
+//#include "dlgManager.h"
 #include "cmyxrandr.h"
 
 #include "cdataProcess.h"
@@ -40,29 +40,50 @@ int main(int argc, char *argv[])
     int nRet = 0;
     try
     {
+        QSettings getConfig("./config.ini", QSettings::IniFormat);
+
+        //setConfig.GetValue("common","ip",value,error);
+        QString _ip = "127.0.0.1";
+        QString _port = "18180";
+        getConfig.beginGroup("common");
+        QVariant value;
+        value = getConfig.value("ip");
+        if(!value.isNull())
+        {
+            _ip = value.toString();
+        }        
+        value.clear();
+        value = getConfig.value("port");
+        if(!value.isNull())
+        {
+            _port = value.toString();
+        }
+
+        MainWindow w;
+
         QSettings settings(&app);
-        // settings.setValue("host","192.168.0.100");
-        settings.setValue("port","18180");
+        settings.setValue("host",_ip);
+        settings.setValue("port",_port);
         settings.setValue("minThreads","4");
         settings.setValue("maxThreads","20");
         settings.setValue("cleanupInterval","60000");
         settings.setValue("readTimeout","60000");
         settings.setValue("maxRequestSize","16000");
         settings.setValue("maxMultiPartSize","10000000");
-        RequestHandler * pRequestHandler = new RequestHandler(&app);
+        RequestHandler * pRequestHandler = new RequestHandler(&w,&app);
         new HttpListener(&settings,pRequestHandler,&app);
 
 
         QApplication::setQuitOnLastWindowClosed(false);
         std::shared_ptr<CSpdlog> splog(CSpdlog::GetInstance());
         cdataProcess dataProcess;
-        MainWindow w; 
+        
         dataProcess.SetMainWindow(&w);
         dataProcess.InitOutputInfo(); 
         QObject::connect(pRequestHandler,&RequestHandler::sendDlgSignal,&w,&MainWindow::onMouseEventRequested);
           
 
-        std::shared_ptr<dlgManager> pdlgManager = dlgManager::GetInstance();
+        //std::shared_ptr<dlgManager> pdlgManager = dlgManager::GetInstance();
 
         // DlgUrl dlg;
         // dlg.show();
@@ -70,6 +91,7 @@ int main(int argc, char *argv[])
         //std::shared_ptr<HttpManager> pHttpManager = HttpManager::GetInstance();
         
         w.show();
+        w.Init();
         w.hide();
         nRet = app.exec();
     }

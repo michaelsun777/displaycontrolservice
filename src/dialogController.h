@@ -8,6 +8,7 @@
 #include "../3rd/json/include/nlohmann/json.hpp"
 #include "requesthandler.h"
 #include "../qtcommon.h"
+#include "UI/mainwindow.h"
 
 
 
@@ -19,12 +20,19 @@ class DialogController : public HttpRequestHandler
     Q_OBJECT
     Q_DISABLE_COPY(DialogController)
 private:
-    /* data */
+    std::map<int, std::string> m_mCodeMsg;
 public:
     DialogController(/* args */);
-    void service(RequestHandler* pRequestHandler,HttpRequest& request, HttpResponse& response);
-
-
+    void service(RequestHandler* pRequestHandler,MainWindow * pMain,HttpRequest& request, HttpResponse& response);
+    //void service(HttpRequest &request, HttpResponse &response);
+    void createRet(HttpResponse &res, int code, nlohmann::json &data);
+    void createRet(HttpResponse &res, int code);
+    std::string getRetMessage(int code);
+    int dlgAdd(RequestHandler* pRequestHandler,MainWindow * pMain,HttpRequest& request, HttpResponse& response);
+    int dlgDel(RequestHandler* pRequestHandler,MainWindow * pMain,HttpRequest& request, HttpResponse& response);
+    int dlgModify(RequestHandler* pRequestHandler,HttpRequest& request, HttpResponse& response);
+    int dlgSearch(RequestHandler* pRequestHandler,MainWindow * pMain,HttpRequest& request, HttpResponse& response);
+    int dlgGetAll(RequestHandler* pRequestHandler,MainWindow * pMain,HttpRequest& request, HttpResponse& response);
 };
 
 #endif

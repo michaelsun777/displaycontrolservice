@@ -42,6 +42,7 @@ bool cmyxrandr::update()
     m_root = RootWindow(m_pDpy, m_screen);
     m_pRes = XRRGetScreenResources(m_pDpy, m_root);
     m_crtc = getCrtc();
+    return true;
 
 }
 
@@ -796,6 +797,7 @@ XRRMonitorInfo *cmyxrandr::getScreenInfo()
     // XRRFreeScreenConfigInfo(psConfig);
     XRRFreeMonitors(info);
     // XFree(display);
+    return 0;
 }
 
 XRRScreenSize *cmyxrandr::getCurrentConfigSizes()

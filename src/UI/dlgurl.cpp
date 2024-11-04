@@ -1,7 +1,7 @@
 #include "dlgurl.h"
 #include "ui_dlgurl.h"
 #include <QMouseEvent>
-#include "../dlgManager.h"
+#include <iostream>
 
 DlgUrl::DlgUrl(string strDlgId,QWidget *parent) : m_qsUrl(""),
     QDialog(parent),
@@ -12,6 +12,7 @@ DlgUrl::DlgUrl(string strDlgId,QWidget *parent) : m_qsUrl(""),
     //setAttribute(Qt::WA_DeleteOnClose);
     m_dlgId = strDlgId;
     connect(this,&DlgUrl::updateSignal,this,&DlgUrl::updateslots);
+    connect(this,&DlgUrl::closeDlgSignal,this,&DlgUrl::DataprocessSlots);
     //dlgManager * dlg = (dlgManager*)parent;
     //connect(dlg,&dlgManager::mouseSignal,this,&DlgUrl::DataprocessSignal);
     
@@ -40,9 +41,9 @@ DlgUrl::~DlgUrl()
 //     disconnect(dlg,&dlgManager::mouseSignal,this,&DlgUrl::testSignal);
 // }
 
-void DlgUrl::UpdateSetting(QtDlgInfo & dlg)
+void DlgUrl::UpdateSetting(QtDlgInfo * dlg)
 {
-    m_QtDlgInfo = dlg;
+    m_QtDlgInfo = *dlg;
     // m_qsUrl = "https://www.baidu.com";    
     ui->webEngineView->load(QUrl(m_QtDlgInfo.url.c_str()));
     m_pos = QPoint(m_QtDlgInfo.xPos,m_QtDlgInfo.yPos);
@@ -60,17 +61,21 @@ void DlgUrl::updateslots()
     update();
 }
 
-void DlgUrl::DataprocessSlots(string strDlgId)
+void DlgUrl::CloseDlg(string strDlgId)
+{
+    emit closeDlgSignal(strDlgId,0);
+}
+
+void DlgUrl::DataprocessSlots(string strDlgId,int cmdType)
 {
     if(m_dlgId.compare(strDlgId) == 0)
     {
         std::cout<<"testSignal,id=" << strDlgId<<std::endl;
+        if(cmdType == 0)
+        {
+            close();
+        }
     }
-
-    
-    // move(m_pos);
-    // resize(m_size);
-    // update();
 }
 
 

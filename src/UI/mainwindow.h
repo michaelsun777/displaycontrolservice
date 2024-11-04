@@ -38,26 +38,38 @@ public:
     void test();
 
 public:
-    //void Init();
+    void Init();    
     bool addDlg(QtDlgInfo & info);
-    // bool delDlg();
-    // bool modifyDlg();
-    // bool getDlg();
-    // bool getAllDlg();
+    bool delDlg(QtDlgInfo & info);
+    bool modifyDlg(QtDlgInfo & info);
+    bool getDlgInfo(string dlgId,QtDlgInfo & info);
+    bool getAllDlgInfo(std::vector<QtDlgInfo> & vInfo);
+private:
+    bool parseJsonToDlgInfo(QtDlgInfo * info,string str);
+    bool dlgInfoToJson(QtDlgInfo * info,string & str);
+    bool readSettings();
+    bool writeSettings(string key,string value);
+    bool deleteSettings(string key);
     
 
 private slots:
     void on_pbtn_test_clicked();
 
 public slots:
-    void onMouseEventRequested(int type,QVariant dlgInfo); 
+    void onInitSlots();
+    bool showNewDlg(string dlgId);
+    void onMouseEventRequested(int type,QVariant dlgInfo);
+    
 
+public:
 
+signals:
+    void initSignal();
 
 private:
     //cdataProcess * m_process;
     std::map<std::string,DlgUrl *> m_mDlgs;
-    std::map<string,QtDlgInfo *> m_mDlgProperty;
+    std::map<std::string,QtDlgInfo *> m_mDlgProperty;
     
 
 private:

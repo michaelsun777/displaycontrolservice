@@ -29,17 +29,17 @@ public:
     ~DlgUrl();
     // bool SetConnect(dlgManager *dlg);//,int type,QPoint p,QSize size
     // bool DelConnect(dlgManager *dlg);
-    void UpdateSetting(QtDlgInfo & dlg);
-//protected slots:
-//    void onMouseEventRequested(string strDlgId,QPoint p,QSize size);
+    void UpdateSetting(QtDlgInfo * dlg);
+    void CloseDlg(string strDlgId);
 
 
 public slots:
-    void DataprocessSlots(string strDlgId);
+    void DataprocessSlots(string strDlgId,int cmdType = 0);
     void updateslots();
 
 signals:
     void updateSignal();
+    void closeDlgSignal(string strDlgId,int cmdType);
 
 // signals:
 //     void mouseSignal(int type,QPoint p,QSize size);

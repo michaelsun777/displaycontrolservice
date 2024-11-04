@@ -1,4 +1,4 @@
-#include "dlgManager.h"
+//#include "dlgManager.h"
 #include "cdataProcess.h"
 
 
@@ -422,8 +422,8 @@ bool cdataProcess::TestMonitorInfo()
     dlg.yPos = 50;
     dlg.url = "https://www.baidu.com";
 
-    std::shared_ptr<dlgManager> pdlgManager = dlgManager::GetInstance();
-    pdlgManager->addDlg(dlg);
+    //std::shared_ptr<dlgManager> pdlgManager = dlgManager::GetInstance();
+    //pdlgManager->addDlg(dlg);
 
     //m_pMainWindow->test();
     
@@ -574,7 +574,7 @@ bool cdataProcess::InitOutputInfo()
             continue;        
     }
     
-
+    return true;
 
 }
 
