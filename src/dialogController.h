@@ -30,7 +30,7 @@ public:
     std::string getRetMessage(int code);
     int dlgAdd(RequestHandler* pRequestHandler,MainWindow * pMain,HttpRequest& request, HttpResponse& response);
     int dlgDel(RequestHandler* pRequestHandler,MainWindow * pMain,HttpRequest& request, HttpResponse& response);
-    int dlgModify(RequestHandler* pRequestHandler,HttpRequest& request, HttpResponse& response);
+    int dlgModify(RequestHandler* pRequestHandler,MainWindow * pMain,HttpRequest& request, HttpResponse& response);
     int dlgSearch(RequestHandler* pRequestHandler,MainWindow * pMain,HttpRequest& request, HttpResponse& response);
     int dlgGetAll(RequestHandler* pRequestHandler,MainWindow * pMain,HttpRequest& request, HttpResponse& response);
 };

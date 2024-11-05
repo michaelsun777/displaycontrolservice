@@ -51,7 +51,9 @@ bool MainWindow::parseJsonToDlgInfo(QtDlgInfo * info,string str)
         info->xPos = jdata["xPos"].template get<int>();
         info->yPos = jdata["yPos"].template get<int>();
         info->height = jdata["height"].template get<int>();
-        info->width = jdata["width"].template get<int>();        
+        info->width = jdata["width"].template get<int>();
+        info->order = jdata["order"].template get<int>();
+
     }
     catch(...)
     {
@@ -76,6 +78,7 @@ bool MainWindow::dlgInfoToJson(QtDlgInfo * info,string & str)
     jdata["yPos"] = info->yPos;
     jdata["height"] = info->height;
     jdata["width"] = info->width;
+    jdata["order"] = info->order;
     str = jdata.dump();
     return true;
 }
@@ -143,14 +146,33 @@ void MainWindow::on_pbtn_test_clicked()
     // QDlgShow(qdlg);
 }
 
+bool cmp(const QtDlgInfo * a, QtDlgInfo * b){	
+	return a->order < b->order;			//按照值从小到大排序 
+}
+
+
+
 void MainWindow::onInitSlots()
 {
+    std::vector<QtDlgInfo *> vInfo;
     for (std::map<std::string,QtDlgInfo *> ::iterator it = m_mDlgProperty.begin(); it != m_mDlgProperty.end(); it++)
     {
-        DlgUrl *qdlg = new DlgUrl(it->second->dlgId);
-        QDlgShow(qdlg, *it->second);        
-        m_mDlgs.insert(make_pair(it->second->dlgId, qdlg));
+        vInfo.push_back(it->second);
+        // DlgUrl *qdlg = new DlgUrl(it->second->dlgId);
+        // QDlgShow(qdlg, *it->second);        
+        // m_mDlgs.insert(make_pair(it->second->dlgId, qdlg));
     }
+
+    sort(vInfo.begin(),vInfo.end(),cmp);
+    for (size_t i = 0; i < vInfo.size(); i++)
+    {
+        DlgUrl *qdlg = new DlgUrl(vInfo[i]->dlgId);         
+        QDlgShow(qdlg, *vInfo[i]);        
+        m_mDlgs.insert(make_pair(vInfo[i]->dlgId, qdlg));
+        
+    }
+    
+
 }
 
 void MainWindow::onMouseEventRequested(int type,QVariant dlgInfo)
@@ -175,7 +197,8 @@ void MainWindow::onMouseEventRequested(int type,QVariant dlgInfo)
     }
     else if(type == 3)
     {
-        modifyDlg(dlg);
+        showNewDlg(dlg.dlgId);//modifyDlg(dlg);
+        
     }
     else
     {
@@ -196,7 +219,7 @@ bool MainWindow::showNewDlg(string dlgId)
     {
         std::map<std::string, DlgUrl *>::iterator it = m_mDlgs.find(dlgId);
         if (it != m_mDlgs.end())
-        {
+        {            
             QDlgShow(it->second, *itp->second);       
             return true;
         }
@@ -219,6 +242,8 @@ bool MainWindow::addDlg(QtDlgInfo & dlg)
         string uuid_string = boost::uuids::to_string(a_uuid);
         dlg.dlgId = uuid_string;        
         QtDlgInfo * info = new QtDlgInfo;
+        if(dlg.order == 0)
+            dlg.order = m_mDlgProperty.size() + 1;
         *info = dlg;
         m_mDlgProperty.insert(make_pair(dlg.dlgId,info));
         string strJson;
@@ -244,6 +269,7 @@ bool MainWindow::modifyDlg(QtDlgInfo & info)
         if(itp != m_mDlgProperty.end())
         {
             *itp->second = info;
+            info.order = itp->second->order;
             string strJson;
             dlgInfoToJson(&info, strJson);
             writeSettings(info.dlgId, strJson);
@@ -254,17 +280,17 @@ bool MainWindow::modifyDlg(QtDlgInfo & info)
         }
 
 
-        std::map<std::string, DlgUrl *>::iterator it = m_mDlgs.find(info.dlgId);
-        if(it != m_mDlgs.end())
-        {
-            it->second->UpdateSetting(&info);
-        }
-        else
-        {
-            DlgUrl *qdlg = new DlgUrl(info.dlgId);            
-            QDlgShow(qdlg, info);
-            m_mDlgs.insert(make_pair(info.dlgId, qdlg));
-        }
+        // std::map<std::string, DlgUrl *>::iterator it = m_mDlgs.find(info.dlgId);
+        // if(it != m_mDlgs.end())
+        // {
+        //     it->second->UpdateSetting(&info);
+        // }
+        // else
+        // {
+        //     DlgUrl *qdlg = new DlgUrl(info.dlgId);            
+        //     QDlgShow(qdlg, info);
+        //     m_mDlgs.insert(make_pair(info.dlgId, qdlg));
+        // }
     }
 
     return true;

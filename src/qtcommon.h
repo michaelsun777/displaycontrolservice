@@ -21,6 +21,7 @@ public:
     int width;
     int height;
     bool titleEnable; //是否显示标题
+    int order;
     void operator=(QtDlgInfo & src)
     {
         name = src.name.c_str();
@@ -37,6 +38,8 @@ public:
         width = src.width;
         height = src.height;
         titleEnable = src.titleEnable;
+        if(src.order != 0)     
+            order = src.order;
     }
 
     bool check(nlohmann::json jdata,std::string strError)
@@ -130,6 +133,15 @@ public:
             return false;
         }
 
+        if (jdata.find("order") != jdata.end())
+        {
+            order = jdata["order"].template get<int>();
+        }
+        else
+        {
+            order = 999;
+        }
+
         return true;
     }
 
@@ -150,6 +162,7 @@ public:
             jdata["yPos"] = yPos;
             jdata["height"] = height;
             jdata["width"] = width;
+            jdata["order"] = order;
             return true;
         }
         catch (...)
@@ -172,6 +185,15 @@ public:
             return false;
         }
 
+    }
+
+    bool operator <(const QtDlgInfo& src) const // 升序排序时必须写的函数
+    {
+        return order < src.order;
+    }
+    bool operator >(const QtDlgInfo& src) const // 降序排序时必须写的函数
+    {
+        return order > src.order;
     }
 
 };

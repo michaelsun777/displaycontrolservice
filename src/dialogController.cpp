@@ -88,7 +88,7 @@ void DialogController::service(RequestHandler* pRequestHandler,MainWindow * pMai
     }
     else if(path.startsWith("/displayctrlserver/dialog/modify"))
     {
-        nRet = dlgModify(pRequestHandler, request, response);
+        nRet = dlgModify(pRequestHandler,pMain, request, response);
     }
     else if(path.startsWith("/displayctrlserver/dialog/del"))
     {
@@ -192,6 +192,14 @@ int DialogController::dlgAdd(RequestHandler* pRequestHandler,MainWindow * pMain,
         dlg.yPos = yPos;
         dlg.height = height;
         dlg.width = width;
+        if(jdata.find("order") != jdata.end())
+        {
+            dlg.order = jdata["yPos"].template get<int>();
+        }
+        else
+        {
+            dlg.order = 0;
+        }
         
         // QtDlgInfo dlg;
         // dlg.height = 1080;
@@ -222,9 +230,8 @@ int DialogController::dlgAdd(RequestHandler* pRequestHandler,MainWindow * pMain,
     return 0;
 }
 
-int DialogController::dlgModify(RequestHandler *pRequestHandler, HttpRequest &request, HttpResponse &response)
+int DialogController::dlgModify(RequestHandler *pRequestHandler,MainWindow * pMain, HttpRequest &request, HttpResponse &response)
 {
-
     QByteArray barray = request.getBody();
     std::string body = barray.data();
     // auto body = req.body;
@@ -303,10 +310,20 @@ int DialogController::dlgModify(RequestHandler *pRequestHandler, HttpRequest &re
     {
         yPos = jdata["yPos"].template get<int>();
     }
+    QtDlgInfo dlg;
+    if(jdata.find("order") != jdata.end())
+    {
+        dlg.order = jdata["yPos"].template get<int>();
+    }
+    else
+    {
+        dlg.order = 0;
+    }
+
 
     int height = jdata["height"].template get<int>();
     int width = jdata["width"].template get<int>();
-    QtDlgInfo dlg;
+    
     dlg.dlgId = dlgid;
     dlg.name = name;
     dlg.url = url;
@@ -329,10 +346,13 @@ int DialogController::dlgModify(RequestHandler *pRequestHandler, HttpRequest &re
     // dlg.xPos = 100;
     // dlg.yPos = 50;
     // dlg.url = "https://www.baidu.com";
-
-    pRequestHandler->sendSignal(3, dlg);
-    json js;
-    createRet(response, 200);
+    if (pMain->modifyDlg(dlg))
+    {
+        pRequestHandler->sendSignal(3, dlg);
+        json js;
+        dlg.toJson(js);
+        createRet(response, 200,js);
+    }    
     return 0;
 }
 int DialogController::dlgSearch(RequestHandler *pRequestHandler,MainWindow * pMain, HttpRequest &request, HttpResponse &response)
