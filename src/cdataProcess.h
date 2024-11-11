@@ -8,7 +8,7 @@
 #include <X11/extensions/Xrandr.h>
 
 
-#include "3rd/cpp-subprocess/subprocess.hpp"
+//#include "3rd/cpp-subprocess/subprocess.hpp"
 #include <iostream>
 #include <cstring>
 #include "3rd/nvidia-settings/src/libXNVCtrl/NVCtrl.h"
@@ -37,7 +37,7 @@ using json = nlohmann::json;
 
 
 using namespace std;
-using namespace subprocess;
+//using namespace subprocess;
 
 
 struct MY_OutputInfo
