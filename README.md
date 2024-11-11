@@ -1,0 +1,1 @@
+sudo apt-get install libboost-all-dev qtcreator qtbase5-dev qtwebengine5-dev libspdlog-dev libxrandr-dev -y 
