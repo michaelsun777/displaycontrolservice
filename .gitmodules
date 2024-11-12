@@ -4,3 +4,6 @@
 [submodule "3rd/nvidia-settings"]
 	path = 3rd/nvidia-settings
 	url = https://github.com/NVIDIA/nvidia-settings.git
+[submodule "3rd/cpp-subprocess"]
+	path = 3rd/cpp-subprocess
+	url = https://github.com/arun11299/cpp-subprocess.git

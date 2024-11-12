@@ -195,6 +195,7 @@ src/nvControlInfo.cpp
 ######dlg
 src/dialogController.cpp
 src/requesthandler.cpp
+3rd/cpp-subprocess/subprocess.hpp
 
 ${http_SRC}
 

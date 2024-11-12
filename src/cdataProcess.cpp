@@ -1,5 +1,7 @@
 //#include "dlgManager.h"
 #include "cdataProcess.h"
+#include <sys/utsname.h>
+#include <sys/statfs.h>
 
 
 cdataProcess::cdataProcess(/* args */)
@@ -404,6 +406,10 @@ bool cdataProcess::SetMonitorsInfo(vector<MONITORSETTINGINFO> * vSetInfo)
 
 bool cdataProcess::TestMonitorInfo()
 {
+    json js;
+    GetServerInfo(js);
+
+
     // string strDisplayName = ":0";
     // cmyxrandr cxr(strDisplayName);
     // vector<MOutputInfo> vOutputInfo;
@@ -413,14 +419,14 @@ bool cdataProcess::TestMonitorInfo()
     // MGPUINFOEX  gpu;
     // nv.getGpuInfo(gpu);
 
-    DLGINFO dlg;
-    dlg.height = 1080;
-    dlg.width = 3840;
-    dlg.postype = 1;
-    dlg.name = "test";
-    dlg.xPos = 200;
-    dlg.yPos = 50;
-    dlg.url = "https://www.baidu.com";
+    // DLGINFO dlg;
+    // dlg.height = 1080;
+    // dlg.width = 3840;
+    // dlg.postype = 1;
+    // dlg.name = "test";
+    // dlg.xPos = 200;
+    // dlg.yPos = 50;
+    // dlg.url = "https://www.baidu.com";
 
     //std::shared_ptr<dlgManager> pdlgManager = dlgManager::GetInstance();
     //pdlgManager->addDlg(dlg);
@@ -656,4 +662,217 @@ bool cdataProcess::GetMonitorsInfo_N()
         
 
     return true;
+}
+
+bool cdataProcess::GetServerInfo(json & js)
+{
+    string strCpuName = getCpuName();
+    
+    MEM_OCCUPY mem_stat;
+    CPU_OCCUPY cpu_stat1;
+    CPU_OCCUPY cpu_stat2;
+    //获取内存
+    //(MemTotal - MemFree)/ MemTotal
+    get_memoccupy((MEM_OCCUPY *)&mem_stat);  
+    //printf(" [MemTotal] = %lu \n [MemFree] = %lu \n [Buffers] = %lu \n [Cached] = %lu \n [SwapCached] = %lu \n", mem_stat.MemTotal, mem_stat.MemFree, mem_stat.Buffers, mem_stat.Cached, mem_stat.SwapCached);  
+    //(MemTotal - MemFree)/ MemTotal //1-(内存空闲 / 内存总数)*100
+    printf("%.3f\n", (mem_stat.MemTotal - mem_stat.MemFree) / ( mem_stat.MemTotal * 1.0f) * 100.0f);
+    float fMemUtil = (mem_stat.MemTotal - mem_stat.MemFree) / ( mem_stat.MemTotal * 1.0f) * 100.0f;
+    //第一次获取cpu使用情况  
+    get_cpuoccupy((CPU_OCCUPY *)&cpu_stat1);  
+    
+    usleep(100000);
+    
+    //第二次获取cpu使用情况  
+    get_cpuoccupy((CPU_OCCUPY *)&cpu_stat2);  
+    //计算cpu使用率  
+    float fCpuUtil = 0;
+    cal_cpuoccupy((CPU_OCCUPY *)&cpu_stat1, (CPU_OCCUPY *)&cpu_stat2,fCpuUtil);
+    char strbuf[200] = {0};
+    sprintf(strbuf,"%0.1fG",mem_stat.MemTotal/1024.0f/1024.0f);
+    string strMemTotal = strbuf;
+    memset(strbuf,0,sizeof(strbuf));
+    sprintf(strbuf,"%0.1f",fMemUtil);
+    string strMemUtil = strbuf;
+    memset(strbuf,0,sizeof(strbuf));
+    sprintf(strbuf,"%.3f%%",fCpuUtil * 100);
+    string strCpuUtil = strbuf;
+
+    string strOsName = "";
+    auto obuf = sp::check_output({"cat", "/etc/issue"});
+    XINFO("os:{}",obuf.buf.data());
+    
+    strOsName = obuf.buf.data();
+    vector<string> vString;
+    CMDEXEC::Stringsplit(strOsName,'\\',vString);
+    if(vString.size()> 0)
+        strOsName = vString[0];
+    else
+        strOsName = "";
+   
+    /// 读取executable所在绝对路径
+    std::string exec_str = get_cur_executable_path();
+    /// 用于获取磁盘剩余空间
+    struct statfs diskInfo;
+    statfs(exec_str.c_str(), &diskInfo);
+
+    unsigned long long blocksize = diskInfo.f_bsize;              // 每个block里包含的字节数
+    unsigned long long totalsize = blocksize * diskInfo.f_blocks; // 总的字节数，f_blocks为block的数目
+
+    printf("Total_size = %llu B = %llu KB = %llu MB = %llu GB\n",
+           totalsize, totalsize >> 10, totalsize >> 20, totalsize >> 30);
+
+    unsigned long long freeDisk = diskInfo.f_bfree * blocksize;       // 剩余空间的大小
+    unsigned long long availableDisk = diskInfo.f_bavail * blocksize; // 可用空间大小
+    printf("Disk_free = %llu MB = %llu GB\nDisk_available = %llu MB = %llu GB\n",
+           freeDisk >> 20, freeDisk >> 30, availableDisk >> 20, availableDisk >> 30);
+
+    memset(strbuf,0,sizeof(strbuf));
+    sprintf(strbuf,"%dGB|%dGB",(totalsize - availableDisk) >> 30, totalsize >> 30);
+    XINFO("disk total:{}GB, used:{}GB",totalsize >> 30,(totalsize - availableDisk) >> 30);
+    string strDiskInfo = strbuf;
+
+    js["cpu"] = strCpuName;
+    js["cpuUtil"] = fCpuUtil;
+    js["memTotal"] = strMemTotal;
+    js["memUtil"] = strMemUtil;
+    js["os"] = strOsName;
+    js["disks"] = strDiskInfo;
+    XINFO("system info:{}",js.dump().c_str());  
+
+    return true;
+}
+
+void cdataProcess::get_memoccupy(MEM_OCCUPY *mem) //对无类型get函数含有一个形参结构体类弄的指针O  
+{  
+    FILE *fd;  
+    char buff[256];  
+    MEM_OCCUPY *m;  
+    m = mem;  
+      
+    fd = fopen("/proc/meminfo", "r");  
+    //MemTotal: 515164 kB  
+    //MemFree: 7348 kB  
+    //Buffers: 7892 kB  
+    //Cached: 241852  kB  
+    //SwapCached: 0 kB  
+    //从fd文件中读取长度为buff的字符串再存到起始地址为buff这个空间里   
+    fgets(buff, sizeof(buff), fd);  
+    sscanf(buff, "%s %lu ", m->name1, &m->MemTotal);  
+    fgets(buff, sizeof(buff), fd);  
+    sscanf(buff, "%s %lu ", m->name2, &m->MemFree);  
+    fgets(buff, sizeof(buff), fd);  
+    sscanf(buff, "%s %lu ", m->name3, &m->Buffers);  
+    fgets(buff, sizeof(buff), fd);  
+    sscanf(buff, "%s %lu ", m->name4, &m->Cached);  
+    fgets(buff, sizeof(buff), fd);   
+    sscanf(buff, "%s %lu", m->name5, &m->SwapCached);  
+      
+    fclose(fd);     //关闭文件fd  
+}
+
+int cdataProcess::get_cpuoccupy(CPU_OCCUPY *cpust) //对无类型get函数含有一个形参结构体类弄的指针O  
+{  
+    FILE *fd;  
+    char buff[256];  
+    CPU_OCCUPY *cpu_occupy;  
+    cpu_occupy = cpust;  
+      
+    fd = fopen("/proc/stat", "r");  
+    fgets(buff, sizeof(buff), fd);  
+      
+    sscanf(buff, "%s %u %u %u %u %u %u %u", cpu_occupy->name, &cpu_occupy->user, &cpu_occupy->nice, &cpu_occupy->system, &cpu_occupy->idle, &cpu_occupy->lowait, &cpu_occupy->irq, &cpu_occupy->softirq);  
+      
+      
+    fclose(fd);  
+      
+    return 0;  
+}
+void cdataProcess::cal_cpuoccupy(CPU_OCCUPY *o, CPU_OCCUPY *n,float & util)  
+{  
+    unsigned long od, nd;  
+    double cpu_use = 0;  
+      
+    od = (unsigned long)(o->user + o->nice + o->system + o->idle + o->lowait + o->irq + o->softirq);//第一次(用户+优先级+系统+空闲)的时间再赋给od  
+    nd = (unsigned long)(n->user + n->nice + n->system + n->idle + n->lowait + n->irq + n->softirq);//第二次(用户+优先级+系统+空闲)的时间再赋给od  
+    double sum = nd - od;  
+    double idle = n->idle - o->idle;  
+    cpu_use = idle / sum;  
+    idle = n->user + n->system + n->nice - o->user - o->system - o->nice;  
+    cpu_use = idle / sum;  
+    printf("%.3f\n",cpu_use);
+    XINFO("cal_cpuoccupy={}",cpu_use);
+    util = cpu_use * 100;
+}
+
+std::string cdataProcess::getCpuName() 
+{
+    std::ifstream ifs("/proc/cpuinfo");
+    std::string line;
+    std::string key = "model name";
+
+    string cpuName = "";
+    string siblings = "";
+    string cpuCores = "";
+    bool bIsFoundCpuName = false;
+    int cpuCore[4] = {0};
+    int cpuCoreMaxThreadId[4] = {0};
+
+    while (std::getline(ifs, line)) {
+        if (line.find(key) == 0)
+        {
+            cpuName = line.substr(key.length() + 2);
+        }
+        else if(line.find("siblings") == 0)
+        {
+            siblings = line.substr(key.length() + 1);
+        }
+        else if(line.find("cpu cores") == 0)
+        {
+            cpuCores = line.substr(key.length() + 1);
+            break;
+        }
+        
+    }
+    //CMDEXEC::CmdRes res;
+    //bool bret = CMDEXEC::Execute("cat /proc/cpuinfo |grep \'physical id\'|sort|uniq",res);
+    //printf("%s\n",res.StdoutString.c_str());
+    //cpu 颗数
+    //auto obuf = sp::check_output({"cat", "/proc/cpuinfo|grep 'physical id'|sort|uniq|wc -l"});
+    //auto obuf = sp::pipeline("cat /proc/cpuinfo", "grep \'physical id\'");//, "sort","uniq"
+
+    auto cat = sp::Popen({"cat", "/proc/cpuinfo"}, sp::output{sp::PIPE});
+    auto grep = sp::Popen({"grep", "physical id"}, sp::input{cat.output()}, sp::output{sp::PIPE});
+    auto sort = sp::Popen({"sort"}, sp::input{grep.output()}, sp::output{sp::PIPE});
+    auto uniq = sp::Popen({"uniq"}, sp::input{sort.output()}, sp::output{sp::PIPE});   
+    auto cut = sp::Popen({"wc", "-l"}, sp::input{uniq.output()}, sp::output{sp::PIPE});
+    auto res = cut.communicate().first;
+
+
+    printf("%s\n",res.buf.data());
+    //cpu cores
+    string strCpuInfo = cpuName +" " + cpuCores + "核" + siblings + "线程 * ";
+    if(res.buf.size() > 0)
+        strCpuInfo = strCpuInfo + res.buf[0];
+    return strCpuInfo;
+}
+
+std::string cdataProcess::get_cur_executable_path()
+{
+    char *p                 = NULL;
+
+    const int len           = 256;
+    /// to keep the absolute path of executable's path
+    char arr_tmp[len]       = {0};
+
+    int n                   = readlink("/proc/self/exe", arr_tmp, len);
+    if (NULL                != (p = strrchr(arr_tmp,'/')))
+        *p = '\0';
+    else
+    {
+        printf("wrong process path");
+        std::string("");
+    }
+
+    return std::string(arr_tmp);
 }

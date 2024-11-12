@@ -68,9 +68,9 @@ void RequestHandler::service(HttpRequest& request, HttpResponse& response)
     {        
         DialogController().service(this,m_pMain,request, response);
     }
-    else
+    else if(path.startsWith("/displayctrlserver/get/server/info"))
     {
-        ;
+        getServerInfo(request, response);
     }
 
     //emit testSignal(3);   
@@ -253,5 +253,25 @@ void RequestHandler::setMonitorInfo(const HttpRequest &req, HttpResponse& res)
         createRet(res,400);
     }
 
+}
+
+
+void RequestHandler::getServerInfo(const HttpRequest &req, HttpResponse &res)
+{
+    string strData;
+    cdataProcess dataprocess;
+    json js;
+    if(dataprocess.GetServerInfo(js))
+    {
+        createRet(res,200,js);
+
+        //res.set_content(strData, "application/json");
+    }
+    else
+    {
+        // string strRet = "{\"result\":\"error\",\"msg\":\"test error\"}";
+        // res.set_content(strRet, "application/json");
+        createRet(res,204);
+    }   
 }
 

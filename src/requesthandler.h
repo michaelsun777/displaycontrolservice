@@ -53,6 +53,7 @@ public:
   void getGpusInfo(const HttpRequest &req, HttpResponse &res);
   void setMonitorInfo(const HttpRequest &req, HttpResponse &res);
   void sendSignal(int type,QtDlgInfo & dlgInfo);
+  void getServerInfo(const HttpRequest &req, HttpResponse &res);
 
 signals:
   void sendDlgSignal(int type,QVariant dlgInfo);

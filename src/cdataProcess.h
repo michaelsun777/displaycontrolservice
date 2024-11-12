@@ -8,7 +8,7 @@
 #include <X11/extensions/Xrandr.h>
 
 
-//#include "3rd/cpp-subprocess/subprocess.hpp"
+//
 #include <iostream>
 #include <cstring>
 #include "3rd/nvidia-settings/src/libXNVCtrl/NVCtrl.h"
@@ -31,13 +31,15 @@
 #include "config.h"
 
 #include "nvControlInfo.h"
+#include "3rd/cpp-subprocess/subprocess.hpp"
 
 //#include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
 
 using namespace std;
-//using namespace subprocess;
+
+namespace sp = subprocess;
 
 
 struct MY_OutputInfo
@@ -77,6 +79,12 @@ public://xrandr
     bool SetMonitorsInfo(vector<MONITORSETTINGINFO> *vSetInfo);
     bool TestMonitorInfo();
     void SetMainWindow(MainWindow * p);
+    bool GetServerInfo(json & js);
+    void get_memoccupy(MEM_OCCUPY *mem); //对无类型get函数含有一个形参结构体类弄的指针O
+    int get_cpuoccupy(CPU_OCCUPY *cpust); //对无类型get函数含有一个形参结构体类弄的指针O
+    void cal_cpuoccupy(CPU_OCCUPY *o, CPU_OCCUPY *n,float & util);
+    std::string getCpuName();
+    std::string get_cur_executable_path();
 public:
     bool InitOutputInfo();
 
