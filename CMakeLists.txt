@@ -75,6 +75,9 @@ endif()
 # INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS}) # opencv
 
 
+#set(QT_PATH "/opt/Qt5.14.2/5.14.2/gcc_64/")
+#set(CMAKE_PREFIX_PATH ${QT_PATH}/lib/cmake)
+
 find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Widgets REQUIRED)
@@ -107,7 +110,9 @@ INCLUDE_DIRECTORIES(${Qt5Core_INCLUDE_DIRS} ${Qt5Gui_INCLUDE_DIRS}
 # include_directories(/usr/local/include/osgEarth)
 INCLUDE_DIRECTORIES(3rd/json/include/nlohmann)
 INCLUDE_DIRECTORIES(3rd/json/include)
-INCLUDE_DIRECTORIES(/usr/include/spdlog)
+INCLUDE_DIRECTORIES(3rd/spdlog/)
+INCLUDE_DIRECTORIES(3rd/spdlog/include)
+#INCLUDE_DIRECTORIES(/usr/include/spdlog)
 INCLUDE_DIRECTORIES(/usr/include/X11)
 
 # INCLUDE_DIRECTORIES(/usr/include/gtk-2.0/)
@@ -155,7 +160,7 @@ aux_source_directory(3rd/httpserver http_SRC)
 ##find_path(CPPUNIT_INCLUDE_DIR PATHS "/usr/include/x86_64-linux-gnu" NO_DEFAULT_PATH)       
 ##find_library(CPPUNIT_LIBRARY PATHS "/usr/lib/x86_64-linux-gnu" NO_DEFAULT_PATH)
 
-# link_directories(/opt/Qt5.14.2/5.14.2/gcc_64/lib/)
+#link_directories(/opt/Qt5.14.2/5.14.2/gcc_64/lib/)
 link_directories(${QT_LIBRARIES})
 link_directories(/usr/lib/x86_64-linux-gnu)
 # link_directories(/opt/MVS/lib/64/)
@@ -176,7 +181,7 @@ src/cspdlog.cpp
 src/cmyxrandr.cpp
 src/exec_cmd.cpp
 
-# 3rd/nvidia-settings/src/libXNVCtrl/NVCtrl.c
+3rd/nvidia-settings/src/libXNVCtrl/NVCtrl.c
 src/UI/dlgurl.cpp
 src/UI/dlgurl.h
 src/UI/dlgurl.ui
@@ -196,16 +201,20 @@ ${http_SRC}
 # ${spdlog_SRC} 
 )
 
+add_subdirectory(3rd/spdlog)
 
 target_link_libraries(dpcs PRIVATE
 pthread
 #  -lusb -ludev -lhidapi-hidraw
 # -lboost_system -lboost_thread -lboost_filesystem -lboost_iostreams -lboost_chrono
 # -lMvCameraControl -luuid -lcurl -lstdc++fs
--lspdlog 
--lX11 -lXrandr -lm -lXext -lXNVCtrl #  // 
--ldl
 ${QT_LIBRARIES}
+-lspdlog 
+-lX11 -lXrandr -lm -lXext #-lXNVCtrl #  // 
+-L3rd/nvidia-settings/src/_out/Linux_x86_64/libXNVCtrl.a
+#-L/usr/lib/x86_64-linux-gnu/libXNVCtrl.so.0
+-ldl
+
 
 # ${OpenCV_LIBS} 
 ${Boost_LIBRARIES}
@@ -224,12 +233,13 @@ ${Boost_LIBRARIES}
 
 #######��ʱ�ò���
 #Qt5::Gui Qt5::Widgets Qt5::Core Qt5::Network 
-#/opt/Qt5.14.2/5.14.2/gcc_64/lib/libQt5OpenGL.so.5
-#/opt/Qt5.14.2/5.14.2/gcc_64/lib/libQt5Sql.so.5
-#/opt/Qt5.14.2/5.14.2/gcc_64/lib/libQt5Network.so.5
-#/opt/Qt5.14.2/5.14.2/gcc_64/lib/libQt5Widgets.so.5
-#/opt/Qt5.14.2/5.14.2/gcc_64/lib/libQt5Gui.so.5
-#/opt/Qt5.14.2/5.14.2/gcc_64/lib/libQt5Core.so.5
+# /opt/Qt5.14.2/5.14.2/gcc_64/lib/libQt5OpenGL.so.5
+# /opt/Qt5.14.2/5.14.2/gcc_64/lib/libQt5Sql.so.5
+# /opt/Qt5.14.2/5.14.2/gcc_64/lib/libQt5Network.so.5
+# /opt/Qt5.14.2/5.14.2/gcc_64/lib/libQt5Widgets.so.5
+# /opt/Qt5.14.2/5.14.2/gcc_64/lib/libQt5Gui.so.5
+# /opt/Qt5.14.2/5.14.2/gcc_64/lib/libQt5Core.so.5
+# /opt/Qt5.14.2/5.14.2/gcc_64/lib/libQt5WebEngine.so.5
 
 )
 

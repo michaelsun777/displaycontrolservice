@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 #include "UI/dlgurl.h"
-#include "common.h"
+//#include "common.h"
 #include <iostream>
 #include <QSettings>
 #include "cspdlog.h"

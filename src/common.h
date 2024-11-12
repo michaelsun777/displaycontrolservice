@@ -1,12 +1,19 @@
 #ifndef _COMMON_H_
 #define _COMMON_H_
 
-// #include <QApplication>
-#include <X11/extensions/Xrandr.h>
+//#include <QApplication>
+
 #include <list>
 #include <string>
 
 #include "cspdlog.h"
+
+namespace MYCOMMON
+{
+
+
+
+#include <X11/extensions/Xrandr.h>
 
 /*
 #define XCONFIG_MODE_PHSYNC    0x0001
@@ -74,7 +81,7 @@ public:
 struct MyModelInfoEX
 {
 public:
-    RRMode		id;
+    unsigned long		id;
     unsigned int	width;
     unsigned int	height;
     unsigned long	dotClock;
@@ -87,7 +94,7 @@ public:
     unsigned int	vTotal;
     std::string		    name;
     unsigned int	nameLength;
-    XRRModeFlags	modeFlags;
+    unsigned long	modeFlags;
 
     std::string     rate;
     std::string     hSync;
@@ -98,6 +105,11 @@ public:
     {
 
     }
+
+    // MyModelInfoEX():name("")
+    // {
+        
+    // }
     
 
     MyModelInfoEX(XRRModeInfo *mode):name("")
@@ -121,6 +133,7 @@ public:
         name = strTmp.c_str();
         modeFlags = mode->modeFlags;
     }
+    
     ~MyModelInfoEX()
     {
         //if(name) delete [] name;
@@ -225,7 +238,7 @@ struct DLGINFO
     
 };
 
-
+}
 
 
 

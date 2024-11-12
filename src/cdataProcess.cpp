@@ -102,7 +102,7 @@ void cdataProcess::print_display_id_and_name(Display *dpy, int target_id, const 
 
 bool cdataProcess::Output(string args)
 {
-    auto p = Popen({args}, output{PIPE});
+    //auto p = Popen({args}, output{PIPE});
 
     return false;
 }

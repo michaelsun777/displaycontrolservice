@@ -22,6 +22,7 @@
 
 
 using namespace std;
+using namespace MYCOMMON;
 
 class nvControlInfo
 {

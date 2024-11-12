@@ -1,1 +1,1 @@
-sudo apt-get install libboost-all-dev qtcreator qtbase5-dev qtwebengine5-dev libspdlog-dev libxrandr-dev -y 
+sudo apt-get install libboost-all-dev qtcreator qtbase5-dev qtwebengine5-dev libspdlog-dev libxrandr-dev libgl1-mesa-dev libgtk-3-dev libxxf86vm-dev libvdpau-dev -y 
