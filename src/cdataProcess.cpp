@@ -692,10 +692,10 @@ bool cdataProcess::GetServerInfo(json & js)
     sprintf(strbuf,"%0.1fG",mem_stat.MemTotal/1024.0f/1024.0f);
     string strMemTotal = strbuf;
     memset(strbuf,0,sizeof(strbuf));
-    sprintf(strbuf,"%0.1f",fMemUtil);
+    sprintf(strbuf,"%0.1f%%",fMemUtil);
     string strMemUtil = strbuf;
     memset(strbuf,0,sizeof(strbuf));
-    sprintf(strbuf,"%.3f%%",fCpuUtil * 100);
+    sprintf(strbuf,"%.1f%%",fCpuUtil * 100);
     string strCpuUtil = strbuf;
 
     string strOsName = "";
@@ -733,7 +733,7 @@ bool cdataProcess::GetServerInfo(json & js)
     string strDiskInfo = strbuf;
 
     js["cpu"] = strCpuName;
-    js["cpuUtil"] = fCpuUtil;
+    js["cpuUtil"] = strCpuUtil;
     js["memTotal"] = strMemTotal;
     js["memUtil"] = strMemUtil;
     js["os"] = strOsName;
@@ -802,7 +802,7 @@ void cdataProcess::cal_cpuoccupy(CPU_OCCUPY *o, CPU_OCCUPY *n,float & util)
     cpu_use = idle / sum;  
     printf("%.3f\n",cpu_use);
     XINFO("cal_cpuoccupy={}",cpu_use);
-    util = cpu_use * 100;
+    util = cpu_use;
 }
 
 std::string cdataProcess::getCpuName() 

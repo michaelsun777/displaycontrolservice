@@ -3,6 +3,18 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12)
 project(DisplayCtrlServer)
 
 
+
+# 添加自定义命令来运行Makefile???
+# add_custom_command(
+#         TARGET MyTarget
+#         PRE_BUILD
+#         COMMAND make WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/3rd/nvidia-settings/
+#         COMMON "make nvidia-settings"
+#         VERBATIM    
+# )
+ 
+
+
 # if (${CMAKE_TOOLCHAIN_FILE} MATCHES ".*vcpkg.cmake.*")
 #     message(STATUS "Building with vcpkg toolchain.")
 #     set(USING_VCPKG ON)
@@ -202,6 +214,7 @@ ${http_SRC}
 # ${spdlog_SRC} 
 )
 
+#add_subdirectory(3rd/nvidia-settings)
 add_subdirectory(3rd/spdlog)
 
 target_link_libraries(dpcs PRIVATE
