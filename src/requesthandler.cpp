@@ -84,6 +84,11 @@ void RequestHandler::service(HttpRequest& request, HttpResponse& response)
     {
         getServerInfo(request, response);
     }
+    else if(path.startsWith("/displayctrlserver/login"))
+    {
+        ;
+    }
+
 
     //emit testSignal(3);   
    
@@ -336,6 +341,18 @@ void RequestHandler::setOutputsInfo(const HttpRequest &req, HttpResponse &res)
                 createRet(res, 400);
                 return;
             }
+            if(js.find("layout_horizontal") == js.end())
+            {
+                XERROR("RequestHandler::setOutputsInfo: layout_horizontal is not exist");
+                createRet(res, 400);
+                return;
+            }
+            if(js.find("layout_vertical") == js.end())
+            {
+                XERROR("RequestHandler::setOutputsInfo: layout_vertical is not exist");
+                createRet(res, 400);
+                return;
+            }
             if(js.find("layout") == js.end())
             {
                 XERROR("RequestHandler::setOutputsInfo: layout is not exist");
@@ -355,9 +372,11 @@ void RequestHandler::setOutputsInfo(const HttpRequest &req, HttpResponse &res)
             std::vector<std::string> vWidthAndHight = CMDEXEC::Split(resolution, 'x');
             int _width = std::stoi(vWidthAndHight[0]);
             int _hight = std::stoi(vWidthAndHight[1]);
-            std::vector<std::string> vLayout = CMDEXEC::Split(layoutName, 'x');
-            int _layout_w = std::stoi(vLayout[0]);
-            int _layout_h = std::stoi(vLayout[1]);
+            // std::vector<std::string> vLayout = CMDEXEC::Split(layoutName, 'x');
+            // int _layout_w = std::stoi(vLayout[0]);
+            // int _layout_h = std::stoi(vLayout[1]);
+            int _layout_w = js["layout_horizontal"].get<int>();
+            int _layout_h = js["layout_vertical"].get<int>();
 
 
             QSettings settings("config.ini", QSettings::IniFormat);
@@ -370,6 +389,7 @@ void RequestHandler::setOutputsInfo(const HttpRequest &req, HttpResponse &res)
             settings.setValue("height", _hight);
             settings.setValue("layout_horizontal", _layout_w);
             settings.setValue("layout_vertical", _layout_h);
+            settings.setValue("allResolution", allResolution.c_str());
             settings.endGroup();
             settings.sync();
             

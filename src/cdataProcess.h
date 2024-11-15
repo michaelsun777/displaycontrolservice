@@ -61,6 +61,7 @@ private:
     int m_nHight;
     int m_layout_w;
     int m_layout_h;
+    string m_allLayouts;
     MainWindow * m_pMainWindow;
 
 private:

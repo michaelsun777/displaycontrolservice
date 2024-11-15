@@ -29,6 +29,7 @@ cdataProcess::cdataProcess(/* args */)
     m_nHight = settings.value("screen/height",0).toInt();
     m_layout_w = settings.value("screen/layout_horizontal",0).toInt();
     m_layout_h = settings.value("screen/layout_vertical",0).toInt();
+    m_allLayouts = settings.value("screen/allResolution","").toString().toStdString();
 
     if(m_nWidth == 0)
     {
@@ -366,12 +367,18 @@ bool cdataProcess::GetOutputsInfo_shell(json & js)
     short shRet = cxr.getAllScreenInfoEx(vOutputInfo,currentSize,maxSize);
     if(shRet == 0)
     {
-        js["layoutName"] = "2x2";
+        int sortBuf[m_layout_h * m_layout_w] = {0};
+        char bufferLayout[40] = {0};
+        sprintf(bufferLayout, "%dx%d", m_layout_w,m_layout_h);
+        string layoutName = bufferLayout;
+        js["layoutName"] = layoutName;
         char buffer[40] = {0};
-        sprintf(buffer, "%dx%d", currentSize.width,currentSize.height);
+        sprintf(buffer, "%dx%d", m_nWidth, m_nHight);
         string resolution = buffer;
         js["resolution"] = resolution;
-        js["allResolution"] = "3840x2160";
+        js["allResolution"] = m_allLayouts;
+        js["layout_horizontal"] = m_layout_h;
+        js["layout_vertical"] = m_layout_w;
         js["num"] = vOutputInfo.size();
         json jsdata;
         int nNum = vOutputInfo.size();
@@ -382,13 +389,18 @@ bool cdataProcess::GetOutputsInfo_shell(json & js)
             return false;
         }
 
+
+
         for (size_t i = 0; i < vOutputInfo.size(); i++)
         {
             json node;
             node["name"] = vOutputInfo[i].name;
             node["coordinateOrderX"] = (vOutputInfo[i].pos.xPos / m_nWidth);
             node["coordinateOrderY"] = (vOutputInfo[i].pos.yPos / m_nHight);
-            node["primary"] = vOutputInfo[i].primary;         
+            int id = (vOutputInfo[i].pos.xPos / m_nWidth) + (vOutputInfo[i].pos.yPos / m_nHight) * m_layout_w;
+            sortBuf[id] = 1;
+            node["id"] = id;
+            node["primary"] = vOutputInfo[i].primary;
             if(vOutputInfo[i].connected)
             {
                 node["connected"] = true;                
@@ -402,6 +414,15 @@ bool cdataProcess::GetOutputsInfo_shell(json & js)
             {
                 json node;             
                 node["name"] = "";
+                for (size_t i = 0; i < sizeof(sortBuf)/sizeof(int); i++)
+                {
+                    if(sortBuf[i] == 0)
+                    {
+                        node["id"] = i;
+                        sortBuf[i] = 1;
+                        break;
+                    }
+                }               
                 node["coordinateOrderX"] = 0;
                 node["coordinateOrderY"] = 0;
                 node["primary"] = false;
@@ -507,9 +528,11 @@ bool cdataProcess::SetOutputsInfo(json & js)
     std::vector<std::string> vWidthAndHight = CMDEXEC::Split(resolution, 'x');
     int _width = std::stoi(vWidthAndHight[0]);
     int _hight = std::stoi(vWidthAndHight[1]);
-    std::vector<std::string> vLayout = CMDEXEC::Split(layoutName, 'x');
-    int _layout_w = std::stoi(vLayout[0]);
-    int _layout_h = std::stoi(vLayout[1]);
+    // std::vector<std::string> vLayout = CMDEXEC::Split(layoutName, 'x');
+    // int _layout_w = std::stoi(vLayout[0]);
+    // int _layout_h = std::stoi(vLayout[1]);
+    int _layout_w = js["layout_horizontal"].get<int>();
+    int _layout_h = js["layout_vertical"].get<int>();
 
     string strDisplayName = ":0";
     cmyxrandr cxr(strDisplayName);
@@ -525,10 +548,22 @@ bool cdataProcess::SetOutputsInfo(json & js)
     for (json::iterator it = jarry.begin();it!=jarry.end();it++)
     {
         string output = (*it)["output"].template get<std::string>();
-        int nCoordinateX = (*it)["coordinateOrderX"].template get<int>();
-        int nCoordinateY = (*it)["coordinateOrderY"].template get<int>();
-        nCoordinateX = nCoordinateX * _width;
-        nCoordinateY = nCoordinateY * _hight;
+        int nCoordinateX = 0;
+        int nCoordinateY = 0;
+        if((*it).find("coordinateOrderX") != (*it).end() && (*it).find("coordinateOrderY") != (*it).end())
+        {
+            nCoordinateX = (*it)["coordinateOrderX"].template get<int>();
+            nCoordinateY = (*it)["coordinateOrderY"].template get<int>();
+            nCoordinateX = nCoordinateX * _width;
+            nCoordinateY = nCoordinateY * _hight;
+        }
+        else
+        {
+            int nId = (*it)["id"].template get<int>();
+            nCoordinateX = (nId % _layout_w) * _width;
+            nCoordinateY = (nId / _layout_w) * _hight;
+        }               
+        
         bool primary = (*it)["primary"].template get<bool>();
         for (size_t i = 0; i < vOutputInfo.size(); i++)
         {
@@ -568,6 +603,7 @@ bool cdataProcess::SetOutputsInfo(json & js)
     m_layout_w = _layout_w;
     m_nWidth = _width;
     m_nHight = _hight;
+    m_allLayouts = allResolution;
 
     return true;
 }
