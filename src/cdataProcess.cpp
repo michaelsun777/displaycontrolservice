@@ -440,6 +440,12 @@ bool cdataProcess::GetOutputsInfo_shell(json & js)
 
 }
 
+bool cdataProcess::ResetOutputsInfo()
+{
+    
+
+}
+
 bool cdataProcess::SetMonitorsInfo(vector<MONITORSETTINGINFO> * vSetInfo)
 {
     for (size_t i = 0; i < vSetInfo->size(); i++)

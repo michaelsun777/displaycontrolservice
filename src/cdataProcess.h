@@ -81,6 +81,7 @@ public://xrandr
     bool GetMonitorsInfo(string & strInfo);
     bool GetMonitorsInfo_shell(json & js);
     bool GetOutputsInfo_shell(json & js);
+    bool ResetOutputsInfo();
     bool GetGpuInfo(json & js);
     bool SetMonitorsInfo(vector<MONITORSETTINGINFO> *vSetInfo);
     bool SetOutputsInfo(json & js);

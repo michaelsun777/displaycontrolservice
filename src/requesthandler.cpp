@@ -64,6 +64,10 @@ void RequestHandler::service(HttpRequest& request, HttpResponse& response)
     {
         getGpusInfo(request, response);
     }
+    else if (path.startsWith("/displayctrlserver/get/outputs/reset"))
+    {
+        resetOutputsInfo(request, response);
+    }
     else if (path.startsWith("/displayctrlserver/get/gpu/Interface"))
     {
         getGpuInterface(request, response);
@@ -203,6 +207,40 @@ void RequestHandler::getGpusInfo(const HttpRequest &req, HttpResponse& res)
     {
         createRet(res, 500);
     }
+}
+
+void RequestHandler::resetOutputsInfo(const HttpRequest &req, HttpResponse& res)
+{
+    string strData;
+    json js;
+    try
+    {
+
+        QSettings settings("config.ini", QSettings::IniFormat);
+        settings.beginGroup("outputsSettings");
+        // settings.setValue("outputs", js.dump().c_str());
+        settings.remove("outputs");
+        settings.endGroup();
+        settings.beginGroup("screen");
+        settings.setValue("isSetting", "false");
+        settings.endGroup();
+        settings.sync();
+
+        cdataProcess dataprocess;
+        if (dataprocess.InitOutputInfo())
+        {
+            createRet(res, 200);
+        }
+        else
+        {
+            createRet(res, 204);
+        }
+    }
+    catch (...)
+    {
+        createRet(res, 500);
+    }
+
 }
 
 void RequestHandler::getGpuInterface(const HttpRequest &req, HttpResponse& res)
