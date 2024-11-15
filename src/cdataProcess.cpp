@@ -2,34 +2,43 @@
 #include "cdataProcess.h"
 #include <sys/utsname.h>
 #include <sys/statfs.h>
+#include <QFile>
 
 
 cdataProcess::cdataProcess(/* args */)
 {
     m_nWidth = 0,m_nHight = 0;
-    CConfig config;
-    config.SetFilePath("config.ini");
-    string value = "";
-	string error = "";
-    config.GetValue("screen","width",value,error);
-    m_nWidth = atoi(value.c_str());
-    value.clear();
-    config.GetValue("screen","height",value,error);
-    m_nHight = atoi(value.c_str());
+    m_layout_w = 0,m_layout_h = 0;
+
+    QFile file("./config.ini");
+    if (!file.exists())
+    {
+        QSettings config("config.ini",QSettings::IniFormat);
+        config.setValue("screen/width",1920);
+        config.setValue("screen/height",1080);
+        config.setValue("screen/layout_horizontal",1);
+        config.setValue("screen/layout_vertical",1);
+        
+        XCRITICAL("config.ini不存在");
+        XCRITICAL("请先配置config.ini文件,配置文件在程序目录下");
+        exit(0);
+    }
+    file.close();
+    QSettings settings("config.ini",QSettings::IniFormat);
+    m_nWidth = settings.value("screen/width",0).toInt();
+    m_nHight = settings.value("screen/height",0).toInt();
+    m_layout_w = settings.value("screen/layout_horizontal",0).toInt();
+    m_layout_h = settings.value("screen/layout_vertical",0).toInt();
+
     if(m_nWidth == 0)
     {
         m_nWidth = 1920;
         m_nHight = 1080;
     }
-    value.clear();
-    config.GetValue("screen","distribution_horizontal",value,error);
-    m_ndistribution_w =  atoi(value.c_str());
-    value.clear();
-    config.GetValue("screen","distribution_vertical",value,error);
-    m_ndistribution_h =  atoi(value.c_str());
-    if(m_ndistribution_w ==  0 || m_ndistribution_h == 0)
+  
+    if(m_layout_w ==  0 || m_layout_h == 0)
     {
-        XERROR("Please set up the Configuration file first!");
+        XERROR("请先在config.ini中配置layout_horizontal和layout_vertical");
         exit(0);
     }
         
@@ -44,7 +53,7 @@ void cdataProcess::SetMainWindow(MainWindow * p)
     m_pMainWindow = p;
 }
 
-void cdataProcess::print_display_name(Display *dpy, int target_id, int attr,char *name)
+void cdataProcess::print_display_name(Display *dpy, int target_id, int attr,char *name,string & displayName)
 {
     Bool ret;
     char *str;
@@ -60,6 +69,7 @@ void cdataProcess::print_display_name(Display *dpy, int target_id, int attr,char
     }
 
     printf("    %18s : %s\n", name, str);
+    displayName = str;
     XFree(str);
 }
 
@@ -97,17 +107,10 @@ void cdataProcess::print_display_id_and_name(Display *dpy, int target_id, const 
     if ((len < 0) || (len >= sizeof(name_str))) {
         return;
     }
-
-    print_display_name(dpy, target_id, NV_CTRL_STRING_DISPLAY_DEVICE_NAME,
-                       name_str);
+    string strDisplayName;
+    print_display_name(dpy, target_id, NV_CTRL_STRING_DISPLAY_DEVICE_NAME,name_str,strDisplayName);
 }
 
-bool cdataProcess::Output(string args)
-{
-    //auto p = Popen({args}, output{PIPE});
-
-    return false;
-}
 
 bool cdataProcess::GetMonitorsInfo(string & strInfo)
 {
@@ -172,7 +175,6 @@ bool cdataProcess::GetMonitorsInfo(string & strInfo)
             //string strPrimary = cxr.isPrimary() ? "Primary" : "";
             // XINFO("{},{},{}",cxr.getName(),strStatus ,strPrimary);
             node["primary"] = cxr.isPrimary();
-
 
 
             if (strStatus == "Connected")
@@ -249,8 +251,8 @@ bool cdataProcess::GetMonitorsInfo_shell(json & js)
         js["maxHeight"] = maxSize.height;
         js["output_width"] = m_nWidth;
         js["output_height"] = m_nHight;
-        js["horizontal"] = m_ndistribution_w;
-        js["vertial"] = m_ndistribution_h;
+        js["horizontal"] = m_layout_w;
+        js["vertial"] = m_layout_h;
 
         json jsdata;
         int nNum = vOutputInfo.size();
@@ -277,6 +279,8 @@ bool cdataProcess::GetMonitorsInfo_shell(json & js)
 
             node["xVirtual"] = (vOutputInfo[i].pos.xPos / m_nWidth);
             node["yVirtual"] = (vOutputInfo[i].pos.yPos / m_nHight);
+            node["coordinateOrderX"] = (vOutputInfo[i].pos.xPos / m_nWidth);
+            node["coordinateOrderY"] = (vOutputInfo[i].pos.yPos / m_nHight);
             node["primary"] = vOutputInfo[i].primary;
             node["currentModeId"] = vOutputInfo[i].currentMode.id;
             node["preferredModeId"] = vOutputInfo[i].preferredMode.id;
@@ -315,9 +319,9 @@ bool cdataProcess::GetMonitorsInfo_shell(json & js)
             jsdata.push_back(node);
         }
 
-        if(vOutputInfo.size() < m_ndistribution_w * m_ndistribution_h)
+        if(vOutputInfo.size() < m_layout_w * m_layout_h)
         {
-            for (size_t i = vOutputInfo.size(); i < m_ndistribution_w * m_ndistribution_h; i++)
+            for (size_t i = vOutputInfo.size(); i < m_layout_w * m_layout_h; i++)
             {
                 json node;
                 node["rroutputId"] = 0;
@@ -343,6 +347,69 @@ bool cdataProcess::GetMonitorsInfo_shell(json & js)
 
         js["output"] = jsdata;
         js["num"] = nNum;
+        //strInfo = js.dump().c_str();
+        XINFO("{}",js.dump().c_str());
+        return true;
+    }
+
+    return false;
+
+}
+
+bool cdataProcess::GetOutputsInfo_shell(json & js)
+{
+    string strDisplayName = ":0";
+    cmyxrandr cxr(strDisplayName);
+    //XRRScreenSize * psize = cxr.getCurrentConfigSizes();
+    CMYSIZE currentSize, maxSize;
+    vector<MOutputInfo> vOutputInfo;  
+    short shRet = cxr.getAllScreenInfoEx(vOutputInfo,currentSize,maxSize);
+    if(shRet == 0)
+    {
+        js["layoutName"] = "2x2";
+        char buffer[40] = {0};
+        sprintf(buffer, "%dx%d", currentSize.width,currentSize.height);
+        string resolution = buffer;
+        js["resolution"] = resolution;
+        js["allResolution"] = "3840x2160";
+        js["num"] = vOutputInfo.size();
+        json jsdata;
+        int nNum = vOutputInfo.size();
+        if(nNum <= 0)
+        {
+            js.clear();
+            //strInfo = "";
+            return false;
+        }
+
+        for (size_t i = 0; i < vOutputInfo.size(); i++)
+        {
+            json node;
+            node["name"] = vOutputInfo[i].name;
+            node["coordinateOrderX"] = (vOutputInfo[i].pos.xPos / m_nWidth);
+            node["coordinateOrderY"] = (vOutputInfo[i].pos.yPos / m_nHight);
+            node["primary"] = vOutputInfo[i].primary;         
+            if(vOutputInfo[i].connected)
+            {
+                node["connected"] = true;                
+            }
+            jsdata.push_back(node);
+        }
+
+        if(vOutputInfo.size() < m_layout_w * m_layout_h)
+        {
+            for (size_t i = vOutputInfo.size(); i < m_layout_w * m_layout_h; i++)
+            {
+                json node;             
+                node["name"] = "";
+                node["coordinateOrderX"] = 0;
+                node["coordinateOrderY"] = 0;
+                node["primary"] = false;
+                jsdata.push_back(node);
+            }
+        }
+
+        js["layout"] = jsdata;
         //strInfo = js.dump().c_str();
         XINFO("{}",js.dump().c_str());
         return true;
@@ -403,11 +470,115 @@ bool cdataProcess::SetMonitorsInfo(vector<MONITORSETTINGINFO> * vSetInfo)
     return true;
 }
 
+bool cdataProcess::SetOutputsInfo(json & js)
+{
+    XINFO("{}",js.dump().c_str());
+    if(js.find("layoutName") == js.end())
+    {
+        XERROR("layoutName is not exist");
+        return false;
+    }
+        
+    if(js.find("resolution") == js.end())
+    {
+        XERROR("resolution is not exist");
+        return false;
+    }
+    if(js.find("allResolution") == js.end())
+    {
+        XERROR("allResolution is not exist");
+        return false;
+    }
+    if(js.find("layout") == js.end())
+    {
+        XERROR("layout is not exist");
+        return false;
+    }
+
+    string layoutName = js["layoutName"].get<std::string>();
+    string resolution = js["resolution"].get<std::string>();
+    string allResolution = js["allResolution"].get<std::string>();
+    json jarry = js["layout"];
+    int num = jarry.size();
+    if(num <= 0)
+    {
+        return false;
+    }
+    std::vector<std::string> vWidthAndHight = CMDEXEC::Split(resolution, 'x');
+    int _width = std::stoi(vWidthAndHight[0]);
+    int _hight = std::stoi(vWidthAndHight[1]);
+    std::vector<std::string> vLayout = CMDEXEC::Split(layoutName, 'x');
+    int _layout_w = std::stoi(vLayout[0]);
+    int _layout_h = std::stoi(vLayout[1]);
+
+    string strDisplayName = ":0";
+    cmyxrandr cxr(strDisplayName);
+    CMYSIZE currentSize, maxSize;
+    vector<MOutputInfo> vOutputInfo;  
+    short shRet = cxr.getAllScreenInfoEx(vOutputInfo,currentSize,maxSize);
+    if(shRet != 0)
+    {
+        return false;
+    }
+
+
+    for (json::iterator it = jarry.begin();it!=jarry.end();it++)
+    {
+        string output = (*it)["output"].template get<std::string>();
+        int nCoordinateX = (*it)["coordinateOrderX"].template get<int>();
+        int nCoordinateY = (*it)["coordinateOrderY"].template get<int>();
+        nCoordinateX = nCoordinateX * _width;
+        nCoordinateY = nCoordinateY * _hight;
+        bool primary = (*it)["primary"].template get<bool>();
+        for (size_t i = 0; i < vOutputInfo.size(); i++)
+        {
+            if(output.compare(vOutputInfo[i].name) == 0)
+            {
+                MyModelInfoEX * pMode = &vOutputInfo[i].currentMode;
+                if(vOutputInfo[i].currentMode.name.compare(resolution) != 0)
+                {
+                    for (size_t i = 0; i < vOutputInfo[i].modes.size(); i++)
+                    {
+                        if(vOutputInfo[i].modes[i].name.compare(resolution) == 0)
+                        { 
+                            pMode = &vOutputInfo[i].modes[i];    
+                            if(setOutputMode(vOutputInfo[i].name, vOutputInfo[i].modes[i].name,vOutputInfo[i].modes[i].rate))
+                            {
+                                return false;
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                if (vOutputInfo[i].pos.xPos != nCoordinateX || vOutputInfo[i].pos.yPos != nCoordinateY)
+                {
+                    //if(!setOutputPos(vOutputInfo[i].name, nCoordinateX, nCoordinateY))
+                    if(!setOutputModeAndPos(vOutputInfo[i].name, pMode->name,pMode->rate,nCoordinateX, nCoordinateY))
+                    {
+                        return false;
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    m_layout_h = _layout_h;
+    m_layout_w = _layout_w;
+    m_nWidth = _width;
+    m_nHight = _hight;
+
+    return true;
+}
 
 bool cdataProcess::TestMonitorInfo()
 {
     json js;
-    GetServerInfo(js);
+    GetOutputAndGpuName(js);
+    XINFO("{}",js.dump());
+    //
+    //GetServerInfo(js);
 
 
     // string strDisplayName = ":0";
@@ -466,9 +637,93 @@ bool cdataProcess::GetGpuInfo(json & js)
     return false;
 }
 
+bool cdataProcess::setOutputMode(string &strOutputName, string &strModeName,string & strRate)
+{
+
+    string strCmd = "xrandr --output ";
+    strCmd += strOutputName;
+    strCmd += " --mode ";
+    strCmd += strModeName;
+    // strCmd += " --pos ";
+    // strCmd += strPos;
+    strCmd += " --rate ";
+    strCmd += strRate;
+    XINFO("exec :{}", strCmd.c_str());
+    CMDEXEC::CmdRes res;
+    bool bRet = CMDEXEC::Execute(strCmd, res);
+    if (!bRet)
+    {
+        XERROR("cdataProcess::setOutputMode CMDEXEC::Execute errono:{},error:{}", res.ExitCode, res.StderrString);
+    }
+    usleep(500000);
+    return true;
+}
+
+bool cdataProcess::setOutputPos(string &strOutputName, int start_x,int start_y)
+{
+    string strCmd = "xrandr --output ";
+    char buf[20] = {0};
+    sprintf(buf, "%dx%d", start_x, start_y);
+    string strPos = buf;
+    strCmd += strOutputName;
+    strCmd += " --pos ";
+    strCmd += strPos;
+    XINFO("exec :{}", strCmd.c_str());
+    CMDEXEC::CmdRes res;
+    bool bRet = CMDEXEC::Execute(strCmd, res);
+    if (!bRet)
+    {
+        XERROR("cdataProcess::setOutputPos CMDEXEC::Execute errono:{},error:{}", res.ExitCode, res.StderrString);
+        return false;
+    }
+    //usleep(500000);
+    return true;
+}
+
+bool cdataProcess::setOutputModeAndPos(string &strOutputName,string &strModeName,string & strRate, int start_x,int start_y)
+{    
+    char buf[20] = {0};
+    sprintf(buf, "%dx%d", start_x, start_y);
+    string strPos = buf;
+    string strCmd = "xrandr --output ";
+    strCmd += strOutputName;
+    strCmd += " --mode ";
+    strCmd += strModeName;
+    strCmd += " --pos ";
+    strCmd += strPos;
+    strCmd += " --rate ";
+    strCmd += strRate;
+   
+    XINFO("exec :{}", strCmd.c_str());
+
+    CMDEXEC::CmdRes res;
+    bool bRet = CMDEXEC::Execute(strCmd, res);
+    if (!bRet)
+    {
+        XERROR("cdataProcess::setOutputModeAndPos CMDEXEC::Execute errono:{},error:{}", res.ExitCode, res.StderrString);
+        return false;
+    }
+    return true;
+}
 
 bool cdataProcess::InitOutputInfo()
 {
+    QSettings settings("config.ini", QSettings::IniFormat);
+    bool bIsSetting = settings.value("screen/isSetting",false).toBool();
+
+    if(bIsSetting)
+    {
+        string strJson = "";
+        strJson = settings.value("outputsSettings/outputs", "").toString().toStdString();
+        if(!strJson.empty())
+        {
+            XINFO("outputs json:{}",strJson.c_str());
+            json jdata = json::parse(strJson.c_str());           
+            SetOutputsInfo(jdata);
+            return true;
+        }
+    }
+
     string strDisplayName = ":0";
     cmyxrandr cxr(strDisplayName);
     vector<MOutputInfo> vOutputInfo;
@@ -536,31 +791,15 @@ bool cdataProcess::InitOutputInfo()
 
     for (size_t i = 0,j = 0; i < vOutputInfo.size(); i++)
     {
-        if(vOutputInfo[i].currentMode.id != lastDeterminedModeId)
+        if(vOutputInfo[i].currentMode.id != lastDeterminedModeId)//先设置mode
         {
-            if((i - j*m_nWidth) < m_nWidth)
-            {
-                start_x = i*m_nWidth;
-                start_y = j*m_nHight;
-            }
-            else
-            {
-                start_y++;
-                start_x = (i - j*m_nWidth)*m_nWidth;
-                start_y = j*m_nHight;
-            }
-            
-            char buf[20] = {0};
-            sprintf(buf,"%dx%d",start_x,start_y);
-            string strPos = buf;
-
             string strOutputName = vOutputInfo[i].name;            
             string strCmd = "xrandr --output ";
             strCmd += strOutputName;
             strCmd += " --mode ";
             strCmd += lastDeterminedModeName;
-            strCmd += " --pos ";
-            strCmd += strPos;
+            //strCmd += " --pos ";
+            //strCmd += strPos;
             strCmd += " --rate ";      
             strCmd += lastDeterminedModeRate;
             if(vOutputInfo[i].primary)
@@ -576,8 +815,49 @@ bool cdataProcess::InitOutputInfo()
             }
 
         }
-        else
-            continue;        
+
+        {
+
+            if ((i - (j * m_layout_w)) >= m_layout_w)
+            {
+                j++;
+            }
+
+            start_x = (i - (j * m_layout_w)) * m_nWidth;
+            start_y = j * m_nHight;
+            char buf[20] = {0};
+            sprintf(buf, "%dx%d", start_x, start_y);
+            string strPos = buf;
+            string strOutputName = vOutputInfo[i].name;
+            string strCmd = "xrandr --output ";
+            strCmd += strOutputName;
+            strCmd += " --mode ";
+            strCmd += lastDeterminedModeName;
+            strCmd += " --pos ";
+            strCmd += strPos;
+            strCmd += " --rate ";
+            strCmd += lastDeterminedModeRate;
+            if (vOutputInfo[i].primary)
+            {
+                strCmd += " --primary";
+            }
+            XINFO("exec :{}", strCmd.c_str());
+
+            if (vOutputInfo[i].pos.xPos != start_x || vOutputInfo[i].pos.yPos != start_y) // 再设置pos
+            {
+                // if((i - j*m_nWidth) < m_nWidth)               
+                CMDEXEC::CmdRes res;
+                bool bRet = CMDEXEC::Execute(strCmd, res);
+                if (!bRet)
+                {
+                    XERROR("cdataProcess::InitOutputInfo CMDEXEC::Execute errono:{},error:{}", res.ExitCode, res.StderrString);
+                }
+            }
+            else
+                continue;
+        }
+
+       
     }
     
     return true;
@@ -588,79 +868,106 @@ bool cdataProcess::InitOutputInfo()
 
 
 
-bool cdataProcess::GetMonitorsInfo_N()
+bool cdataProcess::GetOutputAndGpuName(json & js)
 {
-
-    Display *dpy;
-    Bool ret;
-    int screen, major, minor, len;
-    char *str, *start, *str0, *str1;
+        
+    int major, minor, len;
+    char *start, *str0, *str1;
     int *enabledDpyIds;
 
-    dpy = XOpenDisplay(NULL);
-    if (!dpy) {
-        fprintf(stderr, "Cannot open display '%s'.\n\n", XDisplayName(NULL));
-        return 1;
-    }
-    
-    screen = GetNvXScreen(dpy);
-
-    ret = XNVCTRLQueryVersion(dpy, &major, &minor);
-    if (ret != True)
+    Display *dpy = XOpenDisplay(NULL);
+    if (!dpy) 
     {
-        fprintf(stderr, "The NV-CONTROL X extension does not exist "
-                        "on '%s'.\n\n",
-                XDisplayName(NULL));
-        return 1;
-    }
-
-    printf("\nUsing NV-CONTROL extension %d.%d on %s\n\n",
-           major, minor, XDisplayName(NULL));
-
-    /*
-     * query the enabled display devices on this X screen and print basic
-     * information about each X screen.
-     */
-
-    ret = XNVCTRLQueryTargetBinaryData(dpy,
-                                       NV_CTRL_TARGET_TYPE_X_SCREEN,
-                                       screen,
-                                       0,
-                                       NV_CTRL_BINARY_DATA_DISPLAYS_ENABLED_ON_XSCREEN,
-                                       (unsigned char **)&enabledDpyIds,
-                                       &len);
-    if (!ret || (len < sizeof(enabledDpyIds[0])))
-    {
-        fprintf(stderr, "Failed to query the enabled Display Devices.\n\n");
-        return 1;
-    }
-
-    printf("Enabled Display Devices:\n");
-    m_nAvailableMonitorsCount = enabledDpyIds[0];
-    XINFO("Enabled Display Devices:",(int)enabledDpyIds[0]);
-
-
-    for (int i = 0; i < enabledDpyIds[0]; i++) 
-    {
-        int dpyId = enabledDpyIds[i+1];       
-
-        print_display_id_and_name(dpy, dpyId, "  ");
-    }
-
-    printf("\n");
-    
-    
-    /*
-     * perform the requested action, based on the specified
-     * commandline option
-     */
-
-    if(m_nAvailableMonitorsCount < 1)
-    {
+        XERROR("Cannot open display {}.", XDisplayName(NULL));
         return false;
     }
+    
+    int screen = GetNvXScreen(dpy);
+    Bool ret = XNVCTRLQueryVersion(dpy, &major, &minor);
+    if (ret != True)
+    {
+        XERROR("The NV-CONTROL X extension does not exist on {}.\n\n",XDisplayName(NULL));
+        return false;
+    }
+
+    XINFO("Using NV-CONTROL extension {}.{} on {} \n", major, minor, XDisplayName(NULL));
+    
+    XINFO("Display Device Probed Information:\n\n");
+
+    /* Get the number of gpus in the system */
+    int num_gpus = 0;
+    ret = XNVCTRLQueryTargetCount(dpy, NV_CTRL_TARGET_TYPE_GPU,&num_gpus);
+    if (!ret)
+    {
+        XERROR("Failed to query number of gpus\n\n");
+        XCloseDisplay(dpy);
+        return false;
+    }
+    XINFO("number of GPUs: {}\n", num_gpus);
+
+    /* Probe and list the Display devices */
+
+    for (int i = 0; i < num_gpus; i++)
+    {
+        json node;
+
+        int deprecated;
+        int *pData;
+
+        /* Get the gpu name */
+        char *gpuName = nullptr;
+        ret = XNVCTRLQueryTargetStringAttribute(dpy, NV_CTRL_TARGET_TYPE_GPU, i, 0,NV_CTRL_STRING_PRODUCT_NAME, &gpuName);
+        if (!ret)
+        {
+            XERROR("Failed to query gpu name\n\n");
+            XCloseDisplay(dpy);
+            return false;
+        }
+
+        /* Probe the GPU for new/old display devices */
+        ret = XNVCTRLQueryTargetAttribute(dpy,
+                                          NV_CTRL_TARGET_TYPE_GPU, i,
+                                          0,
+                                          NV_CTRL_PROBE_DISPLAYS,
+                                          &deprecated);
+
+        if (!ret)
+        {
+            XERROR("Failed to probe the enabled Display Devices on GPU-{} ({}).\n\n",i, gpuName);
+            XCloseDisplay(dpy);
+            return false;
+        }
+
+        XINFO("display devices on GPU-{} ({}):\n", i, gpuName);
+        node["gpuName"].push_back(gpuName);
+        if (gpuName) XFree(gpuName);
         
 
+        /* Report results */
+        ret = XNVCTRLQueryTargetBinaryData(dpy,
+                                           NV_CTRL_TARGET_TYPE_GPU, i,
+                                           0,
+                                           NV_CTRL_BINARY_DATA_DISPLAYS_CONNECTED_TO_GPU,
+                                           (unsigned char **)&pData,
+                                           &len);
+        if (!ret || (len < sizeof(pData[0])))
+        {
+            XERROR("Failed to query the connected Display Devices.\n\n");
+            return 1;
+        }
+
+        for (int j = 0; j < pData[0]; j++)
+        {
+            int dpyId = pData[j + 1];
+            print_display_id_and_name(dpy, dpyId, "    ");
+            string strDisplayName;
+            print_display_name(dpy, dpyId,NV_CTRL_STRING_DISPLAY_NAME_RANDR,"RANDR",strDisplayName);
+            node["display"].push_back(strDisplayName);  
+        }
+        XFree(pData); 
+        js["gpu"].push_back(node);        
+    }   
+    XCloseDisplay(dpy);
     return true;
 }
 

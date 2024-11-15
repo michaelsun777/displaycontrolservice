@@ -56,13 +56,25 @@ void RequestHandler::service(HttpRequest& request, HttpResponse& response)
     {
         getMonitorInfo(request, response);
     }
+    else if (path.startsWith("/displayctrlserver/get/outputs/info"))
+    {
+        getOutputsInfo(request, response);
+    }
     else if (path.startsWith("/displayctrlserver/get/gpu/info"))
     {
         getGpusInfo(request, response);
     }
+    else if (path.startsWith("/displayctrlserver/get/gpu/Interface"))
+    {
+        getGpuInterface(request, response);
+    }
     else if (path.startsWith("/displayctrlserver/set/monitor/info"))
     {
         setMonitorInfo(request, response);
+    }
+    else if (path.startsWith("/displayctrlserver/set/outputs/info"))
+    {
+        setOutputsInfo(request, response);
     }
     else if(path.startsWith("/displayctrlserver/dialog"))
     {        
@@ -146,29 +158,69 @@ void RequestHandler::getMonitorInfo(const HttpRequest &req, HttpResponse& res)
 
 }
 
-void RequestHandler::getGpusInfo(const HttpRequest &req, HttpResponse& res)
+void RequestHandler::getOutputsInfo(const HttpRequest &req, HttpResponse &res)
 {
-    
-    
     string strData;
     cdataProcess dataprocess;
-  
     json js;
-    if(dataprocess.GetGpuInfo(js))
+    if(dataprocess.GetOutputsInfo_shell(js))
     {
         createRet(res,200,js);
-        // string strRet = "{\"result\":\"\",\"msg\":\"\"";
-        // res.set_content(strData, "application/json");
-        // res.status = 200;
+
+        //res.set_content(strData, "application/json");
     }
     else
     {
-        createRet(res,204);
         // string strRet = "{\"result\":\"error\",\"msg\":\"test error\"}";
         // res.set_content(strRet, "application/json");
-        // res.status = 204;
+        createRet(res,204);
     }
-    
+
+}
+
+void RequestHandler::getGpusInfo(const HttpRequest &req, HttpResponse& res)
+{
+    string strData;
+    json js;
+    try
+    {
+        cdataProcess dataprocess;
+        if (dataprocess.GetGpuInfo(js))
+        {
+            createRet(res, 200, js);
+        }
+        else
+        {
+            createRet(res, 204);
+        }
+    }
+    catch (...)
+    {
+        createRet(res, 500);
+    }
+}
+
+void RequestHandler::getGpuInterface(const HttpRequest &req, HttpResponse& res)
+{
+    string strData;
+    json js;
+    try
+    {
+        cdataProcess dataprocess;     
+        if(dataprocess.GetOutputAndGpuName(js))
+        {
+            createRet(res,200,js);
+        }
+        else
+        {
+            createRet(res,204);
+        }
+    }
+    catch(...)
+    {
+        createRet(res,500);
+    }
+
 }
 
 
@@ -254,6 +306,87 @@ void RequestHandler::setMonitorInfo(const HttpRequest &req, HttpResponse& res)
     }
 
 }
+
+void RequestHandler::setOutputsInfo(const HttpRequest &req, HttpResponse &res)
+{
+    try
+    {
+        
+        QByteArray barray = req.getBody();
+        std::string body = barray.data();
+        json js = json::parse(body);
+        XINFO("received msg:{}",body);
+        {
+            if(js.find("layoutName") == js.end())
+            {
+                XERROR("RequestHandler::setOutputsInfo: layoutName is not exist");
+                createRet(res, 400);
+                return;
+            }
+                
+            if(js.find("resolution") == js.end())
+            {
+                XERROR("RequestHandler::setOutputsInfo: resolution is not exist");
+                createRet(res, 400);
+                return;
+            }
+            if(js.find("allResolution") == js.end())
+            {
+                XERROR("RequestHandler::setOutputsInfo: allResolution is not exist");
+                createRet(res, 400);
+                return;
+            }
+            if(js.find("layout") == js.end())
+            {
+                XERROR("RequestHandler::setOutputsInfo: layout is not exist");
+                createRet(res, 400);
+                return;
+            }
+        }
+        
+        cdataProcess dataprocess;
+        bool bRet = dataprocess.SetOutputsInfo(js);
+        if (bRet)
+        {
+            string layoutName = js["layoutName"].get<std::string>();
+            string resolution = js["resolution"].get<std::string>();
+            string allResolution = js["allResolution"].get<std::string>();
+            
+            std::vector<std::string> vWidthAndHight = CMDEXEC::Split(resolution, 'x');
+            int _width = std::stoi(vWidthAndHight[0]);
+            int _hight = std::stoi(vWidthAndHight[1]);
+            std::vector<std::string> vLayout = CMDEXEC::Split(layoutName, 'x');
+            int _layout_w = std::stoi(vLayout[0]);
+            int _layout_h = std::stoi(vLayout[1]);
+
+
+            QSettings settings("config.ini", QSettings::IniFormat);
+            settings.beginGroup("outputsSettings");
+            settings.setValue("outputs", js.dump().c_str());
+            settings.endGroup();
+            settings.beginGroup("screen");
+            settings.setValue("isSetting", "true");
+            settings.setValue("width", _width);
+            settings.setValue("height", _hight);
+            settings.setValue("layout_horizontal", _layout_w);
+            settings.setValue("layout_vertical", _layout_h);
+            settings.endGroup();
+            settings.sync();
+            
+            createRet(res, 200);
+        }
+        else
+        {
+            createRet(res, 500);
+        }
+    }
+    catch(...)
+    {
+        createRet(res,400);
+    }  
+
+}
+
 
 
 void RequestHandler::getServerInfo(const HttpRequest &req, HttpResponse &res)

@@ -59,24 +59,30 @@ private:
     std::map<XID,MY_OutputInfo *> m_mOutputsInfo;
     int m_nWidth;
     int m_nHight;
-    int m_ndistribution_w;
-    int m_ndistribution_h;
+    int m_layout_w;
+    int m_layout_h;
     MainWindow * m_pMainWindow;
+
+private:
+    bool setOutputMode(string &strOutputName, string &strModeName,string & strRate);
+    bool setOutputPos(string &strOutputName, int x,int y);
+    bool setOutputModeAndPos(string &strOutputName,string &strModeName,string & strRate, int w,int h);
 
 
 public:
     cdataProcess(/* args */);
     ~cdataProcess();
-    void print_display_name(Display *dpy, int target_id, int attr,char *name);
+    void print_display_name(Display *dpy, int target_id, int attr,char *name,string & displayName);
     int GetNvXScreen(Display *dpy);
     void print_display_id_and_name(Display *dpy, int target_id, const char *tab);
-    bool GetMonitorsInfo_N();
+    bool GetOutputAndGpuName(json & js);
 public://xrandr
-    bool Output(string args);
     bool GetMonitorsInfo(string & strInfo);
     bool GetMonitorsInfo_shell(json & js);
+    bool GetOutputsInfo_shell(json & js);
     bool GetGpuInfo(json & js);
     bool SetMonitorsInfo(vector<MONITORSETTINGINFO> *vSetInfo);
+    bool SetOutputsInfo(json & js);
     bool TestMonitorInfo();
     void SetMainWindow(MainWindow * p);
     bool GetServerInfo(json & js);

@@ -274,7 +274,19 @@ typedef struct CPUPACKED         //定义一个cpu occupy的结构体
     unsigned int lowait;  
     unsigned int irq;  
     unsigned int softirq;  
-}CPU_OCCUPY;  
+}CPU_OCCUPY;
+
+typedef struct MYOutputInfo         //定义一个cpu stat的结构体  
+{
+    string name;
+    bool primary;
+    int x;
+    int y;
+    
+
+}MY_OUTPUT_INFO;
+
+
 
 }
 

@@ -829,243 +829,257 @@ unsigned short cmyxrandr::getCurrentConfigRotation()
 
 short cmyxrandr::getAllScreenInfoEx(vector<MOutputInfo> & vOutputInfo,CMYSIZE & currentSize,CMYSIZE & maxSize)
 {
-    CMDEXEC::CmdRes res;
-    bool bret = CMDEXEC::Execute("xrandr --verbose",res);
-    printf("%s\n",res.StdoutString.c_str());
-    vector<string> vString;
-    CMDEXEC::Stringsplit(res.StdoutString,'\n',vString);
-    // vector<string> screens;
-    // vector<string> devices;
-    // vector<string> items;
-    // vector<string> vItems;
-    // vector<string> hItems;
-
-    vector<string> array[5][50][64][5];
-    //std::vector<std::vector<std::vector<std::string>>> array;
-    int current_w = 0,current_h = 0,maximum_w = 0,maximum_h = 0;
-
-    for (size_t i = 0,j = 0,l = 0,m = 0; i < vString.size(); i++)
+    try
     {
-        if(vString[i].find("\tIdentifier") != string::npos)
+
+        CMDEXEC::CmdRes res;
+        bool bret = CMDEXEC::Execute("xrandr --verbose", res);
+        printf("%s\n", res.StdoutString.c_str());
+        vector<string> vString;
+        CMDEXEC::Stringsplit(res.StdoutString, '\n', vString);
+        // vector<string> screens;
+        // vector<string> devices;
+        // vector<string> items;
+        // vector<string> vItems;
+        // vector<string> hItems;
+
+        vector<string> array[5][MAX_SIZE][64][5];
+        // std::vector<std::vector<std::vector<std::string>>> array;
+        int current_w = 0, current_h = 0, maximum_w = 0, maximum_h = 0;
+
+        for (size_t i = 0, j = 0, l = 0, m = 0; i < vString.size(); i++)
         {
-            string str(vString[i].c_str());
-            str = CMDEXEC::Strip(str);  
-            str = CMDEXEC::Lstrip(str,'\t'); 
-            array[1][j][l-1][m-1][0].append(" ");
-            array[1][j][l-1][m-1][0].append(str.c_str());            
-            continue;
-        }
-        else if(CMDEXEC::StartsWith(vString[i].c_str(), "\t"))
-            continue;
-        if(CMDEXEC::StartsWith(vString[i].c_str(), "Screen "))
-        {
-            string strScreenLine = vString[i].c_str();
-            vector<string> vScreenLineTmp = CMDEXEC::Split(strScreenLine,',');
-            if(vScreenLineTmp.size() < 3)
+            if (vString[i].find("\tIdentifier") != string::npos)
             {
-                return -1;
-            }
-
-            vector<string> vScreenLineTmp2 = CMDEXEC::Split(vScreenLineTmp[1],' ');
-            current_w = atoi(vScreenLineTmp2[1].c_str());
-            current_h = atoi(vScreenLineTmp2[3].c_str());
-            vector<string> vScreenLineTmp3 = CMDEXEC::Split(vScreenLineTmp[2],' ');
-            maximum_w = atoi(vScreenLineTmp3[1].c_str());
-            maximum_h = atoi(vScreenLineTmp3[3].c_str());
-            currentSize.width = current_w;
-            currentSize.height = current_h;
-            maxSize.width = maximum_w;
-            maxSize.height = maximum_h;
-
-            //screens.push_back(vString[i].c_str());            
-            array[0][0][0][m].push_back(vString[i].c_str());
-            m++;
-            j = 0;
-            l = 0;
-        }
-        else if(CMDEXEC::StartsWith(vString[i].c_str(), "  "))
-        {
-            string str(vString[i].c_str());
-            str = CMDEXEC::Strip(str);            
-            //items.push_back(str);
-            array[2][j][l-1][m-1].push_back(str.c_str());
-
-            string strTempH(vString[i+1].c_str());
-            strTempH = CMDEXEC::Lstrip(strTempH);
-            bool bbrh = CMDEXEC::StartsWith(strTempH, "h:");
-            string strTempV(vString[i+2].c_str());
-            strTempV = CMDEXEC::Lstrip(strTempV);
-            bool bbrv = CMDEXEC::StartsWith(strTempV, "v:");
-            if(bbrh)
-            {
-                //hItems.push_back(strTempH);
-                i++;
-                array[3][j][l-1][m-1].push_back(strTempH.c_str());
-                //j++;
-
-            }
-            if(bbrv)
-            {
-                //vItems.push_back(strTempV);
-                i++;
-                array[4][j][l-1][m-1].push_back(strTempV.c_str());
-                //j++;
-            }
-            j++;
-        }
-        else
-        {
-            j = 0;
-            //devices.push_back(vString[i].c_str());
-            array[1][j][l][m-1].push_back(vString[i].c_str());//[hv][name][device][screen]
-            l++;
-                       
-        }
-    }
-
-    for (size_t m = 0; m < 5; m++)//[hv][name][device][screen]
-    {
-        for (size_t l = 0; l < 64; l++)
-        {
-            if(array[1][0][l][m].size() == 0) continue;
-            MOutputInfo testl;
-            string strTmpLong(array[1][0][l][m][0]);
-            
-            string strTmp = strTmpLong;
-            if(strTmpLong.find("Identifier") != string::npos)
-            {   int pos = strTmpLong.find("Identifier");
-                strTmp = strTmpLong.substr(0, pos);
-                string strOutputid = strTmpLong.substr(pos,strTmpLong.length() - 1);
-
-                vector<string> vOutputid = CMDEXEC::Split(strOutputid.c_str(),": ");
-                testl.outputId = std::stoi(vOutputid[1], nullptr, 16);
-                
-            }
-
-            strTmp = CMDEXEC::replaceAll(strTmp,"unknown connection","unknown-connection");
-
-            vector<string> vItemsTmp = CMDEXEC::Split(strTmp.c_str()," ");
-            string output = vItemsTmp[0];
-            testl.name = output;
-
-            if (CMDEXEC::StartsWith(vItemsTmp[1], "connected"))
-                testl.connected = 1;
-            else if (CMDEXEC::StartsWith(vItemsTmp[1], "disconnected"))
-                testl.connected = 2;
-            else if (CMDEXEC::StartsWith(vItemsTmp[1], "unknown-connection"))
-                testl.connected = 3;
-            else
-                testl.connected = 0;
-            
-            if(testl.connected != 1)
+                string str(vString[i].c_str());
+                str = CMDEXEC::Strip(str);
+                str = CMDEXEC::Lstrip(str, '\t');
+                array[1][j][l - 1][m - 1][0].append(" ");
+                array[1][j][l - 1][m - 1][0].append(str.c_str());
                 continue;
-
-            testl.primary = false;
-
-            for (int i = 0; i < vItemsTmp.size(); i++)
+            }
+            else if (CMDEXEC::StartsWith(vString[i].c_str(), "\t"))
+                continue;
+            if (CMDEXEC::StartsWith(vString[i].c_str(), "Screen "))
             {
-                if (vItemsTmp[i].find("primary") != string::npos)
+                string strScreenLine = vString[i].c_str();
+                vector<string> vScreenLineTmp = CMDEXEC::Split(strScreenLine, ',');
+                if (vScreenLineTmp.size() < 3)
                 {
-                    testl.primary = true;
-                    vItemsTmp.erase(vItemsTmp.begin() + i);
-                    break;
+                    return -1;
                 }
+
+                vector<string> vScreenLineTmp2 = CMDEXEC::Split(vScreenLineTmp[1], ' ');
+                current_w = atoi(vScreenLineTmp2[1].c_str());
+                current_h = atoi(vScreenLineTmp2[3].c_str());
+                vector<string> vScreenLineTmp3 = CMDEXEC::Split(vScreenLineTmp[2], ' ');
+                maximum_w = atoi(vScreenLineTmp3[1].c_str());
+                maximum_h = atoi(vScreenLineTmp3[3].c_str());
+                currentSize.width = current_w;
+                currentSize.height = current_h;
+                maxSize.width = maximum_w;
+                maxSize.height = maximum_h;
+
+                // screens.push_back(vString[i].c_str());
+                array[0][0][0][m].push_back(vString[i].c_str());
+                m++;
+                j = 0;
+                l = 0;
             }
-
-            if (!CMDEXEC::StartsWith(vItemsTmp[2], "("))
+            else if (CMDEXEC::StartsWith(vString[i].c_str(), "  "))
             {
-                testl.geometry = vItemsTmp[2].c_str();
+                string str(vString[i].c_str());
+                str = CMDEXEC::Strip(str);
+                // items.push_back(str);
+                array[2][j][l - 1][m - 1].push_back(str.c_str());
 
-                vector<string> vTmp = CMDEXEC::Split(vItemsTmp[2].c_str(),'+');
-                vector<string> vTmpt = CMDEXEC::Split(vTmp[0].c_str(),'x');
+                string strTempH(vString[i + 1].c_str());
+                strTempH = CMDEXEC::Lstrip(strTempH);
+                bool bbrh = CMDEXEC::StartsWith(strTempH, "h:");
+                string strTempV(vString[i + 2].c_str());
+                strTempV = CMDEXEC::Lstrip(strTempV);
+                bool bbrv = CMDEXEC::StartsWith(strTempV, "v:");
+                if (bbrh)
+                {
+                    // hItems.push_back(strTempH);
+                    i++;
+                    array[3][j][l - 1][m - 1].push_back(strTempH.c_str());
+                    // j++;
+                }
+                if (bbrv)
+                {
+                    // vItems.push_back(strTempV);
+                    i++;
+                    array[4][j][l - 1][m - 1].push_back(strTempV.c_str());
+                    // j++;
+                }
+                j++;
+            }
+            else
+            {
+                j = 0;
+                // devices.push_back(vString[i].c_str());
+                array[1][j][l][m - 1].push_back(vString[i].c_str()); //[hv][name][device][screen]
+                l++;
+            }
+        }
 
-                testl.pos.xPos = atoi(vTmp[1].c_str());
-                testl.pos.yPos = atoi(vTmp[2].c_str());
-                testl.size.width = atoi(vTmpt[0].c_str());
-                testl.size.height = atoi(vTmpt[1].c_str());
+        for (size_t m = 0; m < 5; m++) //[hv][name][device][screen]
+        {
+            for (size_t l = 0; l < 64; l++)
+            {
+                if (array[1][0][l][m].size() == 0)
+                    continue;
+                MOutputInfo testl;
+                string strTmpLong(array[1][0][l][m][0]);
 
-                //string outputId = vItemsTmp[3];
-                //outputId = CMDEXEC::StripBrackets(outputId,'(',')'); 
-                //testl.outputId = std::stoi(outputId, nullptr, 16);
+                string strTmp = strTmpLong;
+                if (strTmpLong.find("Identifier") != string::npos)
+                {
+                    int pos = strTmpLong.find("Identifier");
+                    strTmp = strTmpLong.substr(0, pos);
+                    string strOutputid = strTmpLong.substr(pos, strTmpLong.length() - 1);
 
+                    vector<string> vOutputid = CMDEXEC::Split(strOutputid.c_str(), ": ");
+                    testl.outputId = std::stoi(vOutputid[1], nullptr, 16);
+                }
 
-                if (CMDEXEC::StartsWith(vItemsTmp[4], "normal"))
-                    testl.current_rotation = 1;
-                else if (CMDEXEC::StartsWith(vItemsTmp[4], "right"))
-                    testl.current_rotation = 2;
-                else if (CMDEXEC::StartsWith(vItemsTmp[4], "inverted"))
-                    testl.current_rotation = 3;
-                else if (CMDEXEC::StartsWith(vItemsTmp[4], "left"))
-                    testl.current_rotation = 4;
+                strTmp = CMDEXEC::replaceAll(strTmp, "unknown connection", "unknown-connection");
+
+                vector<string> vItemsTmp = CMDEXEC::Split(strTmp.c_str(), " ");
+                string output = vItemsTmp[0];
+                testl.name = output;
+
+                if (CMDEXEC::StartsWith(vItemsTmp[1], "connected"))
+                    testl.connected = 1;
+                else if (CMDEXEC::StartsWith(vItemsTmp[1], "disconnected"))
+                    testl.connected = 2;
+                else if (CMDEXEC::StartsWith(vItemsTmp[1], "unknown-connection"))
+                    testl.connected = 3;
                 else
-                    testl.current_rotation = 1;
-                
-                
-                //vector<string> vTmpmm = CMDEXEC::Split(vItemsTmp[3].c_str(),'x');
-                string mmW = vItemsTmp[vItemsTmp.size()-3].c_str();
-                string mmH = vItemsTmp[vItemsTmp.size()-1].c_str();
-                mmW = CMDEXEC::replaceAll(mmW,"mm"," ");
-                mmH = CMDEXEC::replaceAll(mmH,"mm"," ");
-                testl.mmsize.width = atoi(mmW.c_str());
-                testl.mmsize.height = atoi(mmH.c_str());
-                
-            }
+                    testl.connected = 0;
 
-
-            for (size_t j = 0; j < 50; j++)
-            {
-                if(array[2][j][l][m].size() == 0) 
+                if (testl.connected != 1)
                     continue;
 
-                MyModelInfoEX mode;
-                string strResolution(array[2][j][l][m][0]);
-                if(strResolution.empty()) continue;
-                bool bIsCurrent = false,bIsPreferred = false;
-                if(strResolution.find("*current") !=string::npos) bIsCurrent = true;
-                if(strResolution.find("+preferred") !=string::npos) bIsPreferred = true;
-                if(strResolution.find("Interlace") !=string::npos) mode.interlace = true;
+                testl.primary = false;
 
-                vector<string> vItemsTmpT = CMDEXEC::Split(strResolution.c_str()," ");
-                mode.name = vItemsTmpT[0].c_str();
-                string modeId = vItemsTmpT[1];
-                modeId = CMDEXEC::StripBrackets(modeId,'(',')'); 
-                mode.id = std::stoi(modeId, nullptr, 16);
-                mode.hSync = vItemsTmpT[3].c_str();
-                mode.vSync = vItemsTmpT[4].c_str();
-
-                vector<string> vWH = CMDEXEC::Split(vItemsTmpT[0].c_str(),'x');
-                mode.width = atoi(vWH[0].c_str());
-                mode.height = atoi(vWH[1].c_str());
-
-                //string strResolutionH(array[3][j][l][m][0]);                
-                string strResolutionV(array[4][j][l][m][0]);//v:
-                vector<string> vItemsTmpV = CMDEXEC::Split(strResolutionV.c_str()," ");
-                string strRate = vItemsTmpV[vItemsTmpV.size()-1];
-                strRate = CMDEXEC::Rstrip(strRate,'z');
-                strRate = CMDEXEC::Rstrip(strRate,'H');
-                mode.rate = strRate;
-                XINFO("modeId={},{}_{}",modeId,mode.name,mode.rate);
-                //float fRate = atof(strRate.c_str());
-                //XINFO("nRate:{:.2f}",fRate);
-
-                if(bIsPreferred)
+                for (int i = 0; i < vItemsTmp.size(); i++)
                 {
-                    testl.preferredMode = mode;
+                    if (vItemsTmp[i].find("primary") != string::npos)
+                    {
+                        testl.primary = true;
+                        vItemsTmp.erase(vItemsTmp.begin() + i);
+                        break;
+                    }
                 }
-                
-                //
-                if(bIsCurrent)
+
+                if (!CMDEXEC::StartsWith(vItemsTmp[2], "("))
                 {
-                    testl.currentMode = mode;         
-                  
+                    testl.geometry = vItemsTmp[2].c_str();
+
+                    vector<string> vTmp = CMDEXEC::Split(vItemsTmp[2].c_str(), '+');
+                    vector<string> vTmpt = CMDEXEC::Split(vTmp[0].c_str(), 'x');
+
+                    testl.pos.xPos = atoi(vTmp[1].c_str());
+                    testl.pos.yPos = atoi(vTmp[2].c_str());
+                    testl.size.width = atoi(vTmpt[0].c_str());
+                    testl.size.height = atoi(vTmpt[1].c_str());
+
+                    // string outputId = vItemsTmp[3];
+                    // outputId = CMDEXEC::StripBrackets(outputId,'(',')');
+                    // testl.outputId = std::stoi(outputId, nullptr, 16);
+
+                    if (CMDEXEC::StartsWith(vItemsTmp[4], "normal"))
+                        testl.current_rotation = 1;
+                    else if (CMDEXEC::StartsWith(vItemsTmp[4], "right"))
+                        testl.current_rotation = 2;
+                    else if (CMDEXEC::StartsWith(vItemsTmp[4], "inverted"))
+                        testl.current_rotation = 3;
+                    else if (CMDEXEC::StartsWith(vItemsTmp[4], "left"))
+                        testl.current_rotation = 4;
+                    else
+                        testl.current_rotation = 1;
+
+                    // vector<string> vTmpmm = CMDEXEC::Split(vItemsTmp[3].c_str(),'x');
+                    string mmW = vItemsTmp[vItemsTmp.size() - 3].c_str();
+                    string mmH = vItemsTmp[vItemsTmp.size() - 1].c_str();
+                    mmW = CMDEXEC::replaceAll(mmW, "mm", " ");
+                    mmH = CMDEXEC::replaceAll(mmH, "mm", " ");
+                    testl.mmsize.width = atoi(mmW.c_str());
+                    testl.mmsize.height = atoi(mmH.c_str());
                 }
-                testl.modes.push_back(mode);                
-                
+
+                for (size_t j = 0; j < MAX_SIZE; j++)
+                {
+                    if (array[2][j][l][m].size() == 0)
+                        continue;
+
+                    MyModelInfoEX mode;
+                    string strResolution(array[2][j][l][m][0]);
+                    if (strResolution.empty())
+                        continue;
+                    bool bIsCurrent = false, bIsPreferred = false;
+                    if (strResolution.find("*current") != string::npos)
+                        bIsCurrent = true;
+                    if (strResolution.find("+preferred") != string::npos)
+                        bIsPreferred = true;
+                    if (strResolution.find("Interlace") != string::npos)
+                        mode.interlace = true;
+
+                    vector<string> vItemsTmpT = CMDEXEC::Split(strResolution.c_str(), " ");
+                    mode.name = vItemsTmpT[0].c_str();
+                    string modeId = vItemsTmpT[1];
+                    modeId = CMDEXEC::StripBrackets(modeId, '(', ')');
+                    mode.id = std::stoi(modeId, nullptr, 16);
+                    mode.hSync = vItemsTmpT[3].c_str();
+                    mode.vSync = vItemsTmpT[4].c_str();
+
+                    vector<string> vWH = CMDEXEC::Split(vItemsTmpT[0].c_str(), 'x');
+                    mode.width = atoi(vWH[0].c_str());
+                    mode.height = atoi(vWH[1].c_str());
+
+                    // string strResolutionH(array[3][j][l][m][0]);
+                    string strResolutionV(array[4][j][l][m][0]); // v:
+                    vector<string> vItemsTmpV = CMDEXEC::Split(strResolutionV.c_str(), " ");
+                    string strRate = vItemsTmpV[vItemsTmpV.size() - 1];
+                    strRate = CMDEXEC::Rstrip(strRate, 'z');
+                    strRate = CMDEXEC::Rstrip(strRate, 'H');
+                    mode.rate = strRate;
+                    XINFO("modeId={},{}_{}", modeId, mode.name, mode.rate);
+                    // float fRate = atof(strRate.c_str());
+                    // XINFO("nRate:{:.2f}",fRate);
+
+                    if (bIsPreferred)
+                    {
+                        testl.preferredMode = mode;
+                    }
+
+                    //
+                    if (bIsCurrent)
+                    {
+                        testl.currentMode = mode;
+                    }
+                    testl.modes.push_back(mode);
+                }
+                vOutputInfo.push_back(testl);
             }
-            vOutputInfo.push_back(testl);
+        }
+
+        for (vector<MOutputInfo>::iterator itor = vOutputInfo.begin(); itor != vOutputInfo.end(); ++itor)
+        {
+            if (itor->name.find("VGA") != string::npos || itor->name.find("Virtual") != string::npos)
+            {
+                vOutputInfo.erase(itor);
+                itor--;
+            }
         }
     }
-
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+    
     return 0;
 
 

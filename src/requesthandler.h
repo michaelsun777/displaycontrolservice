@@ -50,8 +50,11 @@ public:
   std::string getRetMessage(int code);
 
   void getMonitorInfo(const HttpRequest &req, HttpResponse &res);
+  void getOutputsInfo(const HttpRequest &req, HttpResponse &res);
   void getGpusInfo(const HttpRequest &req, HttpResponse &res);
+  void getGpuInterface(const HttpRequest &req, HttpResponse &res);
   void setMonitorInfo(const HttpRequest &req, HttpResponse &res);
+  void setOutputsInfo(const HttpRequest &req, HttpResponse &res);
   void sendSignal(int type,QtDlgInfo & dlgInfo);
   void getServerInfo(const HttpRequest &req, HttpResponse &res);
 

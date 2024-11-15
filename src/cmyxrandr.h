@@ -15,6 +15,7 @@ using namespace std;
 
 using namespace MYCOMMON;
 
+#define MAX_SIZE 200
 
 
 
