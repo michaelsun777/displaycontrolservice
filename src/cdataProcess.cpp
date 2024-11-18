@@ -553,7 +553,7 @@ bool cdataProcess::SetOutputsInfo(json & js)
 
     for (json::iterator it = jarry.begin();it!=jarry.end();it++)
     {
-        string output = (*it)["output"].template get<std::string>();
+        string output = (*it)["name"].template get<std::string>();
         int nCoordinateX = 0;
         int nCoordinateY = 0;
         if((*it).find("coordinateOrderX") != (*it).end() && (*it).find("coordinateOrderY") != (*it).end())
