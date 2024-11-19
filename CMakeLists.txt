@@ -124,6 +124,7 @@ INCLUDE_DIRECTORIES(3rd/json/include/nlohmann)
 INCLUDE_DIRECTORIES(3rd/json/include)
 INCLUDE_DIRECTORIES(3rd/spdlog/)
 INCLUDE_DIRECTORIES(3rd/spdlog/include)
+INCLUDE_DIRECTORIES(3rd/md5/src/)
 #INCLUDE_DIRECTORIES(/usr/include/spdlog)
 INCLUDE_DIRECTORIES(/usr/include/X11)
 
@@ -179,6 +180,7 @@ link_directories(/usr/lib/x86_64-linux-gnu)
 # link_directories(hidapi/linux/.libs)
 #link_directories(src/arm_tool/lib)
 link_directories(/usr/local/lib/)
+link_directories(/home/amplesky/work/displayctrolservice/3rd/nvidia-settings/src/_out/Linux_x86_64/)
 
 
 aux_source_directory(src/ SRC_SRC)
@@ -208,6 +210,8 @@ src/nvControlInfo.cpp
 src/dialogController.cpp
 src/requesthandler.cpp
 3rd/cpp-subprocess/subprocess.hpp
+src/CNvControlEvents.cpp
+3rd/md5/src/md5.cpp
 
 ${http_SRC}
 
@@ -225,7 +229,7 @@ pthread
 ${QT_LIBRARIES}
 -lspdlog 
 -lX11 -lXrandr -lm -lXext #-lXNVCtrl #  // 
--L3rd/nvidia-settings/src/_out/Linux_x86_64/libXNVCtrl.a
+#-LXNVCtrl
 #-L/usr/lib/x86_64-linux-gnu/libXNVCtrl.so.0
 -ldl
 

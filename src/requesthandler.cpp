@@ -56,6 +56,10 @@ void RequestHandler::service(HttpRequest& request, HttpResponse& response)
     {
         getMonitorInfo(request, response);
     }
+    else if(path.startsWith("/displayctrlserver/get/outputs/resolution"))
+    {
+        getOutputsMode(request, response);
+    }
     else if (path.startsWith("/displayctrlserver/get/outputs/info"))
     {
         getOutputsInfo(request, response);
@@ -87,10 +91,13 @@ void RequestHandler::service(HttpRequest& request, HttpResponse& response)
     else if(path.startsWith("/displayctrlserver/get/server/info"))
     {
         getServerInfo(request, response);
-    }
+    }    
     else if(path.startsWith("/displayctrlserver/login"))
     {
-        ;
+        login(request, response);
+    }
+    else{
+        createRet(response,404);
     }
 
 
@@ -99,6 +106,7 @@ void RequestHandler::service(HttpRequest& request, HttpResponse& response)
 
     XINFO("RequestHandler: finished request");
 }
+
 
 
 void RequestHandler::createRet(HttpResponse &res,int code,nlohmann::json & data)
@@ -145,6 +153,40 @@ std::string RequestHandler::getRetMessage(int code)
     return "未定义错误码";
 }
 
+void RequestHandler::login(const HttpRequest &req, HttpResponse &res)
+{
+    QByteArray barray = req.getBody();
+    std::string body = barray.data();
+    XINFO("received msg:{}",body);
+    try
+    {
+        json jdata = json::parse(body);
+        string strUserName = jdata.at("username").get<string>();
+        string strPwd = jdata.at("password").get<string>();
+        QSettings config("user.db", QSettings::IniFormat);
+        config.value("user/name", "admin");
+        string localPwd = config.value("user/pwd", "admin").toString().toStdString();
+        MD5 md5(localPwd);
+        string loacalPwdMd5 = md5.toStr();
+         
+        if(strUserName.compare("admin") == 0 && strPwd.compare(loacalPwdMd5) == 0)
+        {
+            createRet(res,200);
+        }
+        else
+        {
+            createRet(res,401);
+        }       
+    }
+    catch(...)
+    {
+        createRet(res,500);
+    }
+    
+    
+}
+
+
 void RequestHandler::getMonitorInfo(const HttpRequest &req, HttpResponse& res)
 {
    
@@ -164,6 +206,27 @@ void RequestHandler::getMonitorInfo(const HttpRequest &req, HttpResponse& res)
         // res.set_content(strRet, "application/json");
         createRet(res,204);
     }   
+
+}
+
+void RequestHandler::getOutputsMode(const HttpRequest &req, HttpResponse& res)
+{
+    string strData;
+    cdataProcess dataprocess;
+    json js;
+    try
+    {
+        if(dataprocess.GetMainOutputModes(js))
+        {
+            createRet(res,200,js);
+        }
+    }
+    catch(...)
+    {
+        createRet(res,500);
+    }
+    
+
 
 }
 
@@ -360,12 +423,12 @@ void RequestHandler::setOutputsInfo(const HttpRequest &req, HttpResponse &res)
         json js = json::parse(body);
         XINFO("received msg:{}",body);
         {
-            if(js.find("layoutName") == js.end())
-            {
-                XERROR("RequestHandler::setOutputsInfo: layoutName is not exist");
-                createRet(res, 400);
-                return;
-            }
+            // if(js.find("layoutName") == js.end())
+            // {
+            //     XERROR("RequestHandler::setOutputsInfo: layoutName is not exist");
+            //     createRet(res, 400);
+            //     return;
+            // }
                 
             if(js.find("resolution") == js.end())
             {
@@ -403,7 +466,7 @@ void RequestHandler::setOutputsInfo(const HttpRequest &req, HttpResponse &res)
         bool bRet = dataprocess.SetOutputsInfo(js);
         if (bRet)
         {
-            string layoutName = js["layoutName"].get<std::string>();
+            //string layoutName = js["layoutName"].get<std::string>();
             string resolution = js["resolution"].get<std::string>();
             string allResolution = js["allResolution"].get<std::string>();
             
@@ -413,9 +476,9 @@ void RequestHandler::setOutputsInfo(const HttpRequest &req, HttpResponse &res)
             // std::vector<std::string> vLayout = CMDEXEC::Split(layoutName, 'x');
             // int _layout_w = std::stoi(vLayout[0]);
             // int _layout_h = std::stoi(vLayout[1]);
-            int _layout_w = js["layout_horizontal"].get<int>();
-            int _layout_h = js["layout_vertical"].get<int>();
-
+            int _layout_h = js["layout_horizontal"].get<int>();
+            int _layout_w = js["layout_vertical"].get<int>();
+ 
 
             QSettings settings("config.ini", QSettings::IniFormat);
             settings.beginGroup("outputsSettings");
@@ -425,8 +488,8 @@ void RequestHandler::setOutputsInfo(const HttpRequest &req, HttpResponse &res)
             settings.setValue("isSetting", "true");
             settings.setValue("width", _width);
             settings.setValue("height", _hight);
-            settings.setValue("layout_horizontal", _layout_w);
-            settings.setValue("layout_vertical", _layout_h);
+            settings.setValue("layout_horizontal", _layout_h);
+            settings.setValue("layout_vertical", _layout_w);
             settings.setValue("allResolution", allResolution.c_str());
             settings.endGroup();
             settings.sync();

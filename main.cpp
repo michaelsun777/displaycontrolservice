@@ -22,6 +22,7 @@
 #include "nvControlInfo.h"
 
 //#include <X11/extensions/Xrandr.h>
+#include "../3rd/md5/src/md5.h"
 
 
 
@@ -37,10 +38,22 @@ std::string g_NOTE = "XXX";
 int main(int argc, char *argv[])
 {
     QApplication app(argc,argv);
+    
     int nRet = 0;
     std::shared_ptr<CSpdlog> splog(CSpdlog::GetInstance());
     try
     {
+        QFile fileUser("./user.db");
+        if (!fileUser.exists())
+        {
+            QSettings config("user.db", QSettings::IniFormat);
+            config.setValue("user/name", "admin");
+            config.setValue("user/pwd", "admin");
+            config.sync();
+        }
+        fileUser.close();
+
+
         QFile file("./config.ini");
         if (!file.exists())
         {

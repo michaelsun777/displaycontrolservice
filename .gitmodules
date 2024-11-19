@@ -10,3 +10,6 @@
 [submodule "3rd/cpp-subprocess"]
 	path = 3rd/cpp-subprocess
 	url = https://github.com/arun11299/cpp-subprocess.git
+[submodule "3rd/md5"]
+	path = 3rd/md5
+	url = https://github.com/JieweiWei/md5.git

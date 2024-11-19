@@ -10,6 +10,7 @@
 #include <cstring>
 #include "../qtcommon.h"
 #include "UI/mainwindow.h"
+#include "../3rd/md5/src/md5.h"
 
 
 using namespace stefanfrings;
@@ -50,6 +51,7 @@ public:
   std::string getRetMessage(int code);
 
   void getMonitorInfo(const HttpRequest &req, HttpResponse &res);
+  void getOutputsMode(const HttpRequest &req, HttpResponse &res);
   void getOutputsInfo(const HttpRequest &req, HttpResponse &res);
   void resetOutputsInfo(const HttpRequest &req, HttpResponse &res);
   void getGpusInfo(const HttpRequest &req, HttpResponse &res);
@@ -58,6 +60,7 @@ public:
   void setOutputsInfo(const HttpRequest &req, HttpResponse &res);
   void sendSignal(int type,QtDlgInfo & dlgInfo);
   void getServerInfo(const HttpRequest &req, HttpResponse &res);
+  void login(const HttpRequest &req, HttpResponse &res);
 
 signals:
   void sendDlgSignal(int type,QVariant dlgInfo);

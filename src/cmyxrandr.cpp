@@ -1,5 +1,21 @@
 #include "cmyxrandr.h"
 
+
+cmyxrandr* cmyxrandr::m_instance = NULL;
+
+cmyxrandr* cmyxrandr::GetInstance()
+{
+    if (m_instance == NULL )
+    {
+        string strDisplayName = ":0";
+        m_instance = new cmyxrandr(strDisplayName);
+        m_instance->OnUpdate();
+        m_instance->Init();
+    }
+
+    return m_instance;
+}
+
 cmyxrandr::cmyxrandr(string strDisplayName, RROutput output) : m_screen(0), m_output(output), m_psConfig(0)
 {
     m_major = 0;
@@ -827,6 +843,18 @@ unsigned short cmyxrandr::getCurrentConfigRotation()
     return current_rotation;
 }
 
+short cmyxrandr::getAllScreenInfoNew(vector<MOutputInfo> & vOutputInfo,CMYSIZE & currentSize,CMYSIZE & maxSize)
+{
+    currentSize = m_currentSize;
+    maxSize = m_maxSize;
+    for (size_t i = 0; i < m_vOutputInfo.size(); i++)
+    {
+        vOutputInfo.push_back(m_vOutputInfo[i]);
+    }
+    return 0;   
+
+}
+
 short cmyxrandr::getAllScreenInfoEx(vector<MOutputInfo> & vOutputInfo,CMYSIZE & currentSize,CMYSIZE & maxSize)
 {
     try
@@ -1144,4 +1172,20 @@ int cmyxrandr::getScreenSizeRange(CMYSIZE & min,CMYSIZE & max)
     max.height = maxHeight;
     XINFO("state:{},minWidth:{},minHeight:{},maxWidth:{},maxHeight:{}", state,minWidth,minHeight,maxWidth,maxHeight);
     return state;
+}
+
+bool cmyxrandr::Init()
+{
+    m_pEvents = new CNvControlEvents(this);
+    m_pEvents->init();
+    m_pEvents->start();
+
+    return true;
+}
+
+bool cmyxrandr::OnUpdate()
+{
+    m_vOutputInfo.clear();
+    getAllScreenInfoEx(m_vOutputInfo,m_currentSize,m_maxSize);
+    return true;
 }

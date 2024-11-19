@@ -8,7 +8,7 @@
 cdataProcess::cdataProcess(/* args */)
 {
     m_nWidth = 0,m_nHight = 0;
-    m_layout_w = 0,m_layout_h = 0;
+    m_layout_vertical = 0,m_layout_horizontal = 0;
 
     QFile file("./config.ini");
     if (!file.exists())
@@ -27,8 +27,8 @@ cdataProcess::cdataProcess(/* args */)
     QSettings settings("config.ini",QSettings::IniFormat);
     m_nWidth = settings.value("screen/width",0).toInt();
     m_nHight = settings.value("screen/height",0).toInt();
-    m_layout_w = settings.value("screen/layout_horizontal",0).toInt();
-    m_layout_h = settings.value("screen/layout_vertical",0).toInt();
+    m_layout_horizontal = settings.value("screen/layout_horizontal",0).toInt();
+    m_layout_vertical = settings.value("screen/layout_vertical",0).toInt();
     m_allLayouts = settings.value("screen/allResolution","").toString().toStdString();
 
     if(m_nWidth == 0)
@@ -37,7 +37,7 @@ cdataProcess::cdataProcess(/* args */)
         m_nHight = 1080;
     }
   
-    if(m_layout_w ==  0 || m_layout_h == 0)
+    if(m_layout_vertical ==  0 || m_layout_horizontal == 0)
     {
         XERROR("请先在config.ini中配置layout_horizontal和layout_vertical");
         exit(0);
@@ -116,15 +116,20 @@ void cdataProcess::print_display_id_and_name(Display *dpy, int target_id, const 
 bool cdataProcess::GetMonitorsInfo(string & strInfo)
 {
     json js;
-    string strDisplayName = ":0";
-    cmyxrandr cxr(strDisplayName);
-    XRRScreenSize * psize = cxr.getCurrentConfigSizes();
+    //string strDisplayName = ":0";
+    //cmyxrandr cxr(strDisplayName);
+    //XRRScreenSize * psize = cxr.getCurrentConfigSizes();
+    cmyxrandr* pcmxrandr =  cmyxrandr::GetInstance();
+    XRRScreenSize * psize = pcmxrandr->getCurrentConfigSizes();
+
     CMYSIZE min,max;
-    cxr.getScreenSizeRange(min,max);
+    //cxr.getScreenSizeRange(min,max);
+    pcmxrandr->getScreenSizeRange(min,max);
+
     //cxr.getScreenInfo();
     //short rate = cxr.getScreenRate();
 
-    unsigned short	rotation = cxr.getCurrentConfigRotation();
+    unsigned short	rotation = pcmxrandr->getCurrentConfigRotation();
    
     js["width"] = psize->width;
     js["height"] = psize->height;
@@ -140,22 +145,22 @@ bool cdataProcess::GetMonitorsInfo(string & strInfo)
 
     json jsdata;
     int nNum = 0;
-    list<RROutput> outputs = cxr.getOutputs();
+    list<RROutput> outputs = pcmxrandr->getOutputs();
     
 
     for (list<RRCrtc>::iterator it = outputs.begin(); it != outputs.end(); it++)   
     {
         RROutput output = *it;
-        cxr.setOutPut(output);
+        pcmxrandr->setOutPut(output);
         // cmyxrandr rroutput(strDisplayName, output);
-        XRROutputInfo *outinfo = cxr.GetOutputInfo();
+        XRROutputInfo *outinfo = pcmxrandr->GetOutputInfo();
         
 
         if (outinfo->nmode > 0)
         {
             nNum++;
-            cxr.setCrtc(outinfo->crtc);
-            XRRCrtcInfo *rcrtinfo = cxr.getCrtcInfo();
+            pcmxrandr->setCrtc(outinfo->crtc);
+            XRRCrtcInfo *rcrtinfo = pcmxrandr->getCrtcInfo();
             json node;
             node["rroutputId"] = output;
             node["name"] = outinfo->name;
@@ -175,14 +180,14 @@ bool cdataProcess::GetMonitorsInfo(string & strInfo)
             string strStatus = outinfo->connection ? "Not connected":"Connected";
             //string strPrimary = cxr.isPrimary() ? "Primary" : "";
             // XINFO("{},{},{}",cxr.getName(),strStatus ,strPrimary);
-            node["primary"] = cxr.isPrimary();
+            node["primary"] = pcmxrandr->isPrimary();
 
 
             if (strStatus == "Connected")
             {
                 node["connected"] = true;
                 json jmodes;
-                list<MyModelInfoEX *> modes = cxr.getOutputModes();
+                list<MyModelInfoEX *> modes = pcmxrandr->getOutputModes();
                 for (list<MyModelInfoEX *>::iterator it = modes.begin(); it != modes.end(); it++)
                 {
                     json mode;
@@ -234,12 +239,13 @@ bool cdataProcess::GetMonitorsInfo(string & strInfo)
 bool cdataProcess::GetMonitorsInfo_shell(json & js)
 {
     //json js;
-    string strDisplayName = ":0";
-    cmyxrandr cxr(strDisplayName);
+    //string strDisplayName = ":0";
+    //cmyxrandr cxr(strDisplayName);
     //XRRScreenSize * psize = cxr.getCurrentConfigSizes();
+    cmyxrandr* pcmxrandr =  cmyxrandr::GetInstance();
     CMYSIZE currentSize, maxSize;
     vector<MOutputInfo> vOutputInfo;  
-    short shRet = cxr.getAllScreenInfoEx(vOutputInfo,currentSize,maxSize);
+    short shRet = pcmxrandr->getAllScreenInfoEx(vOutputInfo,currentSize,maxSize);
     if(shRet == 0)
     {
         js["width"] = currentSize.width;   // vOutputInfo[i].size.width;
@@ -252,8 +258,8 @@ bool cdataProcess::GetMonitorsInfo_shell(json & js)
         js["maxHeight"] = maxSize.height;
         js["output_width"] = m_nWidth;
         js["output_height"] = m_nHight;
-        js["horizontal"] = m_layout_w;
-        js["vertial"] = m_layout_h;
+        js["horizontal"] = m_layout_horizontal;
+        js["vertial"] = m_layout_vertical;
 
         json jsdata;
         int nNum = vOutputInfo.size();
@@ -320,9 +326,9 @@ bool cdataProcess::GetMonitorsInfo_shell(json & js)
             jsdata.push_back(node);
         }
 
-        if(vOutputInfo.size() < m_layout_w * m_layout_h)
+        if(vOutputInfo.size() < m_layout_vertical * m_layout_horizontal)
         {
-            for (size_t i = vOutputInfo.size(); i < m_layout_w * m_layout_h; i++)
+            for (size_t i = vOutputInfo.size(); i < m_layout_vertical * m_layout_horizontal; i++)
             {
                 json node;
                 node["rroutputId"] = 0;
@@ -357,19 +363,34 @@ bool cdataProcess::GetMonitorsInfo_shell(json & js)
 
 }
 
+// bool cdataProcess::GetOutputsInfo()
+// {
+//     // string strDisplayName = ":0";
+//     // cmyxrandr cxr(strDisplayName);
+//     cmyxrandr* pcmxrandr =  cmyxrandr::GetInstance();
+//     CMYSIZE currentSize, maxSize;   
+//     short shRet = pcmxrandr->getAllScreenInfoEx(m_vOutputInfo,currentSize,maxSize);
+//     if(shRet == 0)
+//         return true;
+//     else
+//         return false;
+// }
+
 bool cdataProcess::GetOutputsInfo_shell(json & js)
 {
-    string strDisplayName = ":0";
-    cmyxrandr cxr(strDisplayName);
+    cmyxrandr* pcmxrandr =  cmyxrandr::GetInstance();
+    // string strDisplayName = ":0";
+    // cmyxrandr cxr(strDisplayName);
     //XRRScreenSize * psize = cxr.getCurrentConfigSizes();
     CMYSIZE currentSize, maxSize;
     vector<MOutputInfo> vOutputInfo;  
-    short shRet = cxr.getAllScreenInfoEx(vOutputInfo,currentSize,maxSize);
+    short shRet = pcmxrandr->getAllScreenInfoEx(vOutputInfo,currentSize,maxSize);
+
     if(shRet == 0)
     {
-        int sortBuf[m_layout_h * m_layout_w] = {0};
+        int sortBuf[m_layout_horizontal * m_layout_vertical] = {0};
         char bufferLayout[40] = {0};
-        sprintf(bufferLayout, "%dx%d", m_layout_w,m_layout_h);
+        sprintf(bufferLayout, "%dx%d", m_layout_horizontal,m_layout_vertical);
         string layoutName = bufferLayout;
         js["layoutName"] = layoutName;
         char buffer[40] = {0};
@@ -377,8 +398,8 @@ bool cdataProcess::GetOutputsInfo_shell(json & js)
         string resolution = buffer;
         js["resolution"] = resolution;
         js["allResolution"] = m_allLayouts;
-        js["layout_horizontal"] = m_layout_h;
-        js["layout_vertical"] = m_layout_w;
+        js["layout_horizontal"] = m_layout_horizontal;
+        js["layout_vertical"] = m_layout_vertical;
         js["num"] = vOutputInfo.size();
         json jsdata;
         int nNum = vOutputInfo.size();
@@ -397,7 +418,7 @@ bool cdataProcess::GetOutputsInfo_shell(json & js)
             node["name"] = vOutputInfo[i].name;
             node["coordinateOrderX"] = (vOutputInfo[i].pos.xPos / m_nWidth);
             node["coordinateOrderY"] = (vOutputInfo[i].pos.yPos / m_nHight);
-            int id = (vOutputInfo[i].pos.xPos / m_nWidth) + (vOutputInfo[i].pos.yPos / m_nHight) * m_layout_w;
+            int id = (vOutputInfo[i].pos.xPos / m_nWidth) + (vOutputInfo[i].pos.yPos / m_nHight) * m_layout_vertical;
             sortBuf[id] = 1;
             node["id"] = id;
             node["primary"] = vOutputInfo[i].primary;
@@ -408,9 +429,9 @@ bool cdataProcess::GetOutputsInfo_shell(json & js)
             jsdata.push_back(node);
         }
 
-        if(vOutputInfo.size() < m_layout_w * m_layout_h)
+        if(vOutputInfo.size() < m_layout_vertical * m_layout_horizontal)
         {
-            for (size_t i = vOutputInfo.size(); i < m_layout_w * m_layout_h; i++)
+            for (size_t i = vOutputInfo.size(); i < m_layout_vertical * m_layout_horizontal; i++)
             {
                 json node;             
                 node["name"] = "";
@@ -440,6 +461,53 @@ bool cdataProcess::GetOutputsInfo_shell(json & js)
 
 }
 
+bool cdataProcess::GetMainOutputModes(json & js)
+{
+    cmyxrandr* pcmxrandr =  cmyxrandr::GetInstance();
+    // string strDisplayName = ":0";
+    // cmyxrandr cxr(strDisplayName);
+    //XRRScreenSize * psize = cxr.getCurrentConfigSizes();
+    CMYSIZE currentSize, maxSize;
+    vector<MOutputInfo> vOutputInfo;  
+    short shRet = pcmxrandr->getAllScreenInfoEx(vOutputInfo,currentSize,maxSize);
+
+    if(shRet == 0)
+    {
+        string strLastModeName = "";
+        for (size_t i = 0; i < vOutputInfo.size(); i++)
+        {
+            if(vOutputInfo[i].primary)
+            {
+                for (size_t j = 0; j < vOutputInfo[i].modes.size(); j++)
+                {
+                    if(strLastModeName != vOutputInfo[i].modes[j].name)
+                    {
+                        json node;
+                        node["resolution"] = vOutputInfo[i].modes[j].name;
+                        node["width"] = vOutputInfo[i].modes[j].width;
+                        node["height"] = vOutputInfo[i].modes[j].height;
+                        strLastModeName = vOutputInfo[i].modes[j].name;
+                        js.push_back(node);
+                    }
+                    else
+                        continue;                    
+                }
+               
+            }
+        }
+
+    }
+    else
+    {
+        return false;
+    }
+    XINFO("cdataProcess::GetMainOutputModes:{}",js.dump().c_str());
+    return true;
+}
+
+
+
+
 bool cdataProcess::ResetOutputsInfo()
 {
     
@@ -457,27 +525,28 @@ bool cdataProcess::SetMonitorsInfo(vector<MONITORSETTINGINFO> * vSetInfo)
 
     if(vSetInfo->size() > 0)
     {
-        string strDisplayName = ":0";
-        cmyxrandr cxr(strDisplayName);
+        // string strDisplayName = ":0";
+        // cmyxrandr cxr(strDisplayName);
+        cmyxrandr* pcmxrandr =  cmyxrandr::GetInstance();
 
         for (size_t i = 0; i < vSetInfo->size(); i++)
         {
-            cxr.setOutPut((*vSetInfo)[i].outputId);
-            RRCrtc rrcrtc = cxr.getCrtc();
-            cxr.setCrtc(rrcrtc);
+            pcmxrandr->setOutPut((*vSetInfo)[i].outputId);
+            RRCrtc rrcrtc = pcmxrandr->getCrtc();
+            pcmxrandr->setCrtc(rrcrtc);
             CMYSIZE size((*vSetInfo)[i].size.width, (*vSetInfo)[i].size.height);
-            cxr.setMode(size, 447);
+            pcmxrandr->setMode(size, 447);
         }
 
         for (size_t i = 0; i < vSetInfo->size(); i++)
         {
-            cxr.setOutPut((*vSetInfo)[i].outputId);
-            RRCrtc rrcrtc = cxr.getCrtc();
-            cxr.setCrtc(rrcrtc);
+            pcmxrandr->setOutPut((*vSetInfo)[i].outputId);
+            RRCrtc rrcrtc = pcmxrandr->getCrtc();
+            pcmxrandr->setCrtc(rrcrtc);
             //CMYSIZE size((*vSetInfo)[i].size.width, (*vSetInfo)[i].size.height);
             //CMYPOINT offset((*vSetInfo)[i].pos.xPos * m_nWidth, (*vSetInfo)[i].pos.yPos * m_nHight);
             CMYPOINT offset((*vSetInfo)[i].pos.xPos, (*vSetInfo)[i].pos.yPos);
-            cxr.setOffset(offset);
+            pcmxrandr->setOffset(offset);
         }
         
     }
@@ -500,11 +569,11 @@ bool cdataProcess::SetMonitorsInfo(vector<MONITORSETTINGINFO> * vSetInfo)
 bool cdataProcess::SetOutputsInfo(json & js)
 {
     XINFO("{}",js.dump().c_str());
-    if(js.find("layoutName") == js.end())
-    {
-        XERROR("layoutName is not exist");
-        return false;
-    }
+    // if(js.find("layoutName") == js.end())
+    // {
+    //     XERROR("layoutName is not exist");
+    //     return false;
+    // }
         
     if(js.find("resolution") == js.end())
     {
@@ -522,7 +591,7 @@ bool cdataProcess::SetOutputsInfo(json & js)
         return false;
     }
 
-    string layoutName = js["layoutName"].get<std::string>();
+    //string layoutName = js["layoutName"].get<std::string>();
     string resolution = js["resolution"].get<std::string>();
     string allResolution = js["allResolution"].get<std::string>();
     json jarry = js["layout"];
@@ -537,14 +606,15 @@ bool cdataProcess::SetOutputsInfo(json & js)
     // std::vector<std::string> vLayout = CMDEXEC::Split(layoutName, 'x');
     // int _layout_w = std::stoi(vLayout[0]);
     // int _layout_h = std::stoi(vLayout[1]);
-    int _layout_w = js["layout_horizontal"].get<int>();
-    int _layout_h = js["layout_vertical"].get<int>();
+    int _layout_horizontal = js["layout_horizontal"].get<int>();
+    int _layout_vertical = js["layout_vertical"].get<int>();
 
-    string strDisplayName = ":0";
-    cmyxrandr cxr(strDisplayName);
+    // string strDisplayName = ":0";
+    // cmyxrandr cxr(strDisplayName);
+    cmyxrandr* pcmxrandr = cmyxrandr::GetInstance();
     CMYSIZE currentSize, maxSize;
     vector<MOutputInfo> vOutputInfo;  
-    short shRet = cxr.getAllScreenInfoEx(vOutputInfo,currentSize,maxSize);
+    short shRet = pcmxrandr->getAllScreenInfoEx(vOutputInfo,currentSize,maxSize);
     if(shRet != 0)
     {
         return false;
@@ -556,19 +626,19 @@ bool cdataProcess::SetOutputsInfo(json & js)
         string output = (*it)["name"].template get<std::string>();
         int nCoordinateX = 0;
         int nCoordinateY = 0;
-        if((*it).find("coordinateOrderX") != (*it).end() && (*it).find("coordinateOrderY") != (*it).end())
-        {
-            nCoordinateX = (*it)["coordinateOrderX"].template get<int>();
-            nCoordinateY = (*it)["coordinateOrderY"].template get<int>();
-            nCoordinateX = nCoordinateX * _width;
-            nCoordinateY = nCoordinateY * _hight;
-        }
-        else
-        {
+        // if((*it).find("coordinateOrderX") != (*it).end() && (*it).find("coordinateOrderY") != (*it).end())
+        // {
+        //     nCoordinateX = (*it)["coordinateOrderX"].template get<int>();
+        //     nCoordinateY = (*it)["coordinateOrderY"].template get<int>();
+        //     nCoordinateX = nCoordinateX * _width;
+        //     nCoordinateY = nCoordinateY * _hight;
+        // }
+        // else
+        // {
             int nId = (*it)["id"].template get<int>();
-            nCoordinateX = (nId % _layout_w) * _width;
-            nCoordinateY = (nId / _layout_w) * _hight;
-        }               
+            nCoordinateX = (nId % _layout_vertical) * _width;
+            nCoordinateY = (nId / _layout_vertical) * _hight;
+        //}               
         
         bool primary = (*it)["primary"].template get<bool>();
         for (size_t i = 0; i < vOutputInfo.size(); i++)
@@ -578,17 +648,24 @@ bool cdataProcess::SetOutputsInfo(json & js)
                 MyModelInfoEX * pMode = &vOutputInfo[i].currentMode;
                 if(vOutputInfo[i].currentMode.name.compare(resolution) != 0)
                 {
-                    for (size_t i = 0; i < vOutputInfo[i].modes.size(); i++)
+                    bool bFind = false;
+                    for (size_t l = 0; l < vOutputInfo[i].modes.size(); l++)
                     {
-                        if(vOutputInfo[i].modes[i].name.compare(resolution) == 0)
+                        if(vOutputInfo[i].modes[l].name.compare(resolution) == 0)
                         { 
-                            pMode = &vOutputInfo[i].modes[i];    
-                            if(setOutputMode(vOutputInfo[i].name, vOutputInfo[i].modes[i].name,vOutputInfo[i].modes[i].rate))
+                            bFind = true;
+                            pMode = &vOutputInfo[i].modes[l];    
+                            if(!setOutputMode(vOutputInfo[i].name, vOutputInfo[i].modes[l].name,vOutputInfo[i].modes[l].rate))
                             {
                                 return false;
                             }
                             break;
                         }
+                    }
+                    if(!bFind)
+                    {
+                        XERROR("未找到相应的分辨率,can not find resolution:{}",resolution);
+                        return false;
                     }
                 }
 
@@ -605,8 +682,8 @@ bool cdataProcess::SetOutputsInfo(json & js)
         }
     }
 
-    m_layout_h = _layout_h;
-    m_layout_w = _layout_w;
+    m_layout_horizontal = _layout_horizontal;
+    m_layout_vertical = _layout_vertical;
     m_nWidth = _width;
     m_nHight = _hight;
     m_allLayouts = allResolution;
@@ -710,7 +787,7 @@ bool cdataProcess::setOutputPos(string &strOutputName, int start_x,int start_y)
     strCmd += strOutputName;
     strCmd += " --pos ";
     strCmd += strPos;
-    XINFO("exec :{}", strCmd.c_str());
+    XINFO("setOutputPos exec :{}", strCmd.c_str());
     CMDEXEC::CmdRes res;
     bool bRet = CMDEXEC::Execute(strCmd, res);
     if (!bRet)
@@ -736,7 +813,7 @@ bool cdataProcess::setOutputModeAndPos(string &strOutputName,string &strModeName
     strCmd += " --rate ";
     strCmd += strRate;
    
-    XINFO("exec :{}", strCmd.c_str());
+    XINFO("setOutputModeAndPos exec :{}", strCmd.c_str());
 
     CMDEXEC::CmdRes res;
     bool bRet = CMDEXEC::Execute(strCmd, res);
@@ -766,11 +843,13 @@ bool cdataProcess::InitOutputInfo()
         }
     }
 
-    string strDisplayName = ":0";
-    cmyxrandr cxr(strDisplayName);
+    // string strDisplayName = ":0";
+    // cmyxrandr cxr(strDisplayName);
+    //vector<MOutputInfo> vOutputInfo;
     vector<MOutputInfo> vOutputInfo;
     CMYSIZE currentSize, maxSize;
-    cxr.getAllScreenInfoEx(vOutputInfo,currentSize, maxSize);
+    cmyxrandr* pcmxrandr = cmyxrandr::GetInstance();
+    pcmxrandr->getAllScreenInfoEx(vOutputInfo,currentSize, maxSize);
 
     unsigned long currentModeId = 0,preferredModeId = 0,lastDeterminedModeId = 0;
     string lastDeterminedModeName = "",lastDeterminedModeRate = "";
@@ -860,12 +939,12 @@ bool cdataProcess::InitOutputInfo()
 
         {
 
-            if ((i - (j * m_layout_w)) >= m_layout_w)
+            if ((i - (j * m_layout_vertical)) >= m_layout_vertical)
             {
                 j++;
             }
 
-            start_x = (i - (j * m_layout_w)) * m_nWidth;
+            start_x = (i - (j * m_layout_vertical)) * m_nWidth;
             start_y = j * m_nHight;
             char buf[20] = {0};
             sprintf(buf, "%dx%d", start_x, start_y);
@@ -901,6 +980,8 @@ bool cdataProcess::InitOutputInfo()
 
        
     }
+    
+    
     
     return true;
 

@@ -33,6 +33,7 @@
 #include "nvControlInfo.h"
 #include "3rd/cpp-subprocess/subprocess.hpp"
 
+
 //#include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
@@ -59,19 +60,21 @@ private:
     std::map<XID,MY_OutputInfo *> m_mOutputsInfo;
     int m_nWidth;
     int m_nHight;
-    int m_layout_w;
-    int m_layout_h;
+    int m_layout_vertical;
+    int m_layout_horizontal;
     string m_allLayouts;
     MainWindow * m_pMainWindow;
+ 
 
 private:
+    
     bool setOutputMode(string &strOutputName, string &strModeName,string & strRate);
     bool setOutputPos(string &strOutputName, int x,int y);
     bool setOutputModeAndPos(string &strOutputName,string &strModeName,string & strRate, int w,int h);
 
 
 public:
-    cdataProcess(/* args */);
+   cdataProcess(/* args */);
     ~cdataProcess();
     void print_display_name(Display *dpy, int target_id, int attr,char *name,string & displayName);
     int GetNvXScreen(Display *dpy);
@@ -81,6 +84,9 @@ public://xrandr
     bool GetMonitorsInfo(string & strInfo);
     bool GetMonitorsInfo_shell(json & js);
     bool GetOutputsInfo_shell(json & js);
+    bool GetMainOutputModes(json & js);
+
+    //bool GetOutputsInfo();
     bool ResetOutputsInfo();
     bool GetGpuInfo(json & js);
     bool SetMonitorsInfo(vector<MONITORSETTINGINFO> *vSetInfo);

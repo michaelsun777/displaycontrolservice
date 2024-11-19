@@ -9,6 +9,7 @@
 #include "common.h"
 
 #include "exec_cmd.h"
+#include "CNvControlEvents.h"
 
 
 using namespace std;
@@ -35,9 +36,15 @@ private:
     int                 m_minor;
     int                 m_event_base; 
     int                 m_error_base;
+    static cmyxrandr *  m_instance;
+    CNvControlEvents *  m_pEvents;
+    vector<MOutputInfo> m_vOutputInfo;
+    CMYSIZE m_currentSize;
+    CMYSIZE m_maxSize;
 
 
 public:
+    static cmyxrandr * GetInstance();    
     int                 screen          () const;
     list<RRCrtc>        getAllCrtc      ();
     XRRScreenResources *pRes            () const;
@@ -92,9 +99,12 @@ public:
     XRRScreenSize * getCurrentConfigSizes();
     unsigned short getCurrentConfigRotation();
     short getAllScreenInfoEx(vector<MOutputInfo> & vOutputInfo,CMYSIZE & currentSize,CMYSIZE & maxSize);
+    short getAllScreenInfoNew(vector<MOutputInfo> & vOutputInfo,CMYSIZE & currentSize,CMYSIZE & maxSize);
     int getScreenInfoEx(MOutputInfo & vOutputInfo);
     int getScreenSizeRange(CMYSIZE & min,CMYSIZE & max);
     bool update();
+    bool Init();
+    bool OnUpdate();
 };
 
 
