@@ -10,6 +10,8 @@
 
 #include "exec_cmd.h"
 #include "CNvControlEvents.h"
+#include "3rd/json/include/nlohmann/json.hpp"
+#include <mutex>
 
 
 using namespace std;
@@ -17,7 +19,7 @@ using namespace std;
 using namespace MYCOMMON;
 
 #define MAX_SIZE 200
-
+using json = nlohmann::json;
 
 
 class cmyxrandr
@@ -41,6 +43,8 @@ private:
     vector<MOutputInfo> m_vOutputInfo;
     CMYSIZE m_currentSize;
     CMYSIZE m_maxSize;
+    vector<MYGPUINTERFACE> m_vGPUInterface;
+    std::mutex m_mutex;
 
 
 public:
@@ -105,6 +109,11 @@ public:
     bool update();
     bool Init();
     bool OnUpdate();
+    void print_display_name(Display *dpy, int target_id, int attr,char *name,string & displayName);
+    int GetNvXScreen(Display *dpy);
+    void print_display_id_and_name(Display *dpy, int target_id, const char *tab);
+    bool GetOutputAndGpuName(vector<MYGPUINTERFACE> & vgpu);
+    bool GetOutputAndGpuName(json & js);
 };
 
 

@@ -304,7 +304,7 @@ void * CNvControlEvents::workerThread(void * p)
             if (pThis->m_AtomicCounter > 0)
             {
                 int n = pThis->m_AtomicCounter;
-                sleep(2);
+                usleep(1500*1000);
                 if (n == pThis->m_AtomicCounter)
                 {
                     pThis->m_AtomicCounter = 0;

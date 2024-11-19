@@ -245,7 +245,8 @@ bool cdataProcess::GetMonitorsInfo_shell(json & js)
     cmyxrandr* pcmxrandr =  cmyxrandr::GetInstance();
     CMYSIZE currentSize, maxSize;
     vector<MOutputInfo> vOutputInfo;  
-    short shRet = pcmxrandr->getAllScreenInfoEx(vOutputInfo,currentSize,maxSize);
+    //short shRet = pcmxrandr->getAllScreenInfoEx(vOutputInfo,currentSize,maxSize);
+    short shRet = pcmxrandr->getAllScreenInfoNew(vOutputInfo,currentSize,maxSize);
     if(shRet == 0)
     {
         js["width"] = currentSize.width;   // vOutputInfo[i].size.width;
@@ -384,8 +385,8 @@ bool cdataProcess::GetOutputsInfo_shell(json & js)
     //XRRScreenSize * psize = cxr.getCurrentConfigSizes();
     CMYSIZE currentSize, maxSize;
     vector<MOutputInfo> vOutputInfo;  
-    short shRet = pcmxrandr->getAllScreenInfoEx(vOutputInfo,currentSize,maxSize);
-
+    //short shRet = pcmxrandr->getAllScreenInfoEx(vOutputInfo,currentSize,maxSize);
+    short shRet = pcmxrandr->getAllScreenInfoNew(vOutputInfo,currentSize,maxSize);
     if(shRet == 0)
     {
         int sortBuf[m_layout_horizontal * m_layout_vertical] = {0};
@@ -469,8 +470,8 @@ bool cdataProcess::GetMainOutputModes(json & js)
     //XRRScreenSize * psize = cxr.getCurrentConfigSizes();
     CMYSIZE currentSize, maxSize;
     vector<MOutputInfo> vOutputInfo;  
-    short shRet = pcmxrandr->getAllScreenInfoEx(vOutputInfo,currentSize,maxSize);
-
+    //short shRet = pcmxrandr->getAllScreenInfoEx(vOutputInfo,currentSize,maxSize);
+    short shRet = pcmxrandr->getAllScreenInfoNew(vOutputInfo,currentSize,maxSize);
     if(shRet == 0)
     {
         string strLastModeName = "";
@@ -614,7 +615,8 @@ bool cdataProcess::SetOutputsInfo(json & js)
     cmyxrandr* pcmxrandr = cmyxrandr::GetInstance();
     CMYSIZE currentSize, maxSize;
     vector<MOutputInfo> vOutputInfo;  
-    short shRet = pcmxrandr->getAllScreenInfoEx(vOutputInfo,currentSize,maxSize);
+    //short shRet = pcmxrandr->getAllScreenInfoEx(vOutputInfo,currentSize,maxSize);
+    short shRet = pcmxrandr->getAllScreenInfoNew(vOutputInfo,currentSize,maxSize);
     if(shRet != 0)
     {
         return false;
@@ -849,7 +851,8 @@ bool cdataProcess::InitOutputInfo()
     vector<MOutputInfo> vOutputInfo;
     CMYSIZE currentSize, maxSize;
     cmyxrandr* pcmxrandr = cmyxrandr::GetInstance();
-    pcmxrandr->getAllScreenInfoEx(vOutputInfo,currentSize, maxSize);
+    //pcmxrandr->getAllScreenInfoEx(vOutputInfo,currentSize, maxSize);
+    pcmxrandr->getAllScreenInfoNew(vOutputInfo,currentSize, maxSize);
 
     unsigned long currentModeId = 0,preferredModeId = 0,lastDeterminedModeId = 0;
     string lastDeterminedModeName = "",lastDeterminedModeRate = "";
@@ -993,7 +996,9 @@ bool cdataProcess::InitOutputInfo()
 
 bool cdataProcess::GetOutputAndGpuName(json & js)
 {
-        
+    cmyxrandr * p =cmyxrandr::GetInstance();
+    return p->GetOutputAndGpuName(js);
+    /*    
     int major, minor, len;
     char *start, *str0, *str1;
     int *enabledDpyIds;
@@ -1017,7 +1022,7 @@ bool cdataProcess::GetOutputAndGpuName(json & js)
     
     XINFO("Display Device Probed Information:\n\n");
 
-    /* Get the number of gpus in the system */
+
     int num_gpus = 0;
     ret = XNVCTRLQueryTargetCount(dpy, NV_CTRL_TARGET_TYPE_GPU,&num_gpus);
     if (!ret)
@@ -1028,7 +1033,7 @@ bool cdataProcess::GetOutputAndGpuName(json & js)
     }
     XINFO("number of GPUs: {}\n", num_gpus);
 
-    /* Probe and list the Display devices */
+   
 
     for (int i = 0; i < num_gpus; i++)
     {
@@ -1037,7 +1042,7 @@ bool cdataProcess::GetOutputAndGpuName(json & js)
         int deprecated;
         int *pData;
 
-        /* Get the gpu name */
+        
         char *gpuName = nullptr;
         ret = XNVCTRLQueryTargetStringAttribute(dpy, NV_CTRL_TARGET_TYPE_GPU, i, 0,NV_CTRL_STRING_PRODUCT_NAME, &gpuName);
         if (!ret)
@@ -1047,7 +1052,7 @@ bool cdataProcess::GetOutputAndGpuName(json & js)
             return false;
         }
 
-        /* Probe the GPU for new/old display devices */
+       
         ret = XNVCTRLQueryTargetAttribute(dpy,
                                           NV_CTRL_TARGET_TYPE_GPU, i,
                                           0,
@@ -1066,7 +1071,7 @@ bool cdataProcess::GetOutputAndGpuName(json & js)
         if (gpuName) XFree(gpuName);
         
 
-        /* Report results */
+        
         ret = XNVCTRLQueryTargetBinaryData(dpy,
                                            NV_CTRL_TARGET_TYPE_GPU, i,
                                            0,
@@ -1091,6 +1096,7 @@ bool cdataProcess::GetOutputAndGpuName(json & js)
         js["gpu"].push_back(node);        
     }   
     XCloseDisplay(dpy);
+    */
     return true;
 }
 

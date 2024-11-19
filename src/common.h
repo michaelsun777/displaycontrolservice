@@ -287,6 +287,13 @@ typedef struct MYOutputInfo         //定义一个cpu stat的结构体
 }MY_OUTPUT_INFO;
 
 
+typedef struct MYGPUINTERFACE
+{
+    string nvName;
+    vector<string> outputName;
+    string jsonStr; 
+}MY_GPU_INTERFACE;
+
 
 }
 
