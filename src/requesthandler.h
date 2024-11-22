@@ -11,6 +11,7 @@
 #include "../qtcommon.h"
 #include "UI/mainwindow.h"
 #include "../3rd/md5/src/md5.h"
+#include <mutex>
 
 
 using namespace stefanfrings;
@@ -27,6 +28,7 @@ class RequestHandler : public HttpRequestHandler
 private:
   std::map<int, std::string> m_mCodeMsg;
   MainWindow * m_pMain;
+  std::mutex m_mutex;
 
 public:
   /**

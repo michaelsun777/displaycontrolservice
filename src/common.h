@@ -56,6 +56,11 @@ public:
     {
         height = _height;
     }
+    void operator = (const CMYSIZE &s)
+    {
+        width = s.width;
+        height = s.height;
+    }
 
 
 public:
@@ -71,6 +76,11 @@ public:
         xPos = _x;
         yPos = _y;
 
+    }
+    void operator = (const CMYPOINT &p)
+    {
+        xPos = p.xPos;
+        yPos = p.yPos;
     }
 public:
     int xPos;
@@ -138,6 +148,27 @@ public:
     {
         //if(name) delete [] name;
     }
+    void operator=(XRRModeInfo *mode)
+    {
+        rate = "0";
+        id = mode->id;
+        width = mode->width;
+        height = mode->height;
+        dotClock = mode->dotClock;
+        hSyncStart = mode->hSyncStart;
+        hSyncEnd = mode->hSyncEnd;
+        hTotal = mode->hTotal;
+        hSkew = mode->hSkew;
+        vSyncStart = mode->vSyncStart;
+        vSyncEnd = mode->vSyncEnd;
+        vTotal = mode->vTotal;        
+        nameLength = mode->nameLength;
+        //name = new char[nameLength];
+        //memcpy(name,mode->name,nameLength);
+        std::string strTmp(mode->name);
+        name = strTmp.c_str();
+        modeFlags = mode->modeFlags;
+    }
 
     void operator=(MyModelInfoEX mode)
     {
@@ -193,6 +224,7 @@ struct MOutputInfo
     std::vector<MyModelInfoEX> modes;
     MyModelInfoEX currentMode;
     MyModelInfoEX preferredMode;
+    bool bIsSeted;
     
 };
 

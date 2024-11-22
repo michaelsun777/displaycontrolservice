@@ -32,6 +32,7 @@ private:
     int                  m_screen;
     RRCrtc               m_crtc;
     RROutput             m_output;
+    string               m_outputName;
     XRRScreenConfiguration * m_psConfig;
     string m_strDisplayName;
     int                 m_major;
@@ -98,10 +99,12 @@ public:
     cmyxrandr(string strDisplayName,RROutput output = 0);
     ~cmyxrandr();
     void setOutPut(RROutput output);
+    void setOutPutName(string outputName);
     void setCrtc(RRCrtc crtc);
     XRRMonitorInfo * getScreenInfo();
     XRRScreenSize * getCurrentConfigSizes();
     unsigned short getCurrentConfigRotation();
+    short getAllScreenInfoXrandr(vector<MOutputInfo> & vOutputInfo,CMYSIZE & currentSize,CMYSIZE & maxSize);
     short getAllScreenInfoEx(vector<MOutputInfo> & vOutputInfo,CMYSIZE & currentSize,CMYSIZE & maxSize);
     short getAllScreenInfoNew(vector<MOutputInfo> & vOutputInfo,CMYSIZE & currentSize,CMYSIZE & maxSize);
     int getScreenInfoEx(MOutputInfo & vOutputInfo);
@@ -114,6 +117,7 @@ public:
     void print_display_id_and_name(Display *dpy, int target_id, const char *tab);
     bool GetOutputAndGpuName(vector<MYGPUINTERFACE> & vgpu);
     bool GetOutputAndGpuName(json & js);
+    bool SetOutputIsChanged();
 };
 
 

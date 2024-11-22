@@ -6,6 +6,7 @@
 
 CNvControlEvents::CNvControlEvents(cmyxrandr *p) : m_pcmyxrandr(p)
 {
+    m_AtomicCounter = 0;
 }
 
 CNvControlEvents::CNvControlEvents()
@@ -263,6 +264,7 @@ void * CNvControlEvents::workerThreadListen(void * p)
     CNvControlEvents * pThis = (CNvControlEvents *)p;
     try
     {
+        sleep(30);
         while (pThis->m_bRunning)
         {
             XEvent event;
@@ -299,22 +301,28 @@ void * CNvControlEvents::workerThread(void * p)
     CNvControlEvents * pThis = (CNvControlEvents *)p;
     try
     {
+        sleep(30);
         while (pThis->m_bRunning)
         {
-            if (pThis->m_AtomicCounter > 0)
+
+            int n = pThis->m_AtomicCounter;
+            if (n > 0)
             {
-                int n = pThis->m_AtomicCounter;
-                usleep(1500*1000);
-                if (n == pThis->m_AtomicCounter)
-                {
-                    pThis->m_AtomicCounter = 0;
-                    pThis->m_pcmyxrandr->OnUpdate();
-                }
-                else
-                {
-                    continue;
-                }
+                usleep(2900 * 1000);
+
+            }                
+            else
+            {
+                usleep(100*1000);
+                continue;
             }
+
+            if (n == pThis->m_AtomicCounter)
+            {
+                usleep(2900 * 1000);
+                pThis->m_pcmyxrandr->OnUpdate();
+                pThis->m_AtomicCounter = 0;                
+            }           
         }
     }
     catch (...)
@@ -339,4 +347,10 @@ void CNvControlEvents::start()
         printf("Failed to create thread\n");
     }
 
+}
+
+bool CNvControlEvents::setIsChanged()
+{
+    m_AtomicCounter.fetch_add(1);
+    return true;
 }

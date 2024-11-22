@@ -18,6 +18,7 @@ cmyxrandr* cmyxrandr::GetInstance()
 
 cmyxrandr::cmyxrandr(string strDisplayName, RROutput output) : m_screen(0), m_output(output), m_psConfig(0)
 {
+    m_outputName = "";
     m_major = 0;
     m_minor = 0;
 
@@ -64,7 +65,11 @@ bool cmyxrandr::update()
 
 void cmyxrandr::setOutPut(RROutput output)
 {
-    m_output = output;
+    m_output = output;    
+}
+void cmyxrandr::setOutPutName(string outputName)
+{
+    m_outputName = outputName;
 }
 
 void cmyxrandr::setCrtc(RRCrtc crtc)
@@ -284,6 +289,7 @@ int cmyxrandr::setOffset(CMYPOINT offset)
         }
         this->feedScreen();
     }
+    XINFO("cmyxrandr::setOffset {} ret={}\n",m_outputName,ret);
     return ret;
 }
 
@@ -323,11 +329,12 @@ int cmyxrandr::setMode(CMYSIZE size,RRMode rrmode)
                 XRRFreeCrtcInfo(crtc_info);
             }
             else
-                XINFO("Modo width={},height={},No soportado", size.width, size.height);
+                XINFO("cmyxrandr::setMode Modo width={},height={},No soportado", size.width, size.height);
         }
     }
     this->feedScreen();
     XSync(m_pDpy, false);
+    XINFO("cmyxrandr::setMode {} ret={}\n",m_outputName,ret);
     return (int)ret;
 }
 
@@ -463,7 +470,7 @@ int cmyxrandr::feedScreen()
         }
     }
     this->setScreenSize(size.width, size.height, true);
-    XINFO("Modo width={},height={}, No soportado ", size.width, size.height);
+    XINFO("cmyxrandr::feedScreen() Modo width={},height={}", size.width, size.height);
     return 0;
 }
 
@@ -845,23 +852,190 @@ unsigned short cmyxrandr::getCurrentConfigRotation()
 
 short cmyxrandr::getAllScreenInfoNew(vector<MOutputInfo> & vOutputInfo,CMYSIZE & currentSize,CMYSIZE & maxSize)
 {
+    vOutputInfo.clear();
     m_mutex.lock();
     currentSize = m_currentSize;
     maxSize = m_maxSize;
     for (size_t i = 0; i < m_vOutputInfo.size(); i++)
     {
-        vOutputInfo.push_back(m_vOutputInfo[i]);
+        MOutputInfo out;
+        out.name = m_vOutputInfo[i].name;
+        out.connected = m_vOutputInfo[i].connected;
+        out.primary = m_vOutputInfo[i].primary;
+        out.current_rotation = m_vOutputInfo[i].current_rotation;
+        out.outputId = m_vOutputInfo[i].outputId;
+        out.pos = m_vOutputInfo[i].pos;
+        out.size = m_vOutputInfo[i].size;
+        out.mmsize = m_vOutputInfo[i].mmsize;
+        out.geometry = m_vOutputInfo[i].geometry;
+        out.currentMode = m_vOutputInfo[i].currentMode;
+        out.preferredMode = m_vOutputInfo[i].preferredMode;
+        out.bIsSeted = false;
+        for (size_t j = 0; j < m_vOutputInfo[i].modes.size(); j++)
+        {
+            MyModelInfoEX mode = m_vOutputInfo[i].modes[j];
+            out.modes.push_back(mode);
+        }
+        vOutputInfo.push_back(out);
     }
     m_mutex.unlock();
     return 0;   
 
 }
 
-short cmyxrandr::getAllScreenInfoEx(vector<MOutputInfo> & vOutputInfo,CMYSIZE & currentSize,CMYSIZE & maxSize)
+short cmyxrandr::getAllScreenInfoXrandr(vector<MOutputInfo> & vOutputInfo,CMYSIZE & currentSize,CMYSIZE & maxSize)
 {
     try
     {
+        getCurrentConfigSizes();
+        CMYSIZE min,max;    
+        getScreenSizeRange(min,max);
 
+        m_screen = DefaultScreen(m_pDpy);
+        m_root = RootWindow(m_pDpy, m_screen);
+        // XRRScreenResources * pCurentScreenResources = XRRGetScreenResourcesCurrent (m_pDpy, m_root);
+        // SizeID sizeID = XRRGetPreferredCrtc(display, config);
+
+        //XRRScreenConfiguration *config = XRRGetScreenInfo(m_pDpy, m_root);
+        //int x_return, y_return;
+        //unsigned int width, height;
+        
+
+
+
+        RROutput primaryRroutput = XRRGetOutputPrimary(m_pDpy, m_root);
+        for (int nout = 0; nout < m_pRes->noutput; nout++)
+        {
+            XRROutputInfo *outinfo = XRRGetOutputInfo(m_pDpy, m_pRes, m_pRes->outputs[nout]);
+            
+            //string strStatus = outinfo->connection ? "Not connected":"Connected";
+            if(!outinfo->connection)
+            {
+                MOutputInfo moutputinfo;
+                moutputinfo.outputId = m_pRes->outputs[nout];
+                moutputinfo.name = outinfo->name;
+                moutputinfo.mmsize.width = outinfo->mm_width;
+                moutputinfo.mmsize.height = outinfo->mm_height;
+                moutputinfo.connected = true;
+                if (moutputinfo.name.find("VGA") != string::npos || moutputinfo.name.find("Virtual") != string::npos)
+                {
+                    continue;
+                }
+
+                if(primaryRroutput == m_pRes->outputs[nout])//主显示器
+                {
+                    moutputinfo.primary = true;
+                }
+
+                if (outinfo->nmode > 0)//支持的mode
+                {                    
+                    //list<MyModelInfoEX *> modes = pcmxrandr->getOutputModes();
+                    XRROutputInfo *pOutputInfo = XRRGetOutputInfo(m_pDpy, m_pRes, m_pRes->outputs[nout]);
+                    if (pOutputInfo)
+                    {
+                        for (int j = 0; j < pOutputInfo->nmode; j++)
+                        {
+                            for (int m = 0; m < m_pRes->nmode; m++)
+                            {
+                                if (pOutputInfo->modes[j] == m_pRes->modes[m].id)
+                                {
+                                    XRRModeInfo *mode = &m_pRes->modes[m];
+                                    MyModelInfoEX modex(mode);
+                                    if (j == 0)
+                                    {
+                                        moutputinfo.preferredMode = modex;
+                                    }
+                                    moutputinfo.modes.push_back(modex);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                }
+
+                if (outinfo->crtc > 0)
+                {                    
+                    XRRCrtcInfo *rcrtinfo = XRRGetCrtcInfo(m_pDpy, m_pRes, outinfo->crtc);
+                    moutputinfo.pos.xPos = rcrtinfo->x;
+                    moutputinfo.pos.yPos = rcrtinfo->y;
+                    moutputinfo.size.width = rcrtinfo->width;
+                    moutputinfo.size.height = rcrtinfo->height;
+                    if(currentSize.width < rcrtinfo->width)
+                        currentSize.width = rcrtinfo->width;
+                    if(currentSize.height < rcrtinfo->height)
+                        currentSize.height = rcrtinfo->height;
+
+                    moutputinfo.current_rotation = rcrtinfo->rotation;
+                    if((unsigned long)rcrtinfo->mode > 0)//当前分辨率id
+                    {
+                        for(size_t tloop = 0;tloop < moutputinfo.modes.size();tloop++)
+                        {
+                            if(moutputinfo.modes[tloop].id == (unsigned long)rcrtinfo->mode)
+                            {
+                                moutputinfo.currentMode = moutputinfo.modes[tloop];
+                                break;
+                            }
+                        }
+                    }
+
+                    XRRFreeCrtcInfo(rcrtinfo);
+                }
+                else
+                {
+                    // moutputinfo.currentMode = ;
+                    moutputinfo.pos.xPos = 0;
+                    moutputinfo.pos.yPos = 0;
+                }
+                vOutputInfo.push_back(moutputinfo);
+            }
+            else
+            {
+                ;//"Not connected"
+            }
+            XRRFreeOutputInfo(outinfo);
+
+/*XRRModeFlags	modeFlags;
+#define XCONFIG_MODE_PHSYNC    0x0001
+#define XCONFIG_MODE_NHSYNC    0x0002
+#define XCONFIG_MODE_PVSYNC    0x0004
+#define XCONFIG_MODE_NVSYNC    0x0008
+#define XCONFIG_MODE_INTERLACE 0x0010
+#define XCONFIG_MODE_DBLSCAN   0x0020
+#define XCONFIG_MODE_CSYNC     0x0040
+#define XCONFIG_MODE_PCSYNC    0x0080
+#define XCONFIG_MODE_NCSYNC    0x0100
+#define XCONFIG_MODE_HSKEW     0x0200 //hskew provided 
+#define XCONFIG_MODE_BCAST     0x0400
+#define XCONFIG_MODE_CUSTOM    0x0800 //timing numbers customized by editor 
+#define XCONFIG_MODE_VSCAN     0x1000
+*/
+             
+        
+        }
+
+        // for (vector<MOutputInfo>::iterator itor = vOutputInfo.begin(); itor != vOutputInfo.end(); ++itor)
+        // {
+            // if (itor->name.find("VGA") != string::npos || itor->name.find("Virtual") != string::npos)
+            // {
+            //     vOutputInfo.erase(itor);
+            //     itor--;
+            // }
+        // }
+
+    }
+    catch(...)
+    {
+        XERROR("cmyxrandr::getAllScreenInfoXrandr error {}",errno);
+        return -1;
+    }
+    return 0;
+}
+
+short cmyxrandr::getAllScreenInfoEx(vector<MOutputInfo> & vOutputInfo,CMYSIZE & currentSize,CMYSIZE & maxSize)
+{
+    try
+    {        
         CMDEXEC::CmdRes res;
         bool bret = CMDEXEC::Execute("xrandr --verbose", res);
         printf("%s\n", res.StdoutString.c_str());
@@ -1188,11 +1362,17 @@ bool cmyxrandr::Init()
 bool cmyxrandr::OnUpdate()
 {
     m_mutex.lock();
-    m_vOutputInfo.clear();
+    //m_vOutputInfo.clear();
     m_vGPUInterface.clear();
-    getAllScreenInfoEx(m_vOutputInfo,m_currentSize,m_maxSize);
+    //getAllScreenInfoEx(m_vOutputInfo,m_currentSize,m_maxSize);
+    //getAllScreenInfoXrandr(m_vOutputInfo,m_currentSize,m_maxSize);
     GetOutputAndGpuName(m_vGPUInterface);
     m_mutex.unlock();
+    if(m_vGPUInterface.size() == 0)
+    {
+        SetOutputIsChanged();
+    }
+
     return true;
 }
 
@@ -1390,8 +1570,16 @@ bool cmyxrandr::GetOutputAndGpuName(json & js)
         return true;
     }
     else
+    {
+        SetOutputIsChanged();
         return false;
+    }
 
 
     return true;
+}
+
+bool cmyxrandr::SetOutputIsChanged()
+{
+    return m_pEvents->setIsChanged();
 }

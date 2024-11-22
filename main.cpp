@@ -28,11 +28,13 @@
 
 
 #define VER_AUTO
-std::string g_NameString = "Display Ctrl Server";
-std::string g_VERSION = "DCS-0.0.1-241021-1";
-std::string g_BRANCH = "1.0";
+std::string g_NameString = "Display Control Service";
+std::string g_VERSION = "dpcs-0.0.1-241120-1";
+std::string g_BRANCH = "dev";
 std::string g_DATE = g_build_date_time;// "231103";
-std::string g_NOTE = "XXX";
+std::string g_NOTE = "";
+
+void dumpVersion();
 
 
 int main(int argc, char *argv[])
@@ -41,6 +43,7 @@ int main(int argc, char *argv[])
     
     int nRet = 0;
     std::shared_ptr<CSpdlog> splog(CSpdlog::GetInstance());
+    dumpVersion();
     try
     {
         QFile fileUser("./user.db");
@@ -108,13 +111,14 @@ int main(int argc, char *argv[])
 
         QApplication::setQuitOnLastWindowClosed(false);
         
-        cdataProcess dataProcess;
+        //cdataProcess dataProcess;
         // dataProcess.TestMonitorInfo();
         // sleep(3);
         // return 0;
-        
-        dataProcess.SetMainWindow(&w);
-        dataProcess.InitOutputInfo(); 
+        cdataProcess* pcdataProcess = cdataProcess::GetInstance();
+        pcdataProcess->SetMainWindow(&w);
+        pcdataProcess->InitOutputInfo(); 
+        pcdataProcess->InitMainOutputModes();
         QObject::connect(pRequestHandler,&RequestHandler::sendDlgSignal,&w,&MainWindow::onMouseEventRequested);
           
 
@@ -136,4 +140,21 @@ int main(int argc, char *argv[])
     }
 
     return nRet;
+}
+
+void dumpVersion()
+{
+    XINFO("\n");
+    XINFO("========================================================");
+    XINFO("{}",g_NameString.c_str());
+#ifdef VER_AUTO
+    XINFO("Version:{}",g_VERSION.c_str());
+    XINFO("Branch: {}", g_BRANCH.c_str());
+    XINFO("compile date: {}",g_DATE.c_str());
+#else
+    printf("Version:  \n");
+    printf("Branch:   \n");
+#endif
+    XINFO("NOTE: {}",g_NOTE.c_str());
+    XINFO("========================================================\n");
 }

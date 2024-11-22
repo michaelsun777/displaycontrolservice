@@ -192,9 +192,10 @@ void RequestHandler::getMonitorInfo(const HttpRequest &req, HttpResponse& res)
    
     
     string strData;
-    cdataProcess dataprocess;
+    //cdataProcess dataprocess;
+    cdataProcess* pcdataProcess = cdataProcess::GetInstance();
     json js;
-    if(dataprocess.GetMonitorsInfo_shell(js))
+    if(pcdataProcess->GetMonitorsInfo_shell(js))
     {
         createRet(res,200,js);
 
@@ -212,20 +213,24 @@ void RequestHandler::getMonitorInfo(const HttpRequest &req, HttpResponse& res)
 void RequestHandler::getOutputsMode(const HttpRequest &req, HttpResponse& res)
 {
     string strData;
-    cdataProcess dataprocess;
+    //cdataProcess dataprocess;
     json js;
     try
     {
-        if(dataprocess.GetMainOutputModes(js))
+        cdataProcess* pcdataProcess = cdataProcess::GetInstance();
+        m_mutex.lock();
+        if(pcdataProcess->GetMainOutputModes(js))
         {
             createRet(res,200,js);
+            m_mutex.unlock();
         }
+        m_mutex.unlock();
     }
     catch(...)
     {
         createRet(res,500);
-    }
-    
+        m_mutex.unlock();
+    }  
 
 
 }
@@ -233,20 +238,36 @@ void RequestHandler::getOutputsMode(const HttpRequest &req, HttpResponse& res)
 void RequestHandler::getOutputsInfo(const HttpRequest &req, HttpResponse &res)
 {
     string strData;
-    cdataProcess dataprocess;
+    //cdataProcess dataprocess;
     json js;
-    if(dataprocess.GetOutputsInfo_shell(js))
+    try
     {
-        createRet(res,200,js);
+        cdataProcess *pcdataProcess = cdataProcess::GetInstance();
+        int nRet = pcdataProcess->GetOutputsInfo_shell(js);
+        if (nRet == 0)
+        {
+            createRet(res, 200, js);
 
-        //res.set_content(strData, "application/json");
+            // res.set_content(strData, "application/json");
+        }
+        else if(nRet == -1)
+        {
+            createRet(res, 500);
+        }
+        else
+        {
+            // string strRet = "{\"result\":\"error\",\"msg\":\"test error\"}";
+            // res.set_content(strRet, "application/json");
+            createRet(res, 204);
+        }
+        /* code */
     }
-    else
+    catch(const std::exception& e)
     {
-        // string strRet = "{\"result\":\"error\",\"msg\":\"test error\"}";
-        // res.set_content(strRet, "application/json");
-        createRet(res,204);
+        std::cerr << e.what() << '\n';
     }
+    
+    
 
 }
 
@@ -256,8 +277,11 @@ void RequestHandler::getGpusInfo(const HttpRequest &req, HttpResponse& res)
     json js;
     try
     {
-        cdataProcess dataprocess;
-        if (dataprocess.GetGpuInfo(js))
+        
+        //cdataProcess dataprocess;
+        cdataProcess *pcdataProcess = cdataProcess::GetInstance();
+        m_mutex.lock();
+        if (pcdataProcess->GetGpuInfo(js))
         {
             createRet(res, 200, js);
         }
@@ -265,9 +289,11 @@ void RequestHandler::getGpusInfo(const HttpRequest &req, HttpResponse& res)
         {
             createRet(res, 204);
         }
+        m_mutex.unlock();
     }
     catch (...)
     {
+        m_mutex.unlock();
         createRet(res, 500);
     }
 }
@@ -278,7 +304,7 @@ void RequestHandler::resetOutputsInfo(const HttpRequest &req, HttpResponse& res)
     json js;
     try
     {
-
+        
         QSettings settings("config.ini", QSettings::IniFormat);
         settings.beginGroup("outputsSettings");
         // settings.setValue("outputs", js.dump().c_str());
@@ -286,22 +312,31 @@ void RequestHandler::resetOutputsInfo(const HttpRequest &req, HttpResponse& res)
         settings.endGroup();
         settings.beginGroup("screen");
         settings.setValue("isSetting", "false");
+        settings.setValue("height", "1080");
+        settings.setValue("width", "1920");
+        settings.setValue("layout_horizontal", "1");
+        settings.setValue("layout_vertical", "1");
         settings.endGroup();
         settings.sync();
 
-        cdataProcess dataprocess;
-        if (dataprocess.InitOutputInfo())
+        //cdataProcess dataprocess;       
+        cdataProcess *pcdataProcess = cdataProcess::GetInstance();
+        m_mutex.lock(); 
+        if (pcdataProcess->InitOutputInfo())
         {
+            pcdataProcess->ResetOutputsInfo();
             createRet(res, 200);
         }
         else
         {
             createRet(res, 204);
         }
+        m_mutex.unlock();
     }
     catch (...)
     {
-        createRet(res, 500);
+        m_mutex.unlock();
+        createRet(res, 500);        
     }
 
 }
@@ -312,8 +347,9 @@ void RequestHandler::getGpuInterface(const HttpRequest &req, HttpResponse& res)
     json js;
     try
     {
-        cdataProcess dataprocess;     
-        if(dataprocess.GetOutputAndGpuName(js))
+        //cdataProcess dataprocess;  
+        cdataProcess *pcdataProcess = cdataProcess::GetInstance();   
+        if(pcdataProcess->GetOutputAndGpuName(js))
         {
             createRet(res,200,js);
         }
@@ -369,8 +405,9 @@ void RequestHandler::setMonitorInfo(const HttpRequest &req, HttpResponse& res)
         string strErrorMsg;
         try
         {
-            cdataProcess dataprocess;
-            bRet = dataprocess.SetMonitorsInfo(&vSetInfo);
+            //cdataProcess dataprocess;
+            cdataProcess *pcdataProcess = cdataProcess::GetInstance();
+            bRet = pcdataProcess->SetMonitorsInfo(&vSetInfo);
         }
         catch(...)
         {
@@ -462,8 +499,11 @@ void RequestHandler::setOutputsInfo(const HttpRequest &req, HttpResponse &res)
             }
         }
         
-        cdataProcess dataprocess;
-        bool bRet = dataprocess.SetOutputsInfo(js);
+        //cdataProcess dataprocess;
+        cdataProcess *pcdataProcess = cdataProcess::GetInstance();
+        m_mutex.lock();
+        //bool bRet = pcdataProcess->SetOutputsInfo(js);
+        bool bRet = pcdataProcess->setOutputsXrandr(js);
         if (bRet)
         {
             //string layoutName = js["layoutName"].get<std::string>();
@@ -495,14 +535,18 @@ void RequestHandler::setOutputsInfo(const HttpRequest &req, HttpResponse &res)
             settings.sync();
             
             createRet(res, 200);
+            m_mutex.unlock();
         }
         else
         {
+            m_mutex.unlock();
             createRet(res, 500);
         }
+
     }
     catch(...)
     {
+        m_mutex.unlock();
         createRet(res,400);
     }  
 
@@ -513,9 +557,10 @@ void RequestHandler::setOutputsInfo(const HttpRequest &req, HttpResponse &res)
 void RequestHandler::getServerInfo(const HttpRequest &req, HttpResponse &res)
 {
     string strData;
-    cdataProcess dataprocess;
+    //cdataProcess dataprocess;
+    cdataProcess *pcdataProcess = cdataProcess::GetInstance();
     json js;
-    if(dataprocess.GetServerInfo(js))
+    if(pcdataProcess->GetServerInfo(js))
     {
         createRet(res,200,js);
 

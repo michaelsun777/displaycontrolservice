@@ -47,6 +47,7 @@ public:
     const char *target2str(int n);
     bool init();
     void start();
+    bool setIsChanged();
 };
 
 
