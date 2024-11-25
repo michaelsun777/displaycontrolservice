@@ -1000,27 +1000,33 @@ bool cdataProcess::TestMonitorInfo()
 
 bool cdataProcess::GetGpuInfo(json & js)
 {
-    //json js;
-    MGPUINFOEX gpu;
-    nvControlInfo nv;
-    if(nv.getGpuInfo(gpu))
+    try
     {
-        for (size_t i = 0; i < gpu.vgpus.size(); i++)
+        MGPUINFOEX gpu;
+        nvControlInfo nv;
+        if (nv.getGpuInfo(gpu))
         {
-            MGPUINFO info = gpu.vgpus[i];
-            json node;
-            node["gpuId"] = info.id;
-            node["fan"] = info.Fan;
-            node["mem"] = info.Mem;
-            node["name"] = info.name;
-            node["perf"] = info.Perf;
-            node["pwr"] = info.Pwr;
-            node["tempture"] = info.Temp;
-            node["util"] = info.Util;
-            js["gpus"].push_back(node);            
+            for (size_t i = 0; i < gpu.vgpus.size(); i++)
+            {
+                MGPUINFO info = gpu.vgpus[i];
+                json node;
+                node["gpuId"] = info.id;
+                node["fan"] = info.Fan;
+                node["mem"] = info.Mem;
+                node["name"] = info.name;
+                node["perf"] = info.Perf;
+                node["pwr"] = info.Pwr;
+                node["tempture"] = info.Temp;
+                node["util"] = info.Util;
+                js["gpus"].push_back(node);
+            }
+            // strInfo = js.dump().c_str();
+            return true;
         }
-        //strInfo = js.dump().c_str();
-        return true;
+    }
+    catch(...)
+    {
+        XERROR("cdataProcess::GetGpuInfo errno={}",errno);
     }
     return false;
 }

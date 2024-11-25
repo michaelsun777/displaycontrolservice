@@ -46,64 +46,68 @@ void RequestHandler::sendSignal(int type,QtDlgInfo & dlgInfo)
 
 void RequestHandler::service(HttpRequest& request, HttpResponse& response)
 {
-    QByteArray path = request.getPath();
-    XINFO("Conroller: path={}", path.data());
+    try
+    {
+        QByteArray path = request.getPath();
+        XINFO("Conroller: path={}", path.data());
+
+        response.setHeader("Content-Type", "application/json");
+
+        if (path.startsWith("/displayctrlserver/get/monitor/info"))
+        {
+            getMonitorInfo(request, response);
+        }
+        else if (path.startsWith("/displayctrlserver/get/outputs/resolution"))
+        {
+            getOutputsMode(request, response);
+        }
+        else if (path.startsWith("/displayctrlserver/get/outputs/info"))
+        {
+            getOutputsInfo(request, response);
+        }
+        else if (path.startsWith("/displayctrlserver/get/gpu/info"))
+        {
+            getGpusInfo(request, response);
+        }
+        else if (path.startsWith("/displayctrlserver/get/outputs/reset"))
+        {
+            resetOutputsInfo(request, response);
+        }
+        else if (path.startsWith("/displayctrlserver/get/gpu/Interface"))
+        {
+            getGpuInterface(request, response);
+        }
+        else if (path.startsWith("/displayctrlserver/set/monitor/info"))
+        {
+            setMonitorInfo(request, response);
+        }
+        else if (path.startsWith("/displayctrlserver/set/outputs/info"))
+        {
+            setOutputsInfo(request, response);
+        }
+        else if (path.startsWith("/displayctrlserver/dialog"))
+        {
+            DialogController().service(this, m_pMain, request, response);
+        }
+        else if (path.startsWith("/displayctrlserver/get/server/info"))
+        {
+            getServerInfo(request, response);
+        }
+        else if (path.startsWith("/displayctrlserver/login"))
+        {
+            login(request, response);
+        }
+        else
+        {
+            createRet(response, 404);
+        }
+    }
+    catch(...)
+    {
+        m_mutex.unlock();
+        XINFO("{RequestHandler::service catch unlock}\n");        
+    }
     
-
-    response.setHeader("Content-Type", "application/json");
-
-    if (path.startsWith("/displayctrlserver/get/monitor/info"))
-    {
-        getMonitorInfo(request, response);
-    }
-    else if(path.startsWith("/displayctrlserver/get/outputs/resolution"))
-    {
-        getOutputsMode(request, response);
-    }
-    else if (path.startsWith("/displayctrlserver/get/outputs/info"))
-    {
-        getOutputsInfo(request, response);
-    }
-    else if (path.startsWith("/displayctrlserver/get/gpu/info"))
-    {
-        getGpusInfo(request, response);
-    }
-    else if (path.startsWith("/displayctrlserver/get/outputs/reset"))
-    {
-        resetOutputsInfo(request, response);
-    }
-    else if (path.startsWith("/displayctrlserver/get/gpu/Interface"))
-    {
-        getGpuInterface(request, response);
-    }
-    else if (path.startsWith("/displayctrlserver/set/monitor/info"))
-    {
-        setMonitorInfo(request, response);
-    }
-    else if (path.startsWith("/displayctrlserver/set/outputs/info"))
-    {
-        setOutputsInfo(request, response);
-    }
-    else if(path.startsWith("/displayctrlserver/dialog"))
-    {        
-        DialogController().service(this,m_pMain,request, response);
-    }
-    else if(path.startsWith("/displayctrlserver/get/server/info"))
-    {
-        getServerInfo(request, response);
-    }    
-    else if(path.startsWith("/displayctrlserver/login"))
-    {
-        login(request, response);
-    }
-    else{
-        createRet(response,404);
-    }
-
-
-    //emit testSignal(3);   
-   
-
     XINFO("RequestHandler: finished request");
 }
 
@@ -163,12 +167,16 @@ void RequestHandler::login(const HttpRequest &req, HttpResponse &res)
         json jdata = json::parse(body);
         string strUserName = jdata.at("username").get<string>();
         string strPwd = jdata.at("password").get<string>();
+        XINFO("{RequestHandler::login lock}\n");
+        m_mutex.lock();
         QSettings config("user.db", QSettings::IniFormat);
         config.value("user/name", "admin");
         string localPwd = config.value("user/pwd", "admin").toString().toStdString();
         MD5 md5(localPwd);
         string loacalPwdMd5 = md5.toStr();
-         
+        m_mutex.unlock();
+        XINFO("{RequestHandler::login unlock}\n");
+        
         if(strUserName.compare("admin") == 0 && strPwd.compare(loacalPwdMd5) == 0)
         {
             createRet(res,200);
@@ -176,27 +184,32 @@ void RequestHandler::login(const HttpRequest &req, HttpResponse &res)
         else
         {
             createRet(res,401);
-        }       
+        }
+        
     }
     catch(...)
     {
         createRet(res,500);
+        m_mutex.unlock();
+        XINFO("{RequestHandler::login cache unlock}\n");
     }
-    
-    
+
 }
 
 
 void RequestHandler::getMonitorInfo(const HttpRequest &req, HttpResponse& res)
 {
-   
-    
     string strData;
     //cdataProcess dataprocess;
     cdataProcess* pcdataProcess = cdataProcess::GetInstance();
     json js;
+    XINFO("{RequestHandler::getMonitorInfo lock}\n");
+    m_mutex.lock();
     if(pcdataProcess->GetMonitorsInfo_shell(js))
     {
+        m_mutex.unlock();
+        XINFO("{RequestHandler::getMonitorInfo unlock0}\n");
+        return;
         createRet(res,200,js);
 
         //res.set_content(strData, "application/json");
@@ -206,7 +219,10 @@ void RequestHandler::getMonitorInfo(const HttpRequest &req, HttpResponse& res)
         // string strRet = "{\"result\":\"error\",\"msg\":\"test error\"}";
         // res.set_content(strRet, "application/json");
         createRet(res,204);
-    }   
+        m_mutex.unlock();
+        XINFO("{RequestHandler::getMonitorInfo unlock1}\n");
+        return;
+    }
 
 }
 
@@ -218,18 +234,23 @@ void RequestHandler::getOutputsMode(const HttpRequest &req, HttpResponse& res)
     try
     {
         cdataProcess* pcdataProcess = cdataProcess::GetInstance();
-        m_mutex.lock();
+        XINFO("{RequestHandler::getOutputsMode lock}\n");
+        m_mutex.lock();        
         if(pcdataProcess->GetMainOutputModes(js))
         {
             createRet(res,200,js);
             m_mutex.unlock();
+            XINFO("{RequestHandler::getOutputsMode unlock0}\n");
+            return;
         }
         m_mutex.unlock();
+        XINFO("{RequestHandler::getOutputsMode unlock}\n");
     }
     catch(...)
     {
         createRet(res,500);
         m_mutex.unlock();
+        XINFO("{RequestHandler::getOutputsMode catch unlock}\n");
     }  
 
 
@@ -243,31 +264,40 @@ void RequestHandler::getOutputsInfo(const HttpRequest &req, HttpResponse &res)
     try
     {
         cdataProcess *pcdataProcess = cdataProcess::GetInstance();
+        XINFO("{RequestHandler::getOutputsInfo lock}\n");
+        m_mutex.lock();
         int nRet = pcdataProcess->GetOutputsInfo_shell(js);
         if (nRet == 0)
         {
+            m_mutex.unlock();
+            XINFO("{RequestHandler::getOutputsInfo unlock0}\n");
             createRet(res, 200, js);
+            return;
 
             // res.set_content(strData, "application/json");
         }
         else if(nRet == -1)
         {
+            m_mutex.unlock();
+            XINFO("{RequestHandler::getOutputsInfo unlock1}\n");
             createRet(res, 500);
+            return;
         }
         else
         {
-            // string strRet = "{\"result\":\"error\",\"msg\":\"test error\"}";
-            // res.set_content(strRet, "application/json");
+            m_mutex.unlock();
+            XINFO("{RequestHandler::getOutputsInfo unlock2}\n");
             createRet(res, 204);
+            return;
         }
-        /* code */
     }
-    catch(const std::exception& e)
+    catch(...)
     {
-        std::cerr << e.what() << '\n';
+        XERROR("RequestHandler::getOutputsInfo error errno = {}",errno);
+        createRet(res, 500);
+        m_mutex.unlock();
+        XINFO("{RequestHandler::getOutputsInfo catch unlock}\n");
     }
-    
-    
 
 }
 
@@ -280,20 +310,26 @@ void RequestHandler::getGpusInfo(const HttpRequest &req, HttpResponse& res)
         
         //cdataProcess dataprocess;
         cdataProcess *pcdataProcess = cdataProcess::GetInstance();
+        XINFO("{RequestHandler::getGpusInfo lock}\n");
         m_mutex.lock();
         if (pcdataProcess->GetGpuInfo(js))
         {
+            m_mutex.unlock();
+            XINFO("{RequestHandler::getGpusInfo unlock0}\n");
             createRet(res, 200, js);
+            return;
         }
         else
         {
             createRet(res, 204);
         }
         m_mutex.unlock();
+        XINFO("{RequestHandler::getGpusInfo unlock}\n");
     }
     catch (...)
     {
         m_mutex.unlock();
+        XINFO("{RequestHandler::getGpusInfo catch unlock}\n");
         createRet(res, 500);
     }
 }
@@ -304,7 +340,9 @@ void RequestHandler::resetOutputsInfo(const HttpRequest &req, HttpResponse& res)
     json js;
     try
     {
-        
+        m_mutex.unlock();
+        m_mutex.unlock();
+        XINFO("{RequestHandler::resetOutputsInfo unlock0}\n");
         QSettings settings("config.ini", QSettings::IniFormat);
         settings.beginGroup("outputsSettings");
         // settings.setValue("outputs", js.dump().c_str());
@@ -322,20 +360,24 @@ void RequestHandler::resetOutputsInfo(const HttpRequest &req, HttpResponse& res)
         //cdataProcess dataprocess;       
         cdataProcess *pcdataProcess = cdataProcess::GetInstance();
         m_mutex.lock(); 
+        XINFO("{RequestHandler::resetOutputsInfo lock}\n");
         if (pcdataProcess->InitOutputInfo())
         {
             pcdataProcess->ResetOutputsInfo();
             createRet(res, 200);
+            return;
         }
         else
         {
             createRet(res, 204);
-        }
+        }        
         m_mutex.unlock();
+        XINFO("{RequestHandler::resetOutputsInfo unlock}\n");
     }
     catch (...)
     {
         m_mutex.unlock();
+        XINFO("{RequestHandler::resetOutputsInfo catch unlock}\n");
         createRet(res, 500);        
     }
 
@@ -348,19 +390,28 @@ void RequestHandler::getGpuInterface(const HttpRequest &req, HttpResponse& res)
     try
     {
         //cdataProcess dataprocess;  
-        cdataProcess *pcdataProcess = cdataProcess::GetInstance();   
+        cdataProcess *pcdataProcess = cdataProcess::GetInstance();
+        XINFO("{RequestHandler::getGpuInterface lock}\n");
+        m_mutex.lock();
         if(pcdataProcess->GetOutputAndGpuName(js))
         {
+            m_mutex.unlock();
+            XINFO("{RequestHandler::getGpuInterface unlock0}\n");
             createRet(res,200,js);
+            return;
         }
         else
         {
             createRet(res,204);
         }
+        m_mutex.unlock();
+        XINFO("{RequestHandler::getGpuInterface unlock}\n");
     }
     catch(...)
     {
         createRet(res,500);
+        m_mutex.unlock();
+        XINFO("{RequestHandler::getGpuInterface unlock}\n");
     }
 
 }
@@ -501,11 +552,14 @@ void RequestHandler::setOutputsInfo(const HttpRequest &req, HttpResponse &res)
         
         //cdataProcess dataprocess;
         cdataProcess *pcdataProcess = cdataProcess::GetInstance();
+        XINFO("{RequestHandler::setOutputsInfo lock}\n");
         m_mutex.lock();
         //bool bRet = pcdataProcess->SetOutputsInfo(js);
         bool bRet = pcdataProcess->setOutputsXrandr(js);
         if (bRet)
         {
+            m_mutex.unlock();
+            XINFO("{RequestHandler::setOutputsInfo unlock}\n");
             //string layoutName = js["layoutName"].get<std::string>();
             string resolution = js["resolution"].get<std::string>();
             string allResolution = js["allResolution"].get<std::string>();
@@ -535,11 +589,13 @@ void RequestHandler::setOutputsInfo(const HttpRequest &req, HttpResponse &res)
             settings.sync();
             
             createRet(res, 200);
-            m_mutex.unlock();
+            return;
+            
         }
         else
         {
             m_mutex.unlock();
+            XINFO("{RequestHandler::setOutputsInfo unlock0}\n");
             createRet(res, 500);
         }
 
@@ -547,6 +603,7 @@ void RequestHandler::setOutputsInfo(const HttpRequest &req, HttpResponse &res)
     catch(...)
     {
         m_mutex.unlock();
+        XINFO("{RequestHandler::setOutputsInfo catch unlock0}\n");
         createRet(res,400);
     }  
 
@@ -560,17 +617,23 @@ void RequestHandler::getServerInfo(const HttpRequest &req, HttpResponse &res)
     //cdataProcess dataprocess;
     cdataProcess *pcdataProcess = cdataProcess::GetInstance();
     json js;
+    XINFO("{RequestHandler::getServerInfo lock}\n");
+    m_mutex.lock();
     if(pcdataProcess->GetServerInfo(js))
     {
+        m_mutex.unlock();
+        XINFO("{RequestHandler::getServerInfo unlock}\n");
         createRet(res,200,js);
-
-        //res.set_content(strData, "application/json");
+        return;
+        
     }
     else
     {
         // string strRet = "{\"result\":\"error\",\"msg\":\"test error\"}";
         // res.set_content(strRet, "application/json");
         createRet(res,204);
-    }   
+    }
+    m_mutex.unlock();
+    XINFO("{RequestHandler::getServerInfo unlock0}\n");
 }
 

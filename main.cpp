@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
         settings.setValue("host",_ip);
         settings.setValue("port",_port);
         settings.setValue("minThreads","4");
-        settings.setValue("maxThreads","20");
+        settings.setValue("maxThreads","200");
         settings.setValue("cleanupInterval","60000");
         settings.setValue("readTimeout","60000");
         settings.setValue("maxRequestSize","16000");
