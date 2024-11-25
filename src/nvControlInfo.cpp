@@ -117,7 +117,7 @@ bool nvControlInfo::getGpuInfo(MGPUINFOEX & gpu)
 
 bool nvControlInfo::getGpuTempture(std::vector<MGPUINFO> &vMGPUINFO)
 {
-    return true;
+    //return true;
     CMDEXEC::CmdRes res;
     bool bret = CMDEXEC::Execute("nvidia-smi",res);
     if(!bret)

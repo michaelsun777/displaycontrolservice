@@ -1396,9 +1396,26 @@ bool cdataProcess::InitOutputInfo()
         }
     }
 
-    // string strDisplayName = ":0";
-    // cmyxrandr cxr(strDisplayName);
-    //vector<MOutputInfo> vOutputInfo;
+   
+    m_nWidth = settings.value("screen/width",0).toInt();
+    m_nHight = settings.value("screen/height",0).toInt();
+    m_layout_horizontal = settings.value("screen/layout_horizontal",0).toInt();
+    m_layout_vertical = settings.value("screen/layout_vertical",0).toInt();
+    m_allLayouts = settings.value("screen/allResolution","").toString().toStdString();
+
+    if(m_nWidth == 0)
+    {
+        m_nWidth = 1920;
+        m_nHight = 1080;
+    }
+  
+    if(m_layout_vertical ==  0 || m_layout_horizontal == 0)
+    {
+        XERROR("请先在config.ini中配置layout_horizontal和layout_vertical");
+        exit(0);
+    }
+
+
 
     vector<MOutputInfo> vOutputInfo;
     CMYSIZE currentSize, maxSize;
