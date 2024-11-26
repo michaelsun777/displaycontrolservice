@@ -23,6 +23,7 @@
 
 //#include <X11/extensions/Xrandr.h>
 #include "../3rd/md5/src/md5.h"
+#include "autoDelete.h"
 
 
 
@@ -56,6 +57,9 @@ int main(int argc, char *argv[])
         }
         fileUser.close();
 
+        shared_ptr<CAutoDeleteManager> pCAutoDeleteManager = CAutoDeleteManager::GetInstance();
+        pCAutoDeleteManager->AddNeedDeleteFileInfo("/var/log/dpcs/", 15);
+        pCAutoDeleteManager->AddNeedDeleteFileInfo("./var/", 15);
 
         QFile file("./config.ini");
         if (!file.exists())

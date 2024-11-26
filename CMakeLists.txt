@@ -212,6 +212,7 @@ src/requesthandler.cpp
 3rd/cpp-subprocess/subprocess.hpp
 src/CNvControlEvents.cpp
 3rd/md5/src/md5.cpp
+src/autoDelete.cpp
 
 ${http_SRC}
 
