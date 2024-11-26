@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
         QSettings getConfig("./config.ini", QSettings::IniFormat);
 
         //setConfig.GetValue("common","ip",value,error);
-        QString _ip = "127.0.0.1";
+        QString _ip = "";//127.0.0.1默认为QHostAddress::Any
         QString _port = "18180";
         getConfig.beginGroup("common");
         QVariant value;

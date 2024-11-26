@@ -115,35 +115,50 @@ void RequestHandler::service(HttpRequest& request, HttpResponse& response)
 
 void RequestHandler::createRet(HttpResponse &res,int code,nlohmann::json & data)
 {
-    nlohmann::json ret;
-    ret["code"] = code;
-    if(data != nullptr)
+    try
     {
-        ret["data"] = data;
-    }
-    else
-    {
-        ret["data"] = nlohmann::json::object();
-    }
+        nlohmann::json ret;
+        ret["code"] = code;
+        if (data != nullptr)
+        {
+            ret["data"] = data;
+        }
+        else
+        {
+            ret["data"] = nlohmann::json::object();
+        }
 
-    ret["msg"] = getRetMessage(code);
-    std::string msg = ret.dump();
-    //res.set_content(msg,"application/json");
-    res.write(msg.c_str(),true);
+        ret["msg"] = getRetMessage(code);
+        std::string msg = ret.dump();
+        // res.set_content(msg,"application/json");
+        res.write(msg.c_str(), true);
+    }
+    catch(...)
+    {
+        XERROR("RequestHandler::createRet catch error no = {}",errno);
+    }  
+
 }
 
 void RequestHandler::createRet(HttpResponse &res,int code)
 {
-    nlohmann::json ret;
-    ret["code"] = code;
-   
-    ret["data"] = nlohmann::json::object();
-    
+    try
+    {
+        nlohmann::json ret;
+        ret["code"] = code;
 
-    ret["msg"] = getRetMessage(code);
-    std::string msg = ret.dump();
-    //res.set_content(msg,"application/json");
-    res.write(msg.c_str(),true);
+        ret["data"] = nlohmann::json::object();
+
+        ret["msg"] = getRetMessage(code);
+        std::string msg = ret.dump();
+        // res.set_content(msg,"application/json");
+        res.write(msg.c_str(), true);
+    }
+    catch(...)
+    {
+        XERROR("RequestHandler::createRet0 catch error no = {}",errno);
+    }
+
 }
 
 std::string RequestHandler::getRetMessage(int code)

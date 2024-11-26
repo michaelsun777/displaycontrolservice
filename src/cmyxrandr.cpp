@@ -918,6 +918,7 @@ short cmyxrandr::getAllScreenInfoXrandr(vector<MOutputInfo> & vOutputInfo,CMYSIZ
                 moutputinfo.mmsize.width = outinfo->mm_width;
                 moutputinfo.mmsize.height = outinfo->mm_height;
                 moutputinfo.connected = true;
+                moutputinfo.primary = false;
                 if (moutputinfo.name.find("VGA") != string::npos || moutputinfo.name.find("Virtual") != string::npos)
                 {
                     continue;
