@@ -1,0 +1,19 @@
+[Unit]
+Description=The Display Control Server
+After=network.target
+
+[Service]
+Environment="DISPLAY=:0"
+Type=forking
+PIDFile=/usr/local/dpcs/dpcs.pid  # 会在启动ngnix服务时会创建并将其进程信息保存到该文件
+ExecStart=/usr/local/dpcs/dpcs
+ExecStop=/bin/kill -s QUIT $MAINPID
+PrivateTmp=true
+RestartSec=5s
+Restart=always
+WorkingDirectory=/usr/local/dpcs
+User=amplesky
+
+[Install]
+WantedBy=multi-user.target
+
