@@ -12,6 +12,7 @@ nvControlInfo::~nvControlInfo()
 
 bool nvControlInfo::getGpuInfo(MGPUINFOEX & gpu)
 {
+    XINFO("{nvControlInfo::getGpuInfo in}\n");
     bool bRet = getGpuTempture(gpu.vgpus);
     if(!bRet)
         return bRet;
@@ -38,6 +39,7 @@ bool nvControlInfo::getGpuInfo(MGPUINFOEX & gpu)
     {
         fprintf(stderr, "The NV-CONTROL X extension does not exist on '%s'.\n",
                 XDisplayName(NULL));
+        XCloseDisplay(dpy);
         return false;
     }
 
@@ -50,6 +52,7 @@ bool nvControlInfo::getGpuInfo(MGPUINFOEX & gpu)
     {
         fprintf(stderr, "The NV-CONTROL X extension does not exist on '%s'.\n",
                 XDisplayName(NULL));
+        XCloseDisplay(dpy);
         return false;
     }
 
@@ -110,20 +113,25 @@ bool nvControlInfo::getGpuInfo(MGPUINFOEX & gpu)
 
         }
     }
-
+    XCloseDisplay(dpy);
+    XINFO("{nvControlInfo::getGpuInfo out}\n");
     return true;
 }
 
 
 bool nvControlInfo::getGpuTempture(std::vector<MGPUINFO> &vMGPUINFO)
 {
+    XINFO("{nvControlInfo::getGpuTempture in}\n");
     //return true;
     CMDEXEC::CmdRes res;
     bool bret = CMDEXEC::Execute("nvidia-smi",res);
     if(!bret)
-        return false;
-
-    printf("%s\n",res.StdoutString.c_str());
+    {
+        XINFO("{nvControlInfo::getGpuTempture out 0}\n");
+        return false;        
+    }
+    
+    //printf("%s\n",res.StdoutString.c_str());
     vector<string> vString;
     CMDEXEC::Stringsplit(res.StdoutString,'\n',vString);
     bool bIsIndex = false;
@@ -161,7 +169,6 @@ bool nvControlInfo::getGpuTempture(std::vector<MGPUINFO> &vMGPUINFO)
                     }
                 }
                 
-                
                 string strLineNext = vString[i+1].c_str();
                 strLineNext = CMDEXEC::StripBrackets(strLineNext,'|','|');
                 XINFO("{}",strLineNext);
@@ -194,10 +201,6 @@ bool nvControlInfo::getGpuTempture(std::vector<MGPUINFO> &vMGPUINFO)
 
                         }
                         
-                        
-                        
-
-
                         gInfo.Mem = CMDEXEC::Strip(strMem);
                         gInfo.Pwr = CMDEXEC::Strip(strlast);
                         gInfo.Perf = CMDEXEC::Strip(strPerf);
@@ -220,7 +223,8 @@ bool nvControlInfo::getGpuTempture(std::vector<MGPUINFO> &vMGPUINFO)
             continue;
 
     }
-    
+
+    XINFO("{nvControlInfo::getGpuTempture out}\n");    
     return true;
 
 }

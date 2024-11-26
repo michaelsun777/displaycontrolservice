@@ -1,1 +1,1 @@
-sudo apt-get install cmake libboost-all-dev qtcreator qtbase5-dev qtwebengine5-dev libspdlog-dev libxrandr-dev libgl1-mesa-dev libgtk-3-dev libxxf86vm-dev libvdpau-dev -y 
+sudo apt-get install cmake libboost-all-dev qtcreator qtbase5-dev qtwebengine5-dev libspdlog-dev libgtk2.0-dev libgtk-3-dev libxv-dev libxrandr-dev libgl1-mesa-dev libgtk-3-dev libxxf86vm-dev libvdpau-dev -y 

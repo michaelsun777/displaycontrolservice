@@ -104,7 +104,7 @@ void RequestHandler::service(HttpRequest& request, HttpResponse& response)
     }
     catch(...)
     {
-        m_mutex.unlock();
+        //m_mutex.unlock();
         XINFO("{RequestHandler::service catch unlock}\n");        
     }
     
@@ -168,13 +168,14 @@ void RequestHandler::login(const HttpRequest &req, HttpResponse &res)
         string strUserName = jdata.at("username").get<string>();
         string strPwd = jdata.at("password").get<string>();
         XINFO("{RequestHandler::login lock}\n");
-        m_mutex.lock();
+        //m_mutex.lock();
+        boost::lock_guard<boost::mutex> lock(m_mutex);
         QSettings config("user.db", QSettings::IniFormat);
         config.value("user/name", "admin");
         string localPwd = config.value("user/pwd", "admin").toString().toStdString();
         MD5 md5(localPwd);
         string loacalPwdMd5 = md5.toStr();
-        m_mutex.unlock();
+        //m_mutex.unlock();
         XINFO("{RequestHandler::login unlock}\n");
         
         if(strUserName.compare("admin") == 0 && strPwd.compare(loacalPwdMd5) == 0)
@@ -190,7 +191,7 @@ void RequestHandler::login(const HttpRequest &req, HttpResponse &res)
     catch(...)
     {
         createRet(res,500);
-        m_mutex.unlock();
+        //m_mutex.unlock();
         XINFO("{RequestHandler::login cache unlock}\n");
     }
 
@@ -204,10 +205,11 @@ void RequestHandler::getMonitorInfo(const HttpRequest &req, HttpResponse& res)
     cdataProcess* pcdataProcess = cdataProcess::GetInstance();
     json js;
     XINFO("{RequestHandler::getMonitorInfo lock}\n");
-    m_mutex.lock();
+    //m_mutex.lock();
+    boost::lock_guard<boost::mutex> lock(m_mutex);
     if(pcdataProcess->GetMonitorsInfo_shell(js))
     {
-        m_mutex.unlock();
+        //m_mutex.unlock();
         XINFO("{RequestHandler::getMonitorInfo unlock0}\n");
         return;
         createRet(res,200,js);
@@ -219,7 +221,7 @@ void RequestHandler::getMonitorInfo(const HttpRequest &req, HttpResponse& res)
         // string strRet = "{\"result\":\"error\",\"msg\":\"test error\"}";
         // res.set_content(strRet, "application/json");
         createRet(res,204);
-        m_mutex.unlock();
+        //m_mutex.unlock();
         XINFO("{RequestHandler::getMonitorInfo unlock1}\n");
         return;
     }
@@ -235,21 +237,23 @@ void RequestHandler::getOutputsMode(const HttpRequest &req, HttpResponse& res)
     {
         cdataProcess* pcdataProcess = cdataProcess::GetInstance();
         XINFO("{RequestHandler::getOutputsMode lock}\n");
-        m_mutex.lock();        
+        //m_mutex.lock();
+        boost::lock_guard<boost::mutex> lock(m_mutex);
+        XINFO("{RequestHandler::getOutputsMode lock in}\n");
         if(pcdataProcess->GetMainOutputModes(js))
         {
             createRet(res,200,js);
-            m_mutex.unlock();
-            XINFO("{RequestHandler::getOutputsMode unlock0}\n");
+            //m_mutex.unlock();
+            //XINFO("{RequestHandler::getOutputsMode unlock0}\n");
             return;
         }
-        m_mutex.unlock();
+        //m_mutex.unlock();
         XINFO("{RequestHandler::getOutputsMode unlock}\n");
     }
     catch(...)
     {
         createRet(res,500);
-        m_mutex.unlock();
+        //m_mutex.unlock();
         XINFO("{RequestHandler::getOutputsMode catch unlock}\n");
     }  
 
@@ -265,12 +269,14 @@ void RequestHandler::getOutputsInfo(const HttpRequest &req, HttpResponse &res)
     {
         cdataProcess *pcdataProcess = cdataProcess::GetInstance();
         XINFO("{RequestHandler::getOutputsInfo lock}\n");
-        m_mutex.lock();
+        //m_mutex.lock();
+        boost::lock_guard<boost::mutex> lock(m_mutex);
+        XINFO("{RequestHandler::getOutputsInfo lock in}\n");
         int nRet = pcdataProcess->GetOutputsInfo_shell(js);
         if (nRet == 0)
         {
-            m_mutex.unlock();
-            XINFO("{RequestHandler::getOutputsInfo unlock0}\n");
+            //m_mutex.unlock();
+            //XINFO("{RequestHandler::getOutputsInfo unlock0}\n");
             createRet(res, 200, js);
             return;
 
@@ -278,15 +284,15 @@ void RequestHandler::getOutputsInfo(const HttpRequest &req, HttpResponse &res)
         }
         else if(nRet == -1)
         {
-            m_mutex.unlock();
-            XINFO("{RequestHandler::getOutputsInfo unlock1}\n");
+            //m_mutex.unlock();
+            //XINFO("{RequestHandler::getOutputsInfo unlock1}\n");
             createRet(res, 500);
             return;
         }
         else
         {
-            m_mutex.unlock();
-            XINFO("{RequestHandler::getOutputsInfo unlock2}\n");
+            //m_mutex.unlock();
+            //XINFO("{RequestHandler::getOutputsInfo unlock2}\n");
             createRet(res, 204);
             return;
         }
@@ -295,7 +301,7 @@ void RequestHandler::getOutputsInfo(const HttpRequest &req, HttpResponse &res)
     {
         XERROR("RequestHandler::getOutputsInfo error errno = {}",errno);
         createRet(res, 500);
-        m_mutex.unlock();
+        //m_mutex.unlock();
         XINFO("{RequestHandler::getOutputsInfo catch unlock}\n");
     }
 
@@ -311,11 +317,13 @@ void RequestHandler::getGpusInfo(const HttpRequest &req, HttpResponse& res)
         //cdataProcess dataprocess;
         cdataProcess *pcdataProcess = cdataProcess::GetInstance();
         XINFO("{RequestHandler::getGpusInfo lock}\n");
-        m_mutex.lock();
+        //m_mutex.lock();
+        boost::lock_guard<boost::mutex> lock(m_mutex);
+        XINFO("{RequestHandler::getGpusInfo lock in}\n");
         if (pcdataProcess->GetGpuInfo(js))
         {
-            m_mutex.unlock();
-            XINFO("{RequestHandler::getGpusInfo unlock0}\n");
+            //m_mutex.unlock();
+            //XINFO("{RequestHandler::getGpusInfo unlock0}\n");
             createRet(res, 200, js);
             return;
         }
@@ -323,12 +331,12 @@ void RequestHandler::getGpusInfo(const HttpRequest &req, HttpResponse& res)
         {
             createRet(res, 204);
         }
-        m_mutex.unlock();
+        //m_mutex.unlock();
         XINFO("{RequestHandler::getGpusInfo unlock}\n");
     }
     catch (...)
     {
-        m_mutex.unlock();
+        //m_mutex.unlock();
         XINFO("{RequestHandler::getGpusInfo catch unlock}\n");
         createRet(res, 500);
     }
@@ -340,8 +348,8 @@ void RequestHandler::resetOutputsInfo(const HttpRequest &req, HttpResponse& res)
     json js;
     try
     {
-        m_mutex.unlock();
-        m_mutex.unlock();
+        //m_mutex.unlock();
+        //m_mutex.unlock();
         XINFO("{RequestHandler::resetOutputsInfo unlock0}\n");
         QSettings settings("config.ini", QSettings::IniFormat);
         settings.beginGroup("outputsSettings");
@@ -359,8 +367,10 @@ void RequestHandler::resetOutputsInfo(const HttpRequest &req, HttpResponse& res)
 
         //cdataProcess dataprocess;       
         cdataProcess *pcdataProcess = cdataProcess::GetInstance();
-        m_mutex.lock(); 
+        //m_mutex.lock(); 
         XINFO("{RequestHandler::resetOutputsInfo lock}\n");
+        boost::lock_guard<boost::mutex> lock(m_mutex);
+        XINFO("{RequestHandler::resetOutputsInfo lock in}\n");
         if (pcdataProcess->InitOutputInfo())
         {
             pcdataProcess->ResetOutputsInfo();
@@ -371,12 +381,12 @@ void RequestHandler::resetOutputsInfo(const HttpRequest &req, HttpResponse& res)
         {
             createRet(res, 204);
         }        
-        m_mutex.unlock();
+        //m_mutex.unlock();
         XINFO("{RequestHandler::resetOutputsInfo unlock}\n");
     }
     catch (...)
     {
-        m_mutex.unlock();
+        //m_mutex.unlock();
         XINFO("{RequestHandler::resetOutputsInfo catch unlock}\n");
         createRet(res, 500);        
     }
@@ -392,10 +402,12 @@ void RequestHandler::getGpuInterface(const HttpRequest &req, HttpResponse& res)
         //cdataProcess dataprocess;  
         cdataProcess *pcdataProcess = cdataProcess::GetInstance();
         XINFO("{RequestHandler::getGpuInterface lock}\n");
-        m_mutex.lock();
+        ////m_mutex.lock();
+        boost::lock_guard<boost::mutex> lock(m_mutex);
+        XINFO("{RequestHandler::getGpuInterface lock in}\n");
         if(pcdataProcess->GetOutputAndGpuName(js))
         {
-            m_mutex.unlock();
+            ////m_mutex.unlock();
             XINFO("{RequestHandler::getGpuInterface unlock0}\n");
             createRet(res,200,js);
             return;
@@ -404,13 +416,13 @@ void RequestHandler::getGpuInterface(const HttpRequest &req, HttpResponse& res)
         {
             createRet(res,204);
         }
-        m_mutex.unlock();
+        ////m_mutex.unlock();
         XINFO("{RequestHandler::getGpuInterface unlock}\n");
     }
     catch(...)
     {
         createRet(res,500);
-        m_mutex.unlock();
+        //m_mutex.unlock();
         XINFO("{RequestHandler::getGpuInterface unlock}\n");
     }
 
@@ -553,12 +565,14 @@ void RequestHandler::setOutputsInfo(const HttpRequest &req, HttpResponse &res)
         //cdataProcess dataprocess;
         cdataProcess *pcdataProcess = cdataProcess::GetInstance();
         XINFO("{RequestHandler::setOutputsInfo lock}\n");
-        m_mutex.lock();
+        //m_mutex.lock();
         //bool bRet = pcdataProcess->SetOutputsInfo(js);
+        boost::lock_guard<boost::mutex> lock(m_mutex);
+        XINFO("{RequestHandler::setOutputsInfo lock in}\n");
         bool bRet = pcdataProcess->setOutputsXrandr(js);
         if (bRet)
         {
-            m_mutex.unlock();
+            //m_mutex.unlock();
             XINFO("{RequestHandler::setOutputsInfo unlock}\n");
             //string layoutName = js["layoutName"].get<std::string>();
             string resolution = js["resolution"].get<std::string>();
@@ -594,7 +608,7 @@ void RequestHandler::setOutputsInfo(const HttpRequest &req, HttpResponse &res)
         }
         else
         {
-            m_mutex.unlock();
+            //m_mutex.unlock();
             XINFO("{RequestHandler::setOutputsInfo unlock0}\n");
             createRet(res, 500);
         }
@@ -602,7 +616,7 @@ void RequestHandler::setOutputsInfo(const HttpRequest &req, HttpResponse &res)
     }
     catch(...)
     {
-        m_mutex.unlock();
+        //m_mutex.unlock();
         XINFO("{RequestHandler::setOutputsInfo catch unlock0}\n");
         createRet(res,400);
     }  
@@ -618,10 +632,12 @@ void RequestHandler::getServerInfo(const HttpRequest &req, HttpResponse &res)
     cdataProcess *pcdataProcess = cdataProcess::GetInstance();
     json js;
     XINFO("{RequestHandler::getServerInfo lock}\n");
-    m_mutex.lock();
+    //m_mutex.lock();
+    boost::lock_guard<boost::mutex> lock(m_mutex);
+    XINFO("{RequestHandler::getServerInfo lock in}\n");
     if(pcdataProcess->GetServerInfo(js))
     {
-        m_mutex.unlock();
+        //m_mutex.unlock();
         XINFO("{RequestHandler::getServerInfo unlock}\n");
         createRet(res,200,js);
         return;
@@ -633,7 +649,7 @@ void RequestHandler::getServerInfo(const HttpRequest &req, HttpResponse &res)
         // res.set_content(strRet, "application/json");
         createRet(res,204);
     }
-    m_mutex.unlock();
+    //m_mutex.unlock();
     XINFO("{RequestHandler::getServerInfo unlock0}\n");
 }
 

@@ -1000,6 +1000,7 @@ bool cdataProcess::TestMonitorInfo()
 
 bool cdataProcess::GetGpuInfo(json & js)
 {
+    XINFO("{cdataProcess::GetGpuInfo in}\n");
     try
     {
         MGPUINFOEX gpu;
@@ -1023,6 +1024,7 @@ bool cdataProcess::GetGpuInfo(json & js)
             // strInfo = js.dump().c_str();
             return true;
         }
+        XINFO("{cdataProcess::GetGpuInfo out}\n");
     }
     catch(...)
     {

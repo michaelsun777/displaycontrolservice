@@ -12,6 +12,9 @@
 #include "UI/mainwindow.h"
 #include "../3rd/md5/src/md5.h"
 #include <mutex>
+#include <boost/thread/lock_guard.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/thread.hpp>
 
 
 using namespace stefanfrings;
@@ -28,7 +31,8 @@ class RequestHandler : public HttpRequestHandler
 private:
   std::map<int, std::string> m_mCodeMsg;
   MainWindow * m_pMain;
-  std::mutex m_mutex;
+  //std::mutex m_mutex;  
+  boost::mutex m_mutex;
 
 public:
   /**

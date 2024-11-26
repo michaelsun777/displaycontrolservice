@@ -853,7 +853,8 @@ unsigned short cmyxrandr::getCurrentConfigRotation()
 short cmyxrandr::getAllScreenInfoNew(vector<MOutputInfo> & vOutputInfo,CMYSIZE & currentSize,CMYSIZE & maxSize)
 {
     vOutputInfo.clear();
-    m_mutex.lock();
+    //m_mutex.lock();
+    boost::lock_guard<boost::mutex> lock(m_mutex);
     currentSize = m_currentSize;
     maxSize = m_maxSize;
     for (size_t i = 0; i < m_vOutputInfo.size(); i++)
@@ -878,7 +879,7 @@ short cmyxrandr::getAllScreenInfoNew(vector<MOutputInfo> & vOutputInfo,CMYSIZE &
         }
         vOutputInfo.push_back(out);
     }
-    m_mutex.unlock();
+    //m_mutex.unlock();
     return 0;   
 
 }
@@ -1361,18 +1362,16 @@ bool cmyxrandr::Init()
 
 bool cmyxrandr::OnUpdate()
 {
-    m_mutex.lock();
-    //m_vOutputInfo.clear();
-    m_vGPUInterface.clear();
-    //getAllScreenInfoEx(m_vOutputInfo,m_currentSize,m_maxSize);
-    //getAllScreenInfoXrandr(m_vOutputInfo,m_currentSize,m_maxSize);
+    XINFO("cmyxrandr::OnUpdate in\n");
+    boost::lock_guard<boost::mutex> lock(m_mutex);
+    m_vGPUInterface.clear();  
     GetOutputAndGpuName(m_vGPUInterface);
-    m_mutex.unlock();
+    //m_mutex.unlock();
     if(m_vGPUInterface.size() == 0)
     {
         SetOutputIsChanged();
     }
-
+    XINFO("cmyxrandr::OnUpdate out\n");
     return true;
 }
 
@@ -1387,12 +1386,14 @@ void cmyxrandr::print_display_name(Display *dpy, int target_id, int attr,char *n
                                             target_id, 0,
                                             attr,
                                             &str);
-    if (!ret) {
-        printf("    %18s : N/A\n", name);
+    if (!ret) 
+    {
+        XINFO("cmyxrandr::print_display_name0 {}\n", name);
         return;
     }
 
-    printf("    %18s : %s\n", name, str);
+    //printf("    %18s : %s\n", name, str);
+    XINFO("cmyxrandr::print_display_name1 {}:{}\n", name, str);
     displayName = str;
     XFree(str);
 }
@@ -1440,6 +1441,7 @@ void cmyxrandr::print_display_id_and_name(Display *dpy, int target_id, const cha
 
 bool cmyxrandr::GetOutputAndGpuName(vector<MYGPUINTERFACE> & vgpu)
 {
+    XINFO("GetOutputAndGpuName in\n");
     json  js;
         
     int major, minor, len;
@@ -1450,14 +1452,18 @@ bool cmyxrandr::GetOutputAndGpuName(vector<MYGPUINTERFACE> & vgpu)
     if (!dpy) 
     {
         XERROR("Cannot open display {}.", XDisplayName(NULL));
+        XCloseDisplay(dpy);
         return false;
     }
+    XINFO("GetOutputAndGpuName XOpenDisplay f\n");
+
     
     int screen = GetNvXScreen(dpy);
     Bool ret = XNVCTRLQueryVersion(dpy, &major, &minor);
     if (ret != True)
     {
         XERROR("The NV-CONTROL X extension does not exist on {}.\n\n",XDisplayName(NULL));
+        XCloseDisplay(dpy);
         return false;
     }
 
@@ -1526,18 +1532,24 @@ bool cmyxrandr::GetOutputAndGpuName(vector<MYGPUINTERFACE> & vgpu)
         if (!ret || (len < sizeof(pData[0])))
         {
             XERROR("Failed to query the connected Display Devices.\n\n");
+            XCloseDisplay(dpy);
             return 1;
         }
 
+        XINFO("XNVCTRLQueryTargetBinaryData ret={}\n",ret);
         for (int j = 0; j < pData[0]; j++)
         {
             int dpyId = pData[j + 1];
+            XINFO("print_display_id_and_name\n");
             print_display_id_and_name(dpy, dpyId, "    ");
             string strDisplayName;
+            XINFO("print_display_name\n");
             print_display_name(dpy, dpyId,NV_CTRL_STRING_DISPLAY_NAME_RANDR,"RANDR",strDisplayName);
             node["display"].push_back(strDisplayName);  
             gpu.outputName.push_back(strDisplayName);
+            XINFO("print_display_name ff\n");
         }
+
         XFree(pData); 
         js["gpu"].push_back(node);
         gpu.jsonStr = node.dump();
@@ -1546,6 +1558,7 @@ bool cmyxrandr::GetOutputAndGpuName(vector<MYGPUINTERFACE> & vgpu)
 
     }   
     XCloseDisplay(dpy);
+    XINFO("GetOutputAndGpuName out\n");
     return true;
 
 }
@@ -1560,13 +1573,13 @@ bool cmyxrandr::GetOutputAndGpuName(json & js)
     
     if(m_vGPUInterface.size() > 0)
     {
-        m_mutex.lock();
+        boost::lock_guard<boost::mutex> lock(m_mutex);
         for (size_t i = 0; i < m_vGPUInterface.size(); i++)
         {
             json jnode = json::parse(m_vGPUInterface[i].jsonStr);
             js["gpu"].push_back(jnode);
         }
-        m_mutex.unlock();
+        //m_mutex.unlock();
         return true;
     }
     else

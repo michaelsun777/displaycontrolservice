@@ -12,7 +12,9 @@
 #include "CNvControlEvents.h"
 #include "3rd/json/include/nlohmann/json.hpp"
 #include <mutex>
-
+#include <boost/thread/lock_guard.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/thread.hpp>
 
 using namespace std;
 
@@ -45,7 +47,8 @@ private:
     CMYSIZE m_currentSize;
     CMYSIZE m_maxSize;
     vector<MYGPUINTERFACE> m_vGPUInterface;
-    std::mutex m_mutex;
+    //std::mutex m_mutex;
+    boost::mutex m_mutex;
 
 
 public:

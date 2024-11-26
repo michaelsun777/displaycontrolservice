@@ -75,7 +75,7 @@ namespace CMDEXEC
             else if (pid > 0)
             {
                 res.StdoutString.clear();
-                res.StdoutString.clear();
+                //res.StdoutString.clear();
                 close(fd_out[1]);
                 close(fd_err[1]);
                 char buffer[1024] = {0};
