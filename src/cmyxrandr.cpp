@@ -1551,6 +1551,12 @@ bool cmyxrandr::GetOutputAndGpuName(vector<MYGPUINTERFACE> & vgpu)
             XINFO("print_display_name ff\n");
         }
 
+        if(pData[0] <= 0)
+        {
+            node["display"].push_back("");  
+            gpu.outputName.push_back("");
+        }
+
         XFree(pData); 
         js["gpu"].push_back(node);
         gpu.jsonStr = node.dump();
