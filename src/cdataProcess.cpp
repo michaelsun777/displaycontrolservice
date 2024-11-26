@@ -1205,7 +1205,7 @@ bool cdataProcess::setOutputsXrandr(json & js)
                                 // {
                                 //     return false;
                                 // }
-                                // break;
+                                break;
                             }
                         }
                     }
@@ -1274,6 +1274,8 @@ bool cdataProcess::setOutputsXrandr(json & js)
                                 bIsChange = true;               
                                 CMYPOINT offset(nCoordinateX, nCoordinateY);
                                 pcmxrandr->setOffset(offset);
+                                if(nCoordinateX == 0 && nCoordinateY == 0)
+                                    pcmxrandr->setPrimary();
                             }
                             //break;
                         }
@@ -1504,10 +1506,57 @@ bool cdataProcess::InitOutputInfo()
 
             start_x = (i - (j * m_layout_vertical)) * m_nWidth;
             start_y = j * m_nHight;
+
+            /////
+            pcmxrandr->setOutPut(vOutputInfo[i].outputId);
+            XRROutputInfo *xrroutinfo = pcmxrandr->GetOutputInfo();
+            string strOutputName = xrroutinfo->name;
+            pcmxrandr->setOutPutName(xrroutinfo->name);
+
+            {
+                if (xrroutinfo->crtc > 0)
+                {
+                    pcmxrandr->setCrtc(xrroutinfo->crtc);
+                }
+            
+                if (vOutputInfo[i].preferredMode.id > 0)
+                {
+                    MYCOMMON::CMYSIZE size(vOutputInfo[i].preferredMode.width, vOutputInfo[i].preferredMode.height);
+                    pcmxrandr->setMode(size, vOutputInfo[i].preferredMode.id);
+                    
+                    
+                }
+                else
+                {                               
+                    MYCOMMON::CMYSIZE size(vOutputInfo[i].modes[0].width, vOutputInfo[i].modes[0].height);
+                    if (xrroutinfo->crtc > 0)
+                    {
+                        pcmxrandr->setMode(size, vOutputInfo[i].modes[0].id);
+                    }
+                    else
+                    {
+                        pcmxrandr->setMode(size, 0);
+                        RRCrtc crtc = pcmxrandr->getCrtc();
+                        if (crtc == 0)
+                        {
+                            XERROR("cdataProcess::setOutputsXrandr error, crtc id = 0");
+                        }
+                        pcmxrandr->setCrtc(crtc);
+                    }         
+                    
+                }
+
+                CMYPOINT offset(start_x, start_y);
+                pcmxrandr->setOffset(offset);
+                if (start_x == 0 && start_y == 0)
+                    pcmxrandr->setPrimary();
+            }
+
+            /*
+
             char buf[20] = {0};
             sprintf(buf, "%dx%d", start_x, start_y);
             string strPos = buf;
-
             string strOutputName = vOutputInfo[i].name;            
             string strCmd = "xrandr --output ";
             strCmd += strOutputName;
@@ -1529,6 +1578,7 @@ bool cdataProcess::InitOutputInfo()
             {
                 XERROR("cdataProcess::InitOutputInfo CMDEXEC::Execute errono:{},error:{}",res.ExitCode,res.StderrString);
             }
+            */
 
         }
 /*

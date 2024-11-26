@@ -111,7 +111,7 @@ public:
     std::string     vSync;
     bool            interlace;
 public:
-    MyModelInfoEX():name("")
+    MyModelInfoEX():name(""),id(0)
     {
 
     }
