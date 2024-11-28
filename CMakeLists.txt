@@ -1,6 +1,6 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12)
 
-project(DisplayCtrlServer)
+project(DisplayControlServer)
 
 
 
@@ -278,3 +278,96 @@ ${Boost_LIBRARIES}
 #configure_file(src/dlp/dlpConfig.ini dlpConfig.ini COPYONLY)
 
 #~/code/fastdds/Fast-DDS-Gen/scripts/fastddsgen -example CMake testSecurity.idl
+
+configure_file(${CMAKE_SOURCE_DIR}/dpcs.service.in ${CMAKE_CURRENT_BINARY_DIR}/dpcs.service @ONLY)
+
+INSTALL(TARGETS dpcs CONFIGURATIONS Debug RUNTIME DESTINATION /usr/src/dpcs/)
+INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/dpcs.service DESTINATION /etc/systemd/system/)
+
+#INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/dpcs DESTINATION /usr/src/dpcs)
+
+
+
+#说明要生成的是deb包
+SET(CPACK_GENERATOR "DEB")
+# 指定deb包的版本号
+set(_VERSION_MAJOR 0)
+set(_VERSION_MINOR 0)
+set(_VERSION_PATCH 1)
+set(CPACK_PACKAGE_VERSION_MAJOR "${_VERSION_MAJOR}")
+set(CPACK_PACKAGE_VERSION_MINOR "${_VERSION_MINOR}")
+set(CPACK_PACKAGE_VERSION_PATCH "${_VERSION_PATCH}")
+#设置架构
+set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
+
+# 指定程序名，就是程序安装后的名字
+set(CPACK_DEBIAN_PACKAGE_NAME "dpcs")
+#set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
+set(CPACK_PACKAGE_NAME "dpcs")
+
+#设置依赖
+# SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.3.1-6)")
+# SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.14), libgcc1 (>= 1:3.0)")
+# SET(CPACK_DEBIAN_PACKAGE_DEPENDS qtbase5-dev)
+# SET(CPACK_DEBIAN_PACKAGE_DEPENDS libboost-all-dev)
+# SET(CPACK_DEBIAN_PACKAGE_DEPENDS qtcreator)
+# SET(CPACK_DEBIAN_PACKAGE_DEPENDS qtwebengine5-dev)
+# SET(CPACK_DEBIAN_PACKAGE_DEPENDS libspdlog-dev)
+# SET(CPACK_DEBIAN_PACKAGE_DEPENDS libgtk2.0-dev)
+# SET(CPACK_DEBIAN_PACKAGE_DEPENDS libgtk-3-dev)
+# SET(CPACK_DEBIAN_PACKAGE_DEPENDS libxv-dev)
+# SET(CPACK_DEBIAN_PACKAGE_DEPENDS libxrandr-dev)
+# SET(CPACK_DEBIAN_PACKAGE_DEPENDS libgl1-mesa-dev libgtk-3-dev libxxf86vm-dev libvdpau-dev)
+# SET(CPACK_DEBIAN_PACKAGE_DEPENDS cmake)
+#SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt5core5a, libqt5widgets5, libqt5network5, libqt5gui5")
+
+#设置description
+SET(CPACK_PACKAGE_DESCRIPTION "dpcs description")
+
+#设置联系方式
+#SET(CPACK_PACKAGE_CONTACT "sunhaitao@amplesky.com")
+
+#设置维护人
+#set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Michael Sun")
+SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Michael Sun <sunhaitao@amplesky.com>")
+
+#获取编译时间
+string(TIMESTAMP COMPILE_TIME %Y%m%d_%H%M%S)
+set(build_time    ${COMPILE_TIME})
+#设置打出来的包名
+#set(CPACK_PACKAGE_FILE_NAME  xcl-${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${COMPILE_TIME}-${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}) 
+set(CPACK_PACKAGE_FILE_NAME  ${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION_MAJOR}-${CPACK_PACKAGE_VERSION_MINOR}-${CPACK_PACKAGE_VERSION_PATCH}-${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}) 
+
+#设置安装路径
+#set(CPACK_PACKAGING_INSTALL_PREFIX  "/home/xcl/install")
+
+#设置包的描述文件
+#set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/INSTALL.md")
+
+
+
+include(CPack)
+
+
+##############debian/control设置完成了，下面设置控制脚本，动态库，changelog等#################
+
+#lib目录下保存这一些动态库和安装控制脚本（postinst、postrm、preinst、prerm）  
+#doc目录下是changelog和copyright等文件
+
+#SET(LIBS_DIR "$ENV{DBXML_DIR}/lib")
+#将库文件安装到/usr/lib下
+#INSTALL(FILES ${LIBS_DIR}/libdb-4.8.so ${LIBS_DIR}/libdbxml-2.5.so ${LIBS_DIR}/libxerces-c-3.0.so ${LIBS_DIR}/libxqilla.so.5 ${LIBS_DIR}/libxqilla.so.5.0.2  DESTINATION /usr/lib)
+
+#SET(DOCS_DIR ${CMAKE_SOURCE_DIR}/doc)
+
+#将pro-cc.conf文件安装时copy到/etc/init下
+#INSTALL(FILES ${CMAKE_SOURCE_DIR}/pro-cc.conf DESTINATION /etc/init)
+
+
+
+##############################其他选项#############################
+#设置section
+set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
+
+#设置priority
+set(CPACK_DEBIAN_PACKAGE_PRIORITY "Optional")
