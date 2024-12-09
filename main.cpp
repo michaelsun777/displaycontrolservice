@@ -65,12 +65,13 @@ int main(int argc, char *argv[])
         if (!file.exists())
         {
             QSettings config("config.ini", QSettings::IniFormat);
-            config.setValue("common/ip", "");
+            //config.setValue("common/ip", "");
             config.setValue("common/port", "18180");
             config.setValue("screen/width", 1920);
             config.setValue("screen/height", 1080);
             config.setValue("screen/layout_horizontal", 1);
             config.setValue("screen/layout_vertical", 1);
+            config.setValue("screen/isSetting", "false");
 
             XCRITICAL("config.ini不存在,程序自动创建了配置文件样本,请修改配置文件！");
             XCRITICAL("请先配置config.ini文件,配置文件在程序目录下");

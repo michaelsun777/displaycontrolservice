@@ -7,7 +7,7 @@ cmyxrandr* cmyxrandr::GetInstance()
 {
     if (m_instance == NULL )
     {
-        string strDisplayName = ":0";
+        string strDisplayName = ":1";
         m_instance = new cmyxrandr(strDisplayName);
         m_instance->OnUpdate();
         m_instance->Init();
@@ -23,14 +23,30 @@ cmyxrandr::cmyxrandr(string strDisplayName, RROutput output) : m_screen(0), m_ou
     m_minor = 0;
 
     m_strDisplayName = strDisplayName;
-    m_pDpy = XOpenDisplay(m_strDisplayName.c_str());
-    m_screen = DefaultScreen(m_pDpy);
-    m_root = RootWindow(m_pDpy, m_screen);
-    m_pRes = XRRGetScreenResources(m_pDpy, m_root);
-    m_crtc = getCrtc();
-    Bool bRet = XRRQueryExtension (m_pDpy, &m_event_base, &m_error_base);
-    int nRet = XRRQueryVersion(m_pDpy, &m_major, &m_minor);
-    XINFO("xrandr version:{}.{}", m_major, m_minor);
+    try
+    {
+        m_pDpy = XOpenDisplay(m_strDisplayName.c_str());
+        if(!m_pDpy)
+        {
+            XERROR("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!XOpenDisplay failed (:0),请检查是否未拨出VGA插头上的设备,拨出后重启计算机！\n");
+        }
+        else
+        {
+            m_screen = DefaultScreen(m_pDpy);
+            m_root = RootWindow(m_pDpy, m_screen);
+            m_pRes = XRRGetScreenResources(m_pDpy, m_root);
+            m_crtc = getCrtc();
+            Bool bRet = XRRQueryExtension(m_pDpy, &m_event_base, &m_error_base);
+            int nRet = XRRQueryVersion(m_pDpy, &m_major, &m_minor);
+            XINFO("xrandr version:{}.{}", m_major, m_minor);
+        }
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+    
+    
 }
 
 cmyxrandr::~cmyxrandr()
