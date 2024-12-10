@@ -7,7 +7,7 @@ cmyxrandr* cmyxrandr::GetInstance()
 {
     if (m_instance == NULL )
     {
-        string strDisplayName = ":1";
+        string strDisplayName = ":0";
         m_instance = new cmyxrandr(strDisplayName);
         m_instance->OnUpdate();
         m_instance->Init();

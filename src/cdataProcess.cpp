@@ -1451,6 +1451,7 @@ bool cdataProcess::InitOutputInfo()
                 for (size_t j = 0; j < vOutputInfo[i].modes.size(); j++)
                 {
                     MyModelInfoEX &modex = vOutputInfo[i].modes[j];
+                    
                     if(currentModeId == modex.id)
                     {
                         size_w = modex.width;
@@ -1460,25 +1461,33 @@ bool cdataProcess::InitOutputInfo()
                         XINFO("preferred OutputName={}, modeName={}, OutputId={}, modeId={}, width:{}, height:{}, rate:{}",
                         vOutputInfo[i].name,modex.name,vOutputInfo[i].outputId,modex.id,modex.width,modex.height,modex.rate);
                         break;
-                    }                  
+                    }
                 }
 
                 if(size_w != m_nWidth || size_h != m_nHight)
                 {
                     XCRITICAL("Setting width_height:{}x{},preferred width_height:{}x{},there is significant defferenc,We will try using the set values.",
                     m_nWidth,m_nHight,size_w,size_h);
+                    bool bFoundSetMode = false;
                     for (size_t j = 0; j < vOutputInfo[i].modes.size(); j++)
                     {
                         if(vOutputInfo[i].modes[j].width == m_nWidth && vOutputInfo[i].modes[j].height == m_nHight)
                         {
+                            bFoundSetMode = true;
                             lastDeterminedModeId = vOutputInfo[i].modes[j].id;
                             lastDeterminedModeName = vOutputInfo[i].modes[j].name;
                             lastDeterminedModeRate = vOutputInfo[i].modes[j].rate;
+                            size_w = vOutputInfo[i].modes[j].width;
+                            size_h = vOutputInfo[i].modes[j].height;
                             //, rate:{} ,vOutputInfo[i].modes[j].rate
                             XINFO("we find a mode,Name={}, modeId={}, width:{}, height:{}",vOutputInfo[i].modes[j].name,
                             vOutputInfo[i].modes[j].id,vOutputInfo[i].modes[j].width,vOutputInfo[i].modes[j].height);
                             break;
                         }
+                    }
+                    if(!bFoundSetMode)
+                    {
+                        XERROR("Not found Setting Mode,Using preferred Mode!\n");
                     }
                 }
                 else
@@ -1490,6 +1499,8 @@ bool cdataProcess::InitOutputInfo()
             }
         }
     }
+
+
 
     int start_x = 0,start_y = 0;
     if (m_layout_vertical == 1 && m_layout_horizontal == 1)
@@ -1521,17 +1532,21 @@ bool cdataProcess::InitOutputInfo()
             
                 if (vOutputInfo[i].preferredMode.id > 0)
                 {
-                    MYCOMMON::CMYSIZE size(vOutputInfo[i].preferredMode.width, vOutputInfo[i].preferredMode.height);
-                    pcmxrandr->setMode(size, vOutputInfo[i].preferredMode.id);
+                    //MYCOMMON::CMYSIZE size(vOutputInfo[i].preferredMode.width, vOutputInfo[i].preferredMode.height);
+                    //pcmxrandr->setMode(size, vOutputInfo[i].preferredMode.id);
+                    MYCOMMON::CMYSIZE size(size_w, size_h);
+                    pcmxrandr->setMode(size, lastDeterminedModeId);
                     
                     
                 }
                 else
                 {                               
-                    MYCOMMON::CMYSIZE size(vOutputInfo[i].modes[0].width, vOutputInfo[i].modes[0].height);
+                    //MYCOMMON::CMYSIZE size(vOutputInfo[i].modes[0].width, vOutputInfo[i].modes[0].height);
+                    MYCOMMON::CMYSIZE size(size_w, size_h);
                     if (xrroutinfo->crtc > 0)
                     {
-                        pcmxrandr->setMode(size, vOutputInfo[i].modes[0].id);
+                        //pcmxrandr->setMode(size, vOutputInfo[i].modes[0].id);
+                        pcmxrandr->setMode(size, lastDeterminedModeId);
                     }
                     else
                     {

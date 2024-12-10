@@ -30,7 +30,7 @@
 
 #define VER_AUTO
 std::string g_NameString = "Display Control Service";
-std::string g_VERSION = "dpcs-0.0.1-241120-1";
+std::string g_VERSION = "dpcs-0.0.2-241210-1";
 std::string g_BRANCH = "dev";
 std::string g_DATE = g_build_date_time;// "231103";
 std::string g_NOTE = "";
