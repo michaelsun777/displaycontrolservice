@@ -1,17 +1,14 @@
-
+#include "cdataProcess.h"
+#include <QApplication>
 #include "CNvControlEvents.h"
 #include "cmyxrandr.h"
 
 
 
-CNvControlEvents::CNvControlEvents(cmyxrandr *p) : m_pcmyxrandr(p)
-{
-    m_AtomicCounter = 0;
-}
 
 CNvControlEvents::CNvControlEvents()
 {
-
+    m_AtomicCounter = 0;
 }
 
 CNvControlEvents::~CNvControlEvents(void)
@@ -279,7 +276,7 @@ void * CNvControlEvents::workerThreadListen(void * p)
             ||event.type == (pThis->m_event_base + TARGET_BINARY_ATTRIBUTE_CHANGED_EVENT)
             )
             {  
-                XINFO("CNvControlEvents::workerThreadListen event.type=%d",event.type);
+                XINFO("CNvControlEvents::workerThreadListen event.type={}\n",event.type);
                 pThis->m_AtomicCounter.fetch_add(1);
             }
 
@@ -304,23 +301,22 @@ void * CNvControlEvents::workerThread(void * p)
         sleep(30);
         while (pThis->m_bRunning)
         {
-
             int n = pThis->m_AtomicCounter;
             if (n > 0)
             {
-                usleep(2900 * 1000);
-
+                sleep(2);
             }                
             else
             {
-                usleep(100*1000);
+                sleep(3);
                 continue;
             }
 
             if (n == pThis->m_AtomicCounter)
             {
                 usleep(2900 * 1000);
-                pThis->m_pcmyxrandr->OnUpdate();
+                cdataProcess * pcdataProcess = cdataProcess::GetInstance();
+                pcdataProcess->OnCheckAndUpdate();                
                 pThis->m_AtomicCounter = 0;                
             }           
         }

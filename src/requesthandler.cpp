@@ -386,7 +386,7 @@ void RequestHandler::resetOutputsInfo(const HttpRequest &req, HttpResponse& res)
         XINFO("{RequestHandler::resetOutputsInfo lock}\n");
         boost::lock_guard<boost::mutex> lock(m_mutex);
         XINFO("{RequestHandler::resetOutputsInfo lock in}\n");
-        if (pcdataProcess->InitOutputInfo())
+        if (pcdataProcess->InitOutputInfoLock())
         {
             pcdataProcess->ResetOutputsInfo();
             createRet(res, 200);
@@ -581,10 +581,9 @@ void RequestHandler::setOutputsInfo(const HttpRequest &req, HttpResponse &res)
         cdataProcess *pcdataProcess = cdataProcess::GetInstance();
         XINFO("{RequestHandler::setOutputsInfo lock}\n");
         //m_mutex.lock();
-        //bool bRet = pcdataProcess->SetOutputsInfo(js);
         boost::lock_guard<boost::mutex> lock(m_mutex);
         XINFO("{RequestHandler::setOutputsInfo lock in}\n");
-        bool bRet = pcdataProcess->setOutputsXrandr(js);
+        bool bRet = pcdataProcess->setOutputsXrandrLock(js);
         if (bRet)
         {
             //m_mutex.unlock();

@@ -9,8 +9,8 @@ cmyxrandr* cmyxrandr::GetInstance()
     {
         string strDisplayName = ":0";
         m_instance = new cmyxrandr(strDisplayName);
-        m_instance->OnUpdate();
-        m_instance->Init();
+        //m_instance->OnUpdate();
+        //m_instance->Init();
     }
 
     return m_instance;
@@ -866,46 +866,14 @@ unsigned short cmyxrandr::getCurrentConfigRotation()
     return current_rotation;
 }
 
-short cmyxrandr::getAllScreenInfoNew(vector<MOutputInfo> & vOutputInfo,CMYSIZE & currentSize,CMYSIZE & maxSize)
-{
-    vOutputInfo.clear();
-    //m_mutex.lock();
-    boost::lock_guard<boost::mutex> lock(m_mutex);
-    currentSize = m_currentSize;
-    maxSize = m_maxSize;
-    for (size_t i = 0; i < m_vOutputInfo.size(); i++)
-    {
-        MOutputInfo out;
-        out.name = m_vOutputInfo[i].name;
-        out.connected = m_vOutputInfo[i].connected;
-        out.primary = m_vOutputInfo[i].primary;
-        out.current_rotation = m_vOutputInfo[i].current_rotation;
-        out.outputId = m_vOutputInfo[i].outputId;
-        out.pos = m_vOutputInfo[i].pos;
-        out.size = m_vOutputInfo[i].size;
-        out.mmsize = m_vOutputInfo[i].mmsize;
-        out.geometry = m_vOutputInfo[i].geometry;
-        out.currentMode = m_vOutputInfo[i].currentMode;
-        out.preferredMode = m_vOutputInfo[i].preferredMode;
-        out.bIsSeted = false;
-        for (size_t j = 0; j < m_vOutputInfo[i].modes.size(); j++)
-        {
-            MyModelInfoEX mode = m_vOutputInfo[i].modes[j];
-            out.modes.push_back(mode);
-        }
-        vOutputInfo.push_back(out);
-    }
-    //m_mutex.unlock();
-    return 0;   
-
-}
 
 short cmyxrandr::getAllScreenInfoXrandr(vector<MOutputInfo> & vOutputInfo,CMYSIZE & currentSize,CMYSIZE & maxSize)
 {
     try
     {
+        boost::lock_guard<boost::mutex> lock(m_mutexGetAllScreenInfoXrandr);
         getCurrentConfigSizes();
-        CMYSIZE min,max;    
+        CMYSIZE min,max;
         getScreenSizeRange(min,max);
 
         m_screen = DefaultScreen(m_pDpy);
@@ -1368,31 +1336,6 @@ int cmyxrandr::getScreenSizeRange(CMYSIZE & min,CMYSIZE & max)
     return state;
 }
 
-bool cmyxrandr::Init()
-{
-    m_pEvents = new CNvControlEvents(this);
-    m_pEvents->init();
-    m_pEvents->start();
-
-    return true;
-}
-
-bool cmyxrandr::OnUpdate()
-{
-    XINFO("cmyxrandr::OnUpdate in\n");
-    boost::lock_guard<boost::mutex> lock(m_mutex);
-    m_vGPUInterface.clear();  
-    GetOutputAndGpuName(m_vGPUInterface);
-    //m_mutex.unlock();
-    if(m_vGPUInterface.size() == 0)
-    {
-        SetOutputIsChanged();
-    }
-    XINFO("cmyxrandr::OnUpdate out\n");
-    return true;
-}
-
-
 void cmyxrandr::print_display_name(Display *dpy, int target_id, int attr,char *name,string & displayName)
 {
     Bool ret;
@@ -1594,28 +1537,22 @@ bool cmyxrandr::GetOutputAndGpuName(json & js)
     //         return false;
     // }
     
-    if(m_vGPUInterface.size() > 0)
-    {
-        boost::lock_guard<boost::mutex> lock(m_mutex);
-        for (size_t i = 0; i < m_vGPUInterface.size(); i++)
-        {
-            json jnode = json::parse(m_vGPUInterface[i].jsonStr);
-            js["gpu"].push_back(jnode);
-        }
-        //m_mutex.unlock();
-        return true;
-    }
-    else
-    {
-        SetOutputIsChanged();
-        return false;
-    }
+    // if(m_vGPUInterface.size() > 0)
+    // {
+    //     boost::lock_guard<boost::mutex> lock(m_mutexMyXrandr);
+    //     for (size_t i = 0; i < m_vGPUInterface.size(); i++)
+    //     {
+    //         json jnode = json::parse(m_vGPUInterface[i].jsonStr);
+    //         js["gpu"].push_back(jnode);
+    //     }
+        
+    //     return true;
+    // }
+    // else
+    // {
+    //     return false;
+    // }
 
 
     return true;
-}
-
-bool cmyxrandr::SetOutputIsChanged()
-{
-    return m_pEvents->setIsChanged();
 }

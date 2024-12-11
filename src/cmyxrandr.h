@@ -9,12 +9,11 @@
 #include "common.h"
 
 #include "exec_cmd.h"
-#include "CNvControlEvents.h"
 #include "3rd/json/include/nlohmann/json.hpp"
-#include <mutex>
 #include <boost/thread/lock_guard.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
+#include "NVCtrlLib.h"
 
 using namespace std;
 
@@ -41,14 +40,14 @@ private:
     int                 m_minor;
     int                 m_event_base; 
     int                 m_error_base;
-    static cmyxrandr *  m_instance;
-    CNvControlEvents *  m_pEvents;
+    static cmyxrandr *  m_instance;    
     vector<MOutputInfo> m_vOutputInfo;
     CMYSIZE m_currentSize;
     CMYSIZE m_maxSize;
     vector<MYGPUINTERFACE> m_vGPUInterface;
     //std::mutex m_mutex;
-    boost::mutex m_mutex;
+    //boost::mutex m_mutexMyXrandr;
+    boost::mutex m_mutexGetAllScreenInfoXrandr;
 
 
 public:
@@ -109,18 +108,16 @@ public:
     unsigned short getCurrentConfigRotation();
     short getAllScreenInfoXrandr(vector<MOutputInfo> & vOutputInfo,CMYSIZE & currentSize,CMYSIZE & maxSize);
     short getAllScreenInfoEx(vector<MOutputInfo> & vOutputInfo,CMYSIZE & currentSize,CMYSIZE & maxSize);
-    short getAllScreenInfoNew(vector<MOutputInfo> & vOutputInfo,CMYSIZE & currentSize,CMYSIZE & maxSize);
     int getScreenInfoEx(MOutputInfo & vOutputInfo);
     int getScreenSizeRange(CMYSIZE & min,CMYSIZE & max);
     bool update();
-    bool Init();
-    bool OnUpdate();
+    //bool Init();
+    //bool OnUpdate();
     void print_display_name(Display *dpy, int target_id, int attr,char *name,string & displayName);
     int GetNvXScreen(Display *dpy);
     void print_display_id_and_name(Display *dpy, int target_id, const char *tab);
     bool GetOutputAndGpuName(vector<MYGPUINTERFACE> & vgpu);
     bool GetOutputAndGpuName(json & js);
-    bool SetOutputIsChanged();
 };
 
 

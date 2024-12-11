@@ -36,6 +36,8 @@ std::string g_DATE = g_build_date_time;// "231103";
 std::string g_NOTE = "";
 
 void dumpVersion();
+unsigned int read_line_first_word(FILE *f,char *s);
+unsigned int get_sys_runtime(void);
 
 
 int main(int argc, char *argv[])
@@ -79,6 +81,37 @@ int main(int argc, char *argv[])
         }
         file.close();
 
+        {
+            CMDEXEC::CmdRes respid;
+            bool bret = false;
+            unsigned int uRunTimesTmp = get_sys_runtime();
+            XINFO("uRunTimesTmp 0 ={}\n", uRunTimesTmp);            
+            string strpgrep = "pgrep -x gdm3";
+            while (1)
+            {
+                bret = CMDEXEC::Execute(strpgrep, respid);
+                vector<string> vString;
+                CMDEXEC::Stringsplit(respid.StdoutString, '\n', vString);
+                if (vString.size() > 0)
+                {
+                    unsigned int uRunTimes = get_sys_runtime();
+                    XINFO("uRunTimes 1 = {}\n", uRunTimes);                   
+                    if(uRunTimes > 12)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        usleep(5000);
+                    }                    
+                }
+                else
+                {
+                    sleep(1);
+                }
+            }
+        }
+
         QSettings getConfig("./config.ini", QSettings::IniFormat);
 
         //setConfig.GetValue("common","ip",value,error);
@@ -121,9 +154,8 @@ int main(int argc, char *argv[])
         // sleep(3);
         // return 0;
         cdataProcess* pcdataProcess = cdataProcess::GetInstance();
-        pcdataProcess->SetMainWindow(&w);
-        pcdataProcess->InitOutputInfo(); 
-        pcdataProcess->InitMainOutputModes();
+        pcdataProcess->SetMainWindow(&w);        
+        pcdataProcess->Init();
         QObject::connect(pRequestHandler,&RequestHandler::sendDlgSignal,&w,&MainWindow::onMouseEventRequested);
           
 
@@ -162,4 +194,55 @@ void dumpVersion()
 #endif
     XINFO("NOTE: {}",g_NOTE.c_str());
     XINFO("========================================================\n");
+}
+
+
+/*************************************************
+  Function:    read_line_first_word
+  Description: 读取指定的文件中一行中的一段(到第一个空格)到一字符串中
+  Input:       
+			  1.文件指针
+			  2.欲存储的字符串指针
+  Return: 	   读取的最后一个字符          
+*************************************************/
+unsigned int read_line_first_word(FILE *f,char *s) 
+{
+	unsigned int chr;
+		
+    do
+	{
+		chr = fgetc(f);
+		*(s++) = chr;
+	}while(chr!='\x20' && chr!=EOF && chr!='\xa'&& chr!='\xd');
+	
+	*(s-1)='\0';
+	return chr;
+}
+
+/*************************************************
+  Function:		get_sys_runtime
+  Description:  获取系统启动运行时间	//daisy
+  Input:		无
+  Output:		
+  Return:		系统启动运行时间
+  Others:		
+*************************************************/
+unsigned int get_sys_runtime(void)
+{
+	char buf[30];
+	unsigned int sys_run_time = 0;
+	FILE *pf;
+	
+    memset(buf, 0, sizeof(buf));
+    pf = popen("cat /proc/uptime", "r");
+    if (NULL != pf)
+    {
+		read_line_first_word(pf, buf);
+		sys_run_time = atoi(buf);
+
+        pclose(pf);
+        pf = NULL;
+    }
+	
+	return sys_run_time;
 }

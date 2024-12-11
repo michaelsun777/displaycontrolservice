@@ -33,7 +33,7 @@
 #include "nvControlInfo.h"
 #include "3rd/cpp-subprocess/subprocess.hpp"
 #include <semaphore.h>
-#include <mutex>
+#include "CNvControlEvents.h"
 
 
 //#include <nlohmann/json.hpp>
@@ -41,7 +41,6 @@ using json = nlohmann::json;
 
 
 using namespace std;
-
 namespace sp = subprocess;
 
 
@@ -77,24 +76,32 @@ private:
     static cdataProcess *  m_instance;
     vector<MAINOUTPUTSUPPORTMODESTR> m_supportModes;
     vector<MAINOUTPUTSUPPORTMODESTR> m_InitSupportModes;
-    std::mutex m_mutex;
-    cdataProcess(/* args */);
-    static void * workerThreadListen(void * p);
+    CNvControlEvents *  m_pEvents;
 
-
- 
+    vector<MYGPUINTERFACE> m_vGPUInterface;
+    boost::mutex m_mutexGPUInterface;
+    boost::mutex m_mutexSetOutput;
 
 private:
+    cdataProcess(/* args */);
+    static void * workerThreadListen(void * p);
     
+    
+ 
+
+private:    
+    bool InitMainOutputModes();    
     bool setOutputMode(string &strOutputName, string &strModeName,string & strRate,string & outputMode);
     bool setOutputPos(string &strOutputName, int x,int y);
     bool setOutputModeAndPos(string &strOutputName,string &strModeName,string & strRate, int w,int h,string & outputLayout);
-    
+    bool InitOutputInfo();    
 
 
 public:
-    static cdataProcess * GetInstance();   
-   
+    static cdataProcess * GetInstance();
+    bool Init();
+    
+    bool InitOutputInfoLock();
     ~cdataProcess();
     void print_display_name(Display *dpy, int target_id, int attr,char *name,string & displayName);
     int GetNvXScreen(Display *dpy);
@@ -110,8 +117,8 @@ public://xrandr
     bool ResetOutputsInfo();
     bool GetGpuInfo(json & js);
     bool SetMonitorsInfo(vector<MONITORSETTINGINFO> *vSetInfo);
-    bool SetOutputsInfo(json & js);
     bool setOutputsXrandr(json & js);
+    bool setOutputsXrandrLock(json & js);
     
     bool TestMonitorInfo();
     void SetMainWindow(MainWindow * p);
@@ -122,9 +129,9 @@ public://xrandr
     bool checkOutputModeAndPos(vector<MOutputInfo> & vOutputInfo,string &strOutputName,int x, int y, string & strModeName);
     std::string getCpuName();
     std::string get_cur_executable_path();
+    bool OnCheckAndUpdate();
 public:
-    bool InitOutputInfo();
-    bool InitMainOutputModes();
+    
 
 signals:
     void testSignal(int type);

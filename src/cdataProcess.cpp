@@ -26,7 +26,7 @@ void * cdataProcess::workerThreadListen(void * p)
     // {
 
     // }
-
+    return 0;
 }
 
 cdataProcess::cdataProcess(/* args */)
@@ -286,7 +286,6 @@ bool cdataProcess::GetMonitorsInfo_shell(json & js)
     CMYSIZE currentSize, maxSize;
     vector<MOutputInfo> vOutputInfo;  
     //short shRet = pcmxrandr->getAllScreenInfoEx(vOutputInfo,currentSize,maxSize);
-    //short shRet = pcmxrandr->getAllScreenInfoNew(vOutputInfo,currentSize,maxSize);
     short shRet = pcmxrandr->getAllScreenInfoXrandr(vOutputInfo,currentSize,maxSize);
     if(shRet == 0)
     {
@@ -427,7 +426,6 @@ int cdataProcess::GetOutputsInfo_shell(json & js)
     CMYSIZE currentSize, maxSize;
     vector<MOutputInfo> vOutputInfo;  
     //short shRet = pcmxrandr->getAllScreenInfoEx(vOutputInfo,currentSize,maxSize);
-    //short shRet = pcmxrandr->getAllScreenInfoNew(vOutputInfo,currentSize,maxSize);
     short shRet = pcmxrandr->getAllScreenInfoXrandr(vOutputInfo,currentSize,maxSize);
     if(shRet == 0)
     {
@@ -537,7 +535,6 @@ bool cdataProcess::InitMainOutputModes()
         CMYSIZE currentSize, maxSize;
         vector<MOutputInfo> vOutputInfo;
         //short shRet = pcmxrandr->getAllScreenInfoEx(vOutputInfo,currentSize,maxSize);
-        //short shRet = pcmxrandr->getAllScreenInfoNew(vOutputInfo, currentSize, maxSize);
         short shRet = pcmxrandr->getAllScreenInfoXrandr(vOutputInfo,currentSize,maxSize);
         if (shRet == 0)
         {
@@ -625,8 +622,8 @@ bool cdataProcess::GetMainOutputModes(json & js)
 bool cdataProcess::ResetOutputsInfo()
 {
     cmyxrandr *pcmxrandr = cmyxrandr::GetInstance();
-    pcmxrandr->SetOutputIsChanged();
-    sleep(1);
+    //pcmxrandr->SetOutputIsChanged();
+    //sleep(1);
     return true;
 }
 
@@ -678,262 +675,6 @@ bool cdataProcess::SetMonitorsInfo(vector<MONITORSETTINGINFO> * vSetInfo)
     // cxr.setMode(size,447);
     // cxr.setOffset(offset);
     
-
-    return true;
-}
-
-bool cdataProcess::SetOutputsInfo(json & js)
-{
-    XINFO("{}",js.dump().c_str());
-    // if(js.find("layoutName") == js.end())
-    // {
-    //     XERROR("layoutName is not exist");
-    //     return false;
-    // }
-        
-    if(js.find("resolution") == js.end())
-    {
-        XERROR("resolution is not exist");
-        return false;
-    }
-    if(js.find("allResolution") == js.end())
-    {
-        XERROR("allResolution is not exist");
-        return false;
-    }
-    if(js.find("layout") == js.end())
-    {
-        XERROR("layout is not exist");
-        return false;
-    }
-
-    //string layoutName = js["layoutName"].get<std::string>();
-    string resolution = js["resolution"].get<std::string>();
-    string allResolution = js["allResolution"].get<std::string>();
-    json jarry = js["layout"];
-    int num = jarry.size();
-    if(num <= 0)
-    {
-        return false;
-    }
-    std::vector<std::string> vWidthAndHight = CMDEXEC::Split(resolution, 'x');
-    int _width = std::stoi(vWidthAndHight[0]);
-    int _hight = std::stoi(vWidthAndHight[1]);
-    // std::vector<std::string> vLayout = CMDEXEC::Split(layoutName, 'x');
-    // int _layout_w = std::stoi(vLayout[0]);
-    // int _layout_h = std::stoi(vLayout[1]);
-    int _layout_horizontal = js["layout_horizontal"].get<int>();
-    int _layout_vertical = js["layout_vertical"].get<int>();
-
-    // string strDisplayName = ":0";
-    // cmyxrandr cxr(strDisplayName);
-    cmyxrandr* pcmxrandr = cmyxrandr::GetInstance();
-    CMYSIZE currentSize, maxSize;
-    vector<MOutputInfo> vOutputInfo;  
-    //short shRet = pcmxrandr->getAllScreenInfoEx(vOutputInfo,currentSize,maxSize);
-    //short shRet = pcmxrandr->getAllScreenInfoNew(vOutputInfo,currentSize,maxSize);
-    short shRet = pcmxrandr->getAllScreenInfoXrandr(vOutputInfo,currentSize,maxSize);
-    if(shRet != 0)
-    {
-        return false;
-    }
-    // for (size_t i = 0; i < vOutputInfo.size(); i++)
-    // {
-    //     vOutputInfo[i].bIsSeted = false;
-    // }
-    
-
-    bool bIsChanged = false;
-
-    string strAllSetStr = "xrandr";
-    string strAllOutputMode = "xrandr";
-    int nMaxId = 0;
-    for (json::iterator it = jarry.begin(); it != jarry.end(); it++)
-    {
-        int nId = (*it)["id"].template get<int>();
-        if(nId > nMaxId)
-        {
-            nMaxId = nId;
-        }
-    }
-
-    m_mutex.lock();
-    for (json::iterator it = jarry.begin();it!=jarry.end();it++)
-    {
-        string output = (*it)["name"].template get<std::string>();
-        int nCoordinateX = 0;
-        int nCoordinateY = 0;
-        // if((*it).find("coordinateOrderX") != (*it).end() && (*it).find("coordinateOrderY") != (*it).end())
-        // {
-        //     nCoordinateX = (*it)["coordinateOrderX"].template get<int>();
-        //     nCoordinateY = (*it)["coordinateOrderY"].template get<int>();
-        //     nCoordinateX = nCoordinateX * _width;
-        //     nCoordinateY = nCoordinateY * _hight;
-        // }
-        // else
-        // {
-            int nId = (*it)["id"].template get<int>();
-            nCoordinateX = (nId % _layout_vertical) * _width;
-            nCoordinateY = (nId / _layout_vertical) * _hight;
-        //}               
-        //
-        bool primary = (*it)["primary"].template get<bool>();
-        for (size_t i = 0; i < vOutputInfo.size(); i++)
-        {
-            if(output.compare(vOutputInfo[i].name) == 0)//找到显示器,未找的话不处理
-            {
-                MyModelInfoEX * pMode = &vOutputInfo[i].currentMode;
-                if(vOutputInfo[i].currentMode.name.compare(resolution) != 0 || vOutputInfo[i].pos.xPos != nCoordinateX || vOutputInfo[i].pos.yPos != nCoordinateY)
-                {
-                    vOutputInfo[i].bIsSeted = true;
-                    bool bFind = false;
-                    for (size_t l = 0; l < vOutputInfo[i].modes.size(); l++)
-                    {
-                        if(vOutputInfo[i].modes[l].name.compare(resolution) == 0)
-                        { 
-                            bIsChanged = true;
-                            bFind = true;
-                            pMode = &vOutputInfo[i].modes[l];
-                            string strOutputMode = "";
-                            //if(!setOutputMode(vOutputInfo[i].name, vOutputInfo[i].modes[l].name,vOutputInfo[i].modes[l].rate,strOutputMode))
-                            string strTmp = "";
-                            //sleep(8);
-                            if(!setOutputModeAndPos(vOutputInfo[i].name, pMode->name,pMode->rate,nCoordinateX, nCoordinateY,strTmp))
-                            {
-                                m_mutex.unlock();
-                                return false;
-                            }
-                            //usleep(500000);
-                            strAllOutputMode += strOutputMode;
-                            break;
-                        }
-                    }
-                    if(!bFind)
-                    {
-                        m_mutex.unlock();
-                        XERROR("未找到相应的分辨率,{} can not find resolution:{}",vOutputInfo[i].name,resolution);
-                        return false;
-                    }
-                }
-
-                //if (vOutputInfo[i].pos.xPos != nCoordinateX || vOutputInfo[i].pos.yPos != nCoordinateY)
-                // {
-                //     bIsChanged = true;
-                //     //if(!setOutputPos(vOutputInfo[i].name, nCoordinateX, nCoordinateY))
-                //     string strOutputLayout ="";
-                //     if(!setOutputModeAndPos(vOutputInfo[i].name, pMode->name,pMode->rate,nCoordinateX, nCoordinateY,strOutputLayout))
-                //     {
-                //         return false;
-                //     }
-                //     strAllSetStr += strOutputLayout;
-                // }
-                break;
-            }
-        }
-    }
-
-    //后添加的显示器，没有配置的分辨率，需要添加
-    for (size_t i = 0; i < vOutputInfo.size(); i++)
-    {
-        if (!vOutputInfo[i].bIsSeted)
-        {
-            int nCoordinateX = 0;
-            int nCoordinateY = 0;
-            nMaxId++;
-            nCoordinateX = (nMaxId % _layout_vertical) * _width;
-            nCoordinateY = (nMaxId / _layout_vertical) * _hight;
-            MyModelInfoEX *pMode = &vOutputInfo[i].currentMode;
-            for (size_t l = 0; l < vOutputInfo[i].modes.size(); l++)
-            {
-                if (vOutputInfo[i].modes[l].name.compare(resolution) == 0)
-                {
-                    bIsChanged = true;
-
-                    pMode = &vOutputInfo[i].modes[l];
-                    string strOutputMode = "";
-                    // if(!setOutputMode(vOutputInfo[i].name, vOutputInfo[i].modes[l].name,vOutputInfo[i].modes[l].rate,strOutputMode))
-                    string strTmp = "";
-                    if (!setOutputModeAndPos(vOutputInfo[i].name, pMode->name, pMode->rate, nCoordinateX, nCoordinateY, strTmp))
-                    {
-                        m_mutex.unlock();
-                        return false;
-                    }
-                    // usleep(500000);
-                    strAllOutputMode += strOutputMode;
-                    break;
-                }
-            }
-
-            //XERROR("未找到相应的输出,can not find output:{}", output);
-            m_mutex.unlock();
-            return false;
-        }
-    }
-
-    //cmyxrandr* pcmxrandr = cmyxrandr::GetInstance();
-    bool bIsNeedSendMsg = false;
-    if(bIsChanged)
-    {
-        pcmxrandr->SetOutputIsChanged();
-        sleep(3);
-        shRet = pcmxrandr->getAllScreenInfoNew(vOutputInfo,currentSize,maxSize);
-        if(shRet == 0)
-        {
-            for (json::iterator it = jarry.begin(); it != jarry.end(); it++)
-            {
-                string outputName = (*it)["name"].template get<std::string>();
-                int nId = (*it)["id"].template get<int>();
-                string resolution = js["resolution"].get<std::string>();
-                int nCoordinateX = 0;
-                int nCoordinateY = 0;
-                nCoordinateX = (nId % _layout_vertical) * _width;
-                nCoordinateY = (nId / _layout_vertical) * _hight;
-                if(!checkOutputModeAndPos(vOutputInfo,outputName,nCoordinateX,nCoordinateY,resolution))
-                {
-                    bIsNeedSendMsg = true;
-                    string strTmp = "";
-                    string strTmp2 = "";
-                    setOutputModeAndPos(outputName, resolution, strTmp2, nCoordinateX, nCoordinateY, strTmp);                    
-                }
-            }
-        }
-    }
-    //m_mutex.unlock();       
-    
-    // if(strAllSetStr.length() > 10)
-    // {
-    //     // XINFO("setOutputModeAndPos exec :{}\n", strAllOutputMode.c_str());
-    //     CMDEXEC::CmdRes res;
-    //     // bool bRet = CMDEXEC::Execute(strAllOutputMode, res);
-    //     // XCRITICAL("setOutputModeAndPos CMDEXEC::Execute errono:{},error:{}\n", res.ExitCode, res.StderrString);        
-        
-    //     res.ExitCode = 0;   
-    //     res.StderrString = ""; 
-    //     res.StdoutString = "";
-    //     XINFO("setOutputModeAndPos exec :{}", strAllSetStr.c_str());        
-    //     bool bRet = CMDEXEC::Execute(strAllSetStr, res);
-    //     XERROR("cdataProcess::setOutputModeAndPos CMDEXEC::Execute errono:{},error:{}\n", res.ExitCode, res.StderrString);
-    //     if (!bRet)
-    //     {
-    //         XERROR("cdataProcess::setOutputModeAndPos CMDEXEC::Execute errono:{},error:{}\n", res.ExitCode, res.StderrString);
-    //         return false;
-    //     }
-    // }
-
-
-    m_layout_horizontal = _layout_horizontal;
-    m_layout_vertical = _layout_vertical;
-    m_nWidth = _width;
-    m_nHight = _hight;
-    m_allLayouts = allResolution;
-    if(bIsNeedSendMsg)
-    {
-        //cmyxrandr* pcmxrandr = cmyxrandr::GetInstance();
-        pcmxrandr->SetOutputIsChanged();
-        usleep(3.5f*1000*1000);
-    }
-
-    m_mutex.unlock();
 
     return true;
 }
@@ -1127,6 +868,12 @@ bool cdataProcess::setOutputModeAndPos(string &strOutputName,string &strModeName
 }
 
 
+bool cdataProcess::setOutputsXrandrLock(json & js)
+{
+    boost::lock_guard<boost::mutex> lock(m_mutexSetOutput);
+    return setOutputsXrandr(js);
+}
+
 bool cdataProcess::setOutputsXrandr(json & js)
 {
     string resolution = js["resolution"].get<std::string>();
@@ -1165,7 +912,6 @@ bool cdataProcess::setOutputsXrandr(json & js)
         CMYSIZE currentSize, maxSize;
         vector<MOutputInfo> vOutputInfo;
         //short shRet = pcmxrandr->getAllScreenInfoEx(vOutputInfo,currentSize,maxSize);
-        //short shRet = pcmxrandr->getAllScreenInfoNew(vOutputInfo, currentSize, maxSize);
         short shRet = pcmxrandr->getAllScreenInfoXrandr(vOutputInfo,currentSize,maxSize);
         if (shRet != 0)
         {
@@ -1352,13 +1098,13 @@ bool cdataProcess::setOutputsXrandr(json & js)
     }
     
     //if(bIsChange)
-    {
-        //pcmxrandr->SetOutputIsChanged();
-        usleep(2000*1000);
-        pcmxrandr->OnUpdate();
-        //usleep(3500*1000);
-        pcmxrandr->SetOutputIsChanged();
-    }    
+    // {
+    //     //pcmxrandr->SetOutputIsChanged();
+    //     usleep(2000*1000);
+    //     pcmxrandr->OnUpdate();
+    //     //usleep(3500*1000);
+    //     pcmxrandr->SetOutputIsChanged();
+    // }    
 
     return true;
 }
@@ -1399,8 +1145,7 @@ bool cdataProcess::InitOutputInfo()
         if(!strJson.empty())
         {
             XINFO("outputs json:{}",strJson.c_str());
-            json jdata = json::parse(strJson.c_str());           
-            //SetOutputsInfo(jdata);
+            json jdata = json::parse(strJson.c_str());
             setOutputsXrandr(jdata);
             return true;
         }
@@ -1431,7 +1176,6 @@ bool cdataProcess::InitOutputInfo()
     CMYSIZE currentSize, maxSize;
     //cmyxrandr* pcmxrandr = cmyxrandr::GetInstance();
     //pcmxrandr->getAllScreenInfoEx(vOutputInfo,currentSize, maxSize);
-    //pcmxrandr->getAllScreenInfoNew(vOutputInfo,currentSize, maxSize);
     short shRet = pcmxrandr->getAllScreenInfoXrandr(vOutputInfo,currentSize,maxSize);
 
     unsigned long currentModeId = 0,preferredModeId = 0,lastDeterminedModeId = 0;
@@ -1647,14 +1391,42 @@ bool cdataProcess::InitOutputInfo()
 
 }
 
-
+bool cdataProcess::InitOutputInfoLock()
+{
+    boost::lock_guard<boost::mutex> lock(m_mutexSetOutput);
+    return InitOutputInfo();
+}
 
 
 
 bool cdataProcess::GetOutputAndGpuName(json & js)
 {
-    cmyxrandr * p =cmyxrandr::GetInstance();
-    return p->GetOutputAndGpuName(js);
+
+    if(m_vGPUInterface.size() > 0)
+    {
+        boost::lock_guard<boost::mutex> lock(m_mutexGPUInterface);
+        for (size_t i = 0; i < m_vGPUInterface.size(); i++)
+        {
+            json jnode = json::parse(m_vGPUInterface[i].jsonStr);
+            js["gpu"].push_back(jnode);
+        }
+        
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+
+
+
+
+    //cmyxrandr * p =cmyxrandr::GetInstance();
+    //return p->GetOutputAndGpuName(js);
+
+
+
+
     /*    
     int major, minor, len;
     char *start, *str0, *str1;
@@ -1968,4 +1740,51 @@ std::string cdataProcess::get_cur_executable_path()
     }
 
     return std::string(arr_tmp);
+}
+
+bool cdataProcess::Init()
+{
+    boost::lock_guard<boost::mutex> lock(m_mutexSetOutput);
+    InitOutputInfo(); 
+    InitMainOutputModes();
+    m_pEvents = new CNvControlEvents();
+    m_pEvents->init();
+    m_pEvents->start();
+    return true;
+}
+
+bool cdataProcess::OnCheckAndUpdate()
+{
+    XINFO("cmyxrandr::OnUpdate in\n");
+    CMYSIZE currentSize, maxSize;
+    vector<MOutputInfo> vOutputInfo;
+    cmyxrandr *pcmxrandr = cmyxrandr::GetInstance();
+
+    {   
+        boost::lock_guard<boost::mutex> lock(m_mutexSetOutput);
+        pcmxrandr->getAllScreenInfoXrandr(vOutputInfo, currentSize, maxSize);
+        if (vOutputInfo.size() > 0)
+        {
+            for (size_t i = 0; i < vOutputInfo.size(); i++)
+            {
+                if (vOutputInfo[i].currentMode.width != m_nWidth)
+                {
+                    InitOutputInfo();
+                    break;
+                }
+            }
+        }
+        else
+        {
+            return false;
+        }
+    }   
+
+    if(vOutputInfo.size() > 0)
+    {
+        boost::lock_guard<boost::mutex> lock(m_mutexGPUInterface);
+        pcmxrandr->GetOutputAndGpuName(m_vGPUInterface);
+    }    
+    XINFO("cmyxrandr::OnUpdate out\n");
+    return true;
 }

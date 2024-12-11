@@ -44,6 +44,10 @@ namespace CMDEXEC
     {
         try
         {
+            res.StdoutString.clear();
+            res.StderrString.clear();
+            res.ExitCode = 0;
+
             assert(cmd.size() < MAX_COMMAND_SIZE);
             int fd_out[2];
             int fd_err[2];
