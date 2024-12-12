@@ -301,14 +301,16 @@ void RequestHandler::getOutputsInfo(const HttpRequest &req, HttpResponse &res)
         {
             //m_mutex.unlock();
             //XINFO("{RequestHandler::getOutputsInfo unlock1}\n");
-            createRet(res, 500);
+            //createRet(res, 500);
+            createRet(res, 200, js);
             return;
         }
         else
         {
             //m_mutex.unlock();
             //XINFO("{RequestHandler::getOutputsInfo unlock2}\n");
-            createRet(res, 204);
+            //createRet(res, 204);
+            createRet(res, 500);
             return;
         }
     }

@@ -936,6 +936,7 @@ short cmyxrandr::getAllScreenInfoXrandr(vector<MOutputInfo> & vOutputInfo,CMYSIZ
                                 }
                             }
                         }
+                        XRRFreeOutputInfo(pOutputInfo);
                     }
 
                 }

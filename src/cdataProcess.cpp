@@ -445,6 +445,45 @@ int cdataProcess::GetOutputsInfo_shell(json & js)
         */
         if(currentSize.width != m_nWidth || currentSize.height != m_nHight)
         {
+            json jsdata;
+            int sortBuf[m_layout_horizontal * m_layout_vertical] = {0};
+            char bufferLayout[40] = {0};
+            sprintf(bufferLayout, "%dx%d", m_layout_horizontal, m_layout_vertical);
+            string layoutName = bufferLayout;
+            js["layoutName"] = layoutName;
+
+            char buffer[40] = {0};
+            sprintf(buffer, "%dx%d", m_nWidth, m_nHight);
+            string resolution = buffer;
+            js["resolution"] = resolution;
+            js["allResolution"] = m_allLayouts;
+            js["layout_horizontal"] = m_layout_horizontal;
+            js["num"] = vOutputInfo.size();
+            js["layout_vertical"] = m_layout_vertical;
+
+            for (size_t i = 0; i < m_layout_vertical * m_layout_horizontal; i++)
+            {
+                json node;
+                node["name"] = "不支持的分辨率";//Unsupported resolution
+                for (size_t i = 0; i < sizeof(sortBuf) / sizeof(int); i++)
+                {
+                    if (sortBuf[i] == 0)
+                    {
+                        node["id"] = i;
+                        sortBuf[i] = 1;
+                        break;
+                    }
+                }
+                node["coordinateOrderX"] = 0;
+                node["coordinateOrderY"] = 0;
+                node["primary"] = false;
+                jsdata.push_back(node);
+            }
+
+            js["layout"] = jsdata;
+            // strInfo = js.dump().c_str();
+            XINFO("{}", js.dump().c_str());
+
             return -1;
         }
 
@@ -519,8 +558,45 @@ int cdataProcess::GetOutputsInfo_shell(json & js)
         XINFO("{}",js.dump().c_str());
         return 0;
     }
+    else
+    {
+        json jsdata;        
+        char bufferLayout[40] = {0};
+        sprintf(bufferLayout, "%dx%d", 1, 1);
+        string layoutName = bufferLayout;
+        js["layoutName"] = layoutName;
 
-    return -1;
+        char buffer[40] = {0};
+        sprintf(buffer, "%dx%d", 1920, 1080);
+        string resolution = buffer;
+        js["resolution"] = resolution;
+        js["allResolution"] = resolution;
+        js["layout_horizontal"] = 1;
+        js["num"] = 1;
+        js["layout_vertical"] = 1;
+
+        //if (vOutputInfo.size() < m_layout_vertical * m_layout_horizontal)
+        {
+            // for (size_t i = 0; i < m_layout_vertical * m_layout_horizontal; i++)
+            // {
+                json node;
+                node["name"] = "内部错误";//Unsupported resolution
+                node["id"] = 0;
+                node["coordinateOrderX"] = 0;
+                node["coordinateOrderY"] = 0;
+                node["primary"] = false;
+                jsdata.push_back(node);
+            // }
+        }
+
+        js["layout"] = jsdata;
+        // strInfo = js.dump().c_str();
+        XINFO("{}", js.dump().c_str());
+
+        return -1;
+    }
+
+    return -2;
 
 }
 bool cdataProcess::InitMainOutputModes()
@@ -1747,6 +1823,8 @@ bool cdataProcess::Init()
     boost::lock_guard<boost::mutex> lock(m_mutexSetOutput);
     InitOutputInfo(); 
     InitMainOutputModes();
+    cmyxrandr * pcmxrandr = cmyxrandr::GetInstance();
+    pcmxrandr->GetOutputAndGpuName(m_vGPUInterface);
     m_pEvents = new CNvControlEvents();
     m_pEvents->init();
     m_pEvents->start();
