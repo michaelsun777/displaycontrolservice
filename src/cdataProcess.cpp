@@ -1158,7 +1158,7 @@ bool cdataProcess::InitOutputInfo()
     m_layout_vertical = settings.value("screen/layout_vertical",0).toInt();
     m_allLayouts = settings.value("screen/allResolution","").toString().toStdString();
 
-    if(m_nWidth < 1680)//增加最低分辨率限制，默认为1080p
+    if(m_nWidth < 1680)//增加最低分辨率限制1680*1050，默认为1080p
     {
         m_nWidth = 1920;
         m_nHight = 1080;
