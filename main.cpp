@@ -1,6 +1,8 @@
 
 
 #include <QApplication>
+#include <QStandardPaths>
+#include <QCefContext.h>
 #include <QObject>
 #include <QSettings>
 #include "3rd/httpserver/httplistener.h"
@@ -12,6 +14,7 @@
 //#include "httpManager.h"
 #include "UI/dlgurl.h"
 #include "UI/mainwindow.h"
+#include "UI/mymainwindow.h"
 
 #include "build_date_time.h"
 //#include "dlgManager.h"
@@ -36,6 +39,7 @@ std::string g_DATE = g_build_date_time;// "231103";
 std::string g_NOTE = "";
 
 void dumpVersion();
+bool InitQCefConfig(QCefConfig & config,QApplication & app,int argc, char *argv[]);
 unsigned int read_line_first_word(FILE *f,char *s);
 unsigned int get_sys_runtime(void);
 
@@ -90,25 +94,34 @@ int main(int argc, char *argv[])
             while (1)
             {
                 bret = CMDEXEC::Execute(strpgrep, respid);
-                vector<string> vString;
-                CMDEXEC::Stringsplit(respid.StdoutString, '\n', vString);
-                if (vString.size() > 0)
+                if(bret)
                 {
-                    unsigned int uRunTimes = get_sys_runtime();
-                    XINFO("uRunTimes 1 = {}\n", uRunTimes);                   
-                    if(uRunTimes > 12)
+                    vector<string> vString;
+                    CMDEXEC::Stringsplit(respid.StdoutString, '\n', vString);
+                    if (vString.size() > 0)
                     {
-                        break;
+                        unsigned int uRunTimes = get_sys_runtime();
+                        XINFO("uRunTimes 1 = {}\n", uRunTimes);
+                        if (uRunTimes > 12)
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            usleep(5000);
+                        }
                     }
                     else
                     {
-                        usleep(5000);
-                    }                    
+                        sleep(1);
+                    }
                 }
                 else
                 {
-                    sleep(1);
+                    XERROR("pgrep -x gdm3 执行失败,程序退出\n");
+                    return -1;
                 }
+                
             }
         }
 
@@ -164,8 +177,60 @@ int main(int argc, char *argv[])
         // DlgUrl dlg;
         // dlg.show();
         // dlg.UpdateUrl("https://www.baidu.com");
-        //std::shared_ptr<HttpManager> pHttpManager = HttpManager::GetInstance();
-        
+        // std::shared_ptr<HttpManager> pHttpManager = HttpManager::GetInstance();
+        // build QCefConfig
+        MyMainWindow *pMyW = nullptr;
+        QCefConfig config;
+
+        // config.setUserAgent("QCefViewTest");
+        // // set log level
+        // config.setLogLevel(QCefConfig::LOGSEVERITY_DEFAULT);
+        // // set JSBridge object name (default value is CefViewClient)
+        // config.setBridgeObjectName("CallBridge");
+        // // set Built-in scheme name (default value is CefView)
+        // config.setBuiltinSchemeName("CefView");
+        // // port for remote debugging (default is 0 and means to disable remote debugging)
+        // config.setRemoteDebuggingPort(9000);
+        // // set background color for all browsers
+        // // (QCefSetting.setBackgroundColor will overwrite this value for specified browser instance)
+        // config.setBackgroundColor(Qt::lightGray);
+
+        // // WindowlessRenderingEnabled is set to true by default,
+        // // set to false to disable the OSR mode
+        // config.setWindowlessRenderingEnabled(true);
+
+        // // add command line args, you can any cef supported switches or parameters
+        // config.addCommandLineSwitch("use-mock-keychain");
+        // // config.addCommandLineSwitch("disable-gpu");
+        // // config.addCommandLineSwitch("enable-media-stream");
+        // // config.addCommandLineSwitch("allow-file-access-from-files");
+        // // config.addCommandLineSwitch("disable-spell-checking");
+        // // config.addCommandLineSwitch("disable-site-isolation-trials");
+        // // config.addCommandLineSwitch("enable-aggressive-domstorage-flushing");
+        // config.addCommandLineSwitchWithValue("renderer-process-limit", "1");
+        // // allow remote debugging
+        // config.addCommandLineSwitchWithValue("remote-allow-origins", "*");
+        // // config.addCommandLineSwitchWithValue("disable-features", "BlinkGenPropertyTrees,TranslateUI,site-per-process");
+
+        // // set cache folder
+        // config.setCachePath(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation));
+        // QCefContext cefContext(&app, argc, argv, &config);
+        // pMyW = new MyMainWindow();
+        // pMyW->show();
+
+
+
+
+        bool bretQCef = InitQCefConfig(config, app, argc, argv);
+        if (!bretQCef)
+        {
+           XERROR("InitQCefConfig failed\n");
+           return -1;
+        }
+        QCefContext cefContext(&app, argc, argv, &config);
+        pMyW = new MyMainWindow();
+        pMyW->show();
+
         w.show();
         w.Init();
         w.hide();
@@ -245,4 +310,58 @@ unsigned int get_sys_runtime(void)
     }
 	
 	return sys_run_time;
+}
+
+bool InitQCefConfig(QCefConfig & config,QApplication & app,int argc, char *argv[])
+{
+    try
+    {
+        // build QCefConfig
+        // QCefConfig config;
+        // set user agent
+        // config.setUserAgent("QCefViewTest");
+        // set log level
+        config.setLogLevel(QCefConfig::LOGSEVERITY_DEFAULT);
+        // set JSBridge object name (default value is CefViewClient)
+        config.setBridgeObjectName("CallBridge");
+        // set Built-in scheme name (default value is CefView)
+        config.setBuiltinSchemeName("CefView");
+        // port for remote debugging (default is 0 and means to disable remote debugging)
+        config.setRemoteDebuggingPort(9000);
+        // set background color for all browsers
+        // (QCefSetting.setBackgroundColor will overwrite this value for specified browser instance)
+        config.setBackgroundColor(Qt::lightGray);
+        // WindowlessRenderingEnabled is set to true by default,
+        // set to false to disable the OSR mode
+        config.setWindowlessRenderingEnabled(true);
+
+        // add command line args, you can any cef supported switches or parameters
+        config.addCommandLineSwitch("use-mock-keychain");
+        //config.addCommandLineSwitch("disable-gpu");
+        config.addCommandLineSwitch("enable-media-stream");
+        config.addCommandLineSwitch("use-gl=desktop");
+        config.addCommandLineSwitch("enable-gpu-rasterization");
+        // config.addCommandLineSwitch("allow-file-access-from-files");
+        // config.addCommandLineSwitch("disable-spell-checking");
+        // config.addCommandLineSwitch("disable-site-isolation-trials");
+        // config.addCommandLineSwitch("enable-aggressive-domstorage-flushing");
+        config.addCommandLineSwitchWithValue("renderer-process-limit", "1");
+        // allow remote debugging
+        config.addCommandLineSwitchWithValue("remote-allow-origins", "*");
+        // config.addCommandLineSwitchWithValue("disable-features", "BlinkGenPropertyTrees,TranslateUI,site-per-process");
+
+        // set cache folder
+        config.setCachePath(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation));
+        // create QCefContext instance with config,
+        // the lifecycle of cefContext must be the same as QApplication instance     
+        // QCefContext cefContext(&app, argc, argv, &config);
+
+        
+        return true;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << '\n';
+        return false;
+    }
 }

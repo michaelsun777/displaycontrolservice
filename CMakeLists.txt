@@ -143,6 +143,8 @@ INCLUDE_DIRECTORIES(/usr/include/X11)
 INCLUDE_DIRECTORIES(3rd/nvidia-settings/src/libXNVCtrl)
 INCLUDE_DIRECTORIES(3rd/nvidia-settings/src/libXNVCtrlAttributes)
 INCLUDE_DIRECTORIES(3rd/httpserver/)
+INCLUDE_DIRECTORIES(3rd/QCefView/include)
+INCLUDE_DIRECTORIES(3rd/QCefView)
 INCLUDE_DIRECTORIES(src/UI)
 
 INCLUDE_DIRECTORIES(src)
@@ -183,7 +185,7 @@ link_directories(/usr/lib/x86_64-linux-gnu)
 #link_directories(src/arm_tool/lib)
 link_directories(/usr/local/lib/)
 link_directories(/home/amplesky/work/displayctrolservice/3rd/nvidia-settings/src/_out/Linux_x86_64/)
-
+link_directories(3rd/QCefView/build/output/Debug/bin)
 
 aux_source_directory(src/ SRC_SRC)
 # aux_source_directory(src/UI SRC_SRC_UI)
@@ -204,6 +206,9 @@ src/UI/dlgurl.ui
 src/UI/mainwindow.cpp
 src/UI/mainwindow.h
 src/UI/mainwindow.ui
+src/UI/mymainwindow.cpp
+src/UI/mymainwindow.h
+src/UI/mymainwindow.ui
 src/cdataProcess.cpp
 src/config.cpp
 # src/httpManager.cpp
@@ -218,6 +223,9 @@ src/autoDelete.cpp
 
 ${http_SRC}
 
+3rd/QCefView/example/QCefViewTest/CefViewWidget.cpp
+3rd/QCefView/example/QCefViewTest/DownloadManager.cpp
+
 # ${spdlog_SRC} 
 )
 
@@ -225,7 +233,10 @@ ${http_SRC}
 add_subdirectory(3rd/spdlog)
 
 target_link_libraries(dpcs PRIVATE
-pthread
+"-Wl,--no-as-needed /home/amplesky/work/displaycontrolservice-test/3rd/QCefView/build/output/Debug/bin/libQCefView.so"
+"-Wl,--no-as-needed /home/amplesky/work/displaycontrolservice-test/3rd/QCefView/build/output/Debug/bin/libcef.so"
+
+
 #  -lusb -ludev -lhidapi-hidraw
 # -lboost_system -lboost_thread -lboost_filesystem -lboost_iostreams -lboost_chrono
 # -lMvCameraControl -luuid -lcurl -lstdc++fs
@@ -234,6 +245,7 @@ ${QT_LIBRARIES}
 -lX11 -lXrandr -lm -lXext #-lXNVCtrl #  // 
 #-LXNVCtrl
 #-L/usr/lib/x86_64-linux-gnu/libXNVCtrl.so.0
+pthread
 -ldl
 
 
