@@ -37,6 +37,7 @@ std::string g_VERSION = "dpcs-0.0.2-241210-1";
 std::string g_BRANCH = "dev";
 std::string g_DATE = g_build_date_time;// "231103";
 std::string g_NOTE = "";
+std::string g_cefName ="CefView";
 
 void dumpVersion();
 bool InitQCefConfig(QCefConfig & config,QApplication & app,int argc, char *argv[]);
@@ -170,6 +171,8 @@ int main(int argc, char *argv[])
         pcdataProcess->SetMainWindow(&w);        
         pcdataProcess->Init();
         QObject::connect(pRequestHandler,&RequestHandler::sendDlgSignal,&w,&MainWindow::onMouseEventRequested);
+        QObject::connect(pRequestHandler,&RequestHandler::sendOpenTitleWindowSignal,&w,&MainWindow::onOpenTitleWindow);
+        QObject::connect(pRequestHandler,&RequestHandler::sendCloseTitleWindowSignal,&w,&MainWindow::onCloseTitleWindow);
           
 
         //std::shared_ptr<dlgManager> pdlgManager = dlgManager::GetInstance();
@@ -179,7 +182,6 @@ int main(int argc, char *argv[])
         // dlg.UpdateUrl("https://www.baidu.com");
         // std::shared_ptr<HttpManager> pHttpManager = HttpManager::GetInstance();
         // build QCefConfig
-        MyMainWindow *pMyW = nullptr;
         QCefConfig config;
 
         // config.setUserAgent("QCefViewTest");
@@ -228,8 +230,6 @@ int main(int argc, char *argv[])
            return -1;
         }
         QCefContext cefContext(&app, argc, argv, &config);
-        pMyW = new MyMainWindow();
-        pMyW->show();
 
         w.show();
         w.Init();
@@ -325,7 +325,7 @@ bool InitQCefConfig(QCefConfig & config,QApplication & app,int argc, char *argv[
         // set JSBridge object name (default value is CefViewClient)
         config.setBridgeObjectName("CallBridge");
         // set Built-in scheme name (default value is CefView)
-        config.setBuiltinSchemeName("CefView");
+        config.setBuiltinSchemeName(g_cefName.c_str());
         // port for remote debugging (default is 0 and means to disable remote debugging)
         config.setRemoteDebuggingPort(9000);
         // set background color for all browsers

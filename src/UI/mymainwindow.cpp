@@ -1,15 +1,14 @@
 #include "mymainwindow.h"
 
-
-MyMainWindow::MyMainWindow(QWidget *parent) :
-    QMainWindow(parent)
+MyMainWindow::MyMainWindow(std::string name, QWidget *parent) :
+    QMainWindow(parent),m_name(name)
     //,    ui(new Ui::MyMainWindow)
 {
     m_ui.setupUi(this);
-
-    createRightCefView();
-
-    //setWindowFlags(Qt::FramelessWindowHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint);
+    // 背景透明
+    setAttribute(Qt::WA_TranslucentBackground);
+    // 去掉边框
+    setWindowFlags(Qt::FramelessWindowHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint);
 
 }
 
@@ -39,9 +38,10 @@ void MyMainWindow::createRightCefView()
     // setting.setBackgroundColor(QColor::fromRgba(qRgba(255, 255, 220, 255)));
     // setting.setBackgroundColor(QColor::fromRgb(0, 0, 255));
     setting.setBackgroundColor(Qt::lightGray);
-
+    std::string url = "CefView://";
+    url += m_name;
     // create the QCefView widget and add it to the layout container
-    m_pRightCefViewWidget = new CefViewWidget("https://map.baidu.com/", &setting, this);
+    m_pRightCefViewWidget = new CefViewWidget(url.c_str(), &setting, this);
     m_pRightCefViewWidget->resize(500, 500);    
     m_pRightCefViewWidget->setContextMenuPolicy(Qt::DefaultContextMenu);
     //m_ui.Container->layout()->addWidget(m_pRightCefViewWidget);
@@ -72,4 +72,11 @@ void MyMainWindow::resizeEvent(QResizeEvent *event)
     m_pRightCefViewWidget->resize(newSize);
 
     QWidget::resizeEvent(event); 
+}
+
+void MyMainWindow::createWindow(int x, int y, int w, int h)
+{
+    createRightCefView();
+    setGeometry(x, y, w, h);
+    show();
 }

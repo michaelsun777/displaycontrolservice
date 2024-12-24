@@ -97,6 +97,14 @@ void RequestHandler::service(HttpRequest& request, HttpResponse& response)
         {
             login(request, response);
         }
+        else if (path.startsWith("/cef/opentitle"))
+        {
+            openTitleWindow(request, response);
+        }
+        else if (path.startsWith("/cef/closetitle"))
+        {
+            closeTitleWindow(request, response);
+        }
         else
         {
             createRet(response, 404);
@@ -667,5 +675,18 @@ void RequestHandler::getServerInfo(const HttpRequest &req, HttpResponse &res)
     }
     //m_mutex.unlock();
     XINFO("{RequestHandler::getServerInfo unlock0}\n");
+}
+
+void RequestHandler::openTitleWindow(const HttpRequest &req, HttpResponse &res)
+{
+    emit sendOpenTitleWindowSignal();
+    XINFO("{RequestHandler::openTitleWindow succeed}\n");
+    createRet(res,200);
+}
+void RequestHandler::closeTitleWindow(const HttpRequest &req, HttpResponse &res)
+{
+    emit sendCloseTitleWindowSignal();
+    XINFO("{RequestHandler::openTitleWindow succeed}\n");
+    createRet(res,200);
 }
 

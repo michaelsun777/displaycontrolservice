@@ -17,8 +17,9 @@ class MyMainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MyMainWindow(QWidget *parent = nullptr);
+    explicit MyMainWindow(std::string name, QWidget *parent = nullptr);
     ~MyMainWindow();
+    void createWindow(int x,int y,int w, int h);
 
 protected:
   void createRightCefView();
@@ -28,6 +29,7 @@ private:
     Ui::MyMainWindow m_ui;
     QVBoxLayout * m_layout;
     CefViewWidget* m_pRightCefViewWidget = nullptr;
+    std::string m_name;
 };
 
 #endif // MYMAINWINDOW_H
