@@ -2,7 +2,11 @@
 
 #include <QApplication>
 #include <QStandardPaths>
-#include <QCefContext.h>
+#ifdef USE_CEF_SWITCH
+    #include <QCefContext.h>
+    #include "UI/mymainwindow.h"
+#endif
+
 #include <QObject>
 #include <QSettings>
 #include "3rd/httpserver/httplistener.h"
@@ -14,7 +18,8 @@
 //#include "httpManager.h"
 #include "UI/dlgurl.h"
 #include "UI/mainwindow.h"
-#include "UI/mymainwindow.h"
+
+#include "UI/dugiswidget.h"
 
 #include "build_date_time.h"
 //#include "dlgManager.h"
@@ -31,6 +36,7 @@
 
 
 
+
 #define VER_AUTO
 std::string g_NameString = "Display Control Service";
 std::string g_VERSION = "dpcs-0.0.2-241210-1";
@@ -38,8 +44,11 @@ std::string g_BRANCH = "dev";
 std::string g_DATE = g_build_date_time;// "231103";
 std::string g_NOTE = "";
 
-void dumpVersion();
+#ifdef USE_CEF_SWITCH
 bool InitQCefConfig(QCefConfig & config,QApplication & app,int argc, char *argv[]);
+#endif
+
+void dumpVersion();
 unsigned int read_line_first_word(FILE *f,char *s);
 unsigned int get_sys_runtime(void);
 
@@ -179,48 +188,9 @@ int main(int argc, char *argv[])
         // dlg.UpdateUrl("https://www.baidu.com");
         // std::shared_ptr<HttpManager> pHttpManager = HttpManager::GetInstance();
         // build QCefConfig
+#ifdef USE_CEF_SWITCH
         MyMainWindow *pMyW = nullptr;
         QCefConfig config;
-
-        // config.setUserAgent("QCefViewTest");
-        // // set log level
-        // config.setLogLevel(QCefConfig::LOGSEVERITY_DEFAULT);
-        // // set JSBridge object name (default value is CefViewClient)
-        // config.setBridgeObjectName("CallBridge");
-        // // set Built-in scheme name (default value is CefView)
-        // config.setBuiltinSchemeName("CefView");
-        // // port for remote debugging (default is 0 and means to disable remote debugging)
-        // config.setRemoteDebuggingPort(9000);
-        // // set background color for all browsers
-        // // (QCefSetting.setBackgroundColor will overwrite this value for specified browser instance)
-        // config.setBackgroundColor(Qt::lightGray);
-
-        // // WindowlessRenderingEnabled is set to true by default,
-        // // set to false to disable the OSR mode
-        // config.setWindowlessRenderingEnabled(true);
-
-        // // add command line args, you can any cef supported switches or parameters
-        // config.addCommandLineSwitch("use-mock-keychain");
-        // // config.addCommandLineSwitch("disable-gpu");
-        // // config.addCommandLineSwitch("enable-media-stream");
-        // // config.addCommandLineSwitch("allow-file-access-from-files");
-        // // config.addCommandLineSwitch("disable-spell-checking");
-        // // config.addCommandLineSwitch("disable-site-isolation-trials");
-        // // config.addCommandLineSwitch("enable-aggressive-domstorage-flushing");
-        // config.addCommandLineSwitchWithValue("renderer-process-limit", "1");
-        // // allow remote debugging
-        // config.addCommandLineSwitchWithValue("remote-allow-origins", "*");
-        // // config.addCommandLineSwitchWithValue("disable-features", "BlinkGenPropertyTrees,TranslateUI,site-per-process");
-
-        // // set cache folder
-        // config.setCachePath(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation));
-        // QCefContext cefContext(&app, argc, argv, &config);
-        // pMyW = new MyMainWindow();
-        // pMyW->show();
-
-
-
-
         bool bretQCef = InitQCefConfig(config, app, argc, argv);
         if (!bretQCef)
         {
@@ -230,6 +200,11 @@ int main(int argc, char *argv[])
         QCefContext cefContext(&app, argc, argv, &config);
         pMyW = new MyMainWindow();
         pMyW->show();
+#endif
+
+        DuGisWidget dugis;
+        dugis.show();
+
 
         w.show();
         w.Init();
@@ -312,6 +287,8 @@ unsigned int get_sys_runtime(void)
 	return sys_run_time;
 }
 
+#ifdef USE_CEF_SWITCH
+
 bool InitQCefConfig(QCefConfig & config,QApplication & app,int argc, char *argv[])
 {
     try
@@ -365,3 +342,5 @@ bool InitQCefConfig(QCefConfig & config,QApplication & app,int argc, char *argv[
         return false;
     }
 }
+
+#endif

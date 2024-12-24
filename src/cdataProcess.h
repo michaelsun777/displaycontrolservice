@@ -104,7 +104,7 @@ public:
     bool InitOutputInfoLock();
     ~cdataProcess();
     void print_display_name(Display *dpy, int target_id, int attr,char *name,string & displayName);
-    int GetNvXScreen(Display *dpy);
+    //int GetNvXScreen(Display *dpy);
     void print_display_id_and_name(Display *dpy, int target_id, const char *tab);
     bool GetOutputAndGpuName(json & js);
 public://xrandr

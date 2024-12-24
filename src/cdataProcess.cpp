@@ -112,29 +112,29 @@ void cdataProcess::print_display_name(Display *dpy, int target_id, int attr,char
     XFree(str);
 }
 
-int cdataProcess::GetNvXScreen(Display *dpy)
-{
-    int defaultScreen, screen;
+// int cdataProcess::GetNvXScreen(Display *dpy)
+// {
+//     int defaultScreen, screen;
 
-    defaultScreen = DefaultScreen(dpy);
+//     defaultScreen = DefaultScreen(dpy);
 
-    if (XNVCTRLIsNvScreen(dpy, defaultScreen)) {
-        return defaultScreen;
-    }
+//     if (XNVCTRLIsNvScreen(dpy, defaultScreen)) {
+//         return defaultScreen;
+//     }
 
-    for (screen = 0; screen < ScreenCount(dpy); screen++) {
-        if (XNVCTRLIsNvScreen(dpy, screen)) {
-            printf("Default X screen %d is not an NVIDIA X screen.  "
-                   "Using X screen %d instead.\n",
-                   defaultScreen, screen);
-            return screen;
-        }
-    }
+//     for (screen = 0; screen < ScreenCount(dpy); screen++) {
+//         if (XNVCTRLIsNvScreen(dpy, screen)) {
+//             printf("Default X screen %d is not an NVIDIA X screen.  "
+//                    "Using X screen %d instead.\n",
+//                    defaultScreen, screen);
+//             return screen;
+//         }
+//     }
 
-    fprintf(stderr, "Unable to find any NVIDIA X screens; aborting.\n");
+//     fprintf(stderr, "Unable to find any NVIDIA X screens; aborting.\n");
 
-    exit(1);
-}
+//     exit(1);
+// }
 
 void cdataProcess::print_display_id_and_name(Display *dpy, int target_id, const char *tab)
 {
@@ -1496,112 +1496,6 @@ bool cdataProcess::GetOutputAndGpuName(json & js)
 
 
 
-
-    //cmyxrandr * p =cmyxrandr::GetInstance();
-    //return p->GetOutputAndGpuName(js);
-
-
-
-
-    /*    
-    int major, minor, len;
-    char *start, *str0, *str1;
-    int *enabledDpyIds;
-
-    Display *dpy = XOpenDisplay(NULL);
-    if (!dpy) 
-    {
-        XERROR("Cannot open display {}.", XDisplayName(NULL));
-        return false;
-    }
-    
-    int screen = GetNvXScreen(dpy);
-    Bool ret = XNVCTRLQueryVersion(dpy, &major, &minor);
-    if (ret != True)
-    {
-        XERROR("The NV-CONTROL X extension does not exist on {}.\n\n",XDisplayName(NULL));
-        return false;
-    }
-
-    XINFO("Using NV-CONTROL extension {}.{} on {} \n", major, minor, XDisplayName(NULL));
-    
-    XINFO("Display Device Probed Information:\n\n");
-
-
-    int num_gpus = 0;
-    ret = XNVCTRLQueryTargetCount(dpy, NV_CTRL_TARGET_TYPE_GPU,&num_gpus);
-    if (!ret)
-    {
-        XERROR("Failed to query number of gpus\n\n");
-        XCloseDisplay(dpy);
-        return false;
-    }
-    XINFO("number of GPUs: {}\n", num_gpus);
-
-   
-
-    for (int i = 0; i < num_gpus; i++)
-    {
-        json node;
-
-        int deprecated;
-        int *pData;
-
-        
-        char *gpuName = nullptr;
-        ret = XNVCTRLQueryTargetStringAttribute(dpy, NV_CTRL_TARGET_TYPE_GPU, i, 0,NV_CTRL_STRING_PRODUCT_NAME, &gpuName);
-        if (!ret)
-        {
-            XERROR("Failed to query gpu name\n\n");
-            XCloseDisplay(dpy);
-            return false;
-        }
-
-       
-        ret = XNVCTRLQueryTargetAttribute(dpy,
-                                          NV_CTRL_TARGET_TYPE_GPU, i,
-                                          0,
-                                          NV_CTRL_PROBE_DISPLAYS,
-                                          &deprecated);
-
-        if (!ret)
-        {
-            XERROR("Failed to probe the enabled Display Devices on GPU-{} ({}).\n\n",i, gpuName);
-            XCloseDisplay(dpy);
-            return false;
-        }
-
-        XINFO("display devices on GPU-{} ({}):\n", i, gpuName);
-        node["gpuName"].push_back(gpuName);
-        if (gpuName) XFree(gpuName);
-        
-
-        
-        ret = XNVCTRLQueryTargetBinaryData(dpy,
-                                           NV_CTRL_TARGET_TYPE_GPU, i,
-                                           0,
-                                           NV_CTRL_BINARY_DATA_DISPLAYS_CONNECTED_TO_GPU,
-                                           (unsigned char **)&pData,
-                                           &len);
-        if (!ret || (len < sizeof(pData[0])))
-        {
-            XERROR("Failed to query the connected Display Devices.\n\n");
-            return 1;
-        }
-
-        for (int j = 0; j < pData[0]; j++)
-        {
-            int dpyId = pData[j + 1];
-            print_display_id_and_name(dpy, dpyId, "    ");
-            string strDisplayName;
-            print_display_name(dpy, dpyId,NV_CTRL_STRING_DISPLAY_NAME_RANDR,"RANDR",strDisplayName);
-            node["display"].push_back(strDisplayName);  
-        }
-        XFree(pData); 
-        js["gpu"].push_back(node);        
-    }   
-    XCloseDisplay(dpy);
-    */
     return true;
 }
 

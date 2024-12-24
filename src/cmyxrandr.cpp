@@ -1379,8 +1379,9 @@ int cmyxrandr::GetNvXScreen(Display *dpy)
     }
 
     fprintf(stderr, "Unable to find any NVIDIA X screens; aborting.\n");
-
-    exit(1);
+    XERROR("请确认是否关闭了VGA输出!!!!!!!!!!\n");
+    return -1;
+    //exit(1);
 }
 
 void cmyxrandr::print_display_id_and_name(Display *dpy, int target_id, const char *tab)
@@ -1420,6 +1421,9 @@ bool cmyxrandr::GetOutputAndGpuName(vector<MYGPUINTERFACE> & vgpu)
 
     
     int screen = GetNvXScreen(dpy);
+    if(screen < 0)
+        return false;
+
     Bool ret = XNVCTRLQueryVersion(dpy, &major, &minor);
     if (ret != True)
     {
