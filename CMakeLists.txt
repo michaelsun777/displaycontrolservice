@@ -182,7 +182,7 @@ link_directories(/usr/lib/x86_64-linux-gnu)
 # link_directories(hidapi/linux/.libs)
 #link_directories(src/arm_tool/lib)
 link_directories(/usr/local/lib/)
-link_directories(/home/amplesky/work/displayctrolservice/3rd/nvidia-settings/src/_out/Linux_x86_64/)
+link_directories(${PROJECT_SOURCE_DIR}/3rd/nvidia-settings/src/_out/Linux_x86_64/)
 
 
 aux_source_directory(src/ SRC_SRC)
