@@ -233,9 +233,10 @@ ${http_SRC}
 add_subdirectory(3rd/spdlog)
 
 target_link_libraries(dpcs PRIVATE
-"-Wl,--no-as-needed /home/amplesky/work/displaycontrolservice-test/3rd/QCefView/build/output/Debug/bin/libQCefView.so"
-"-Wl,--no-as-needed /home/amplesky/work/displaycontrolservice-test/3rd/QCefView/build/output/Debug/bin/libcef.so"
-
+#"-Wl,--no-as-needed /home/amplesky/work/displaycontrolservice/3rd/QCefView/build/output/Debug/bin/libQCefView.so"
+#"-Wl,--no-as-needed /home/amplesky/work/displaycontrolservice/3rd/QCefView/build/output/Debug/bin/libcef.so"
+-Wl,--no-as-needed ${CMAKE_SOURCE_DIR}/3rd/QCefView/build/output/Debug/bin/libQCefView.so
+-Wl,--no-as-needed ${CMAKE_SOURCE_DIR}/3rd/QCefView/build/output/Debug/bin/libcef.so
 
 #  -lusb -ludev -lhidapi-hidraw
 # -lboost_system -lboost_thread -lboost_filesystem -lboost_iostreams -lboost_chrono
