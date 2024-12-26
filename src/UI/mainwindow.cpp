@@ -130,7 +130,7 @@ bool MainWindow::deleteSettings(string key)
 bool MainWindow::QDlgShow(DlgUrl * qdlg,QtDlgInfo & info)
 {
     qdlg->setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
-    qdlg->show();    
+    // qdlg->show();    
     qdlg->UpdateSetting(&info);
     return true;
 
@@ -170,7 +170,7 @@ void MainWindow::onInitSlots()
         DlgUrl *qdlg = new DlgUrl(vInfo[i]->dlgId);         
         QDlgShow(qdlg, *vInfo[i]);        
         m_mDlgs.insert(make_pair(vInfo[i]->dlgId, qdlg));
-        
+
     }
     
 

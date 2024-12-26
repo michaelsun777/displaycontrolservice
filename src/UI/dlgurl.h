@@ -8,6 +8,7 @@
 #include <QWebEngineView>
 #include <QVBoxLayout>
 #include "../qtcommon.h"
+#include "../3rd/QCefView/example/QCefViewTest/CefViewWidget.h"
 
 #include <cstring>
 
@@ -32,6 +33,9 @@ public:
     void UpdateSetting(QtDlgInfo * dlg);
     void CloseDlg(string strDlgId);
 
+protected:
+  void createRightCefView();
+
 
 public slots:
     void DataprocessSlots(string strDlgId,int cmdType = 0);
@@ -53,6 +57,8 @@ private:
     QPoint m_pos;
     QSize m_size;
     QtDlgInfo m_QtDlgInfo;
+    CefViewWidget* m_pRightCefViewWidget = nullptr;
+    QVBoxLayout * m_layout;
 };
 
 #endif // DLGURL_H

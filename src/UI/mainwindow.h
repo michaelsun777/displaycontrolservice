@@ -75,7 +75,6 @@ private:
     std::map<std::string,DlgUrl *> m_mDlgs;
     std::map<std::string,QtDlgInfo *> m_mDlgProperty;
     std::map<std::string,MyMainWindow *> m_titleWindows;
-    
 
 private:
     Ui::MainWindow *ui;
