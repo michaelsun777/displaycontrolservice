@@ -67,9 +67,13 @@ public:
   void sendSignal(int type,QtDlgInfo & dlgInfo);
   void getServerInfo(const HttpRequest &req, HttpResponse &res);
   void login(const HttpRequest &req, HttpResponse &res);
+  void openTitleWindow(const HttpRequest &req, HttpResponse &res);
+  void closeTitleWindow(const HttpRequest &req, HttpResponse &res);
 
 signals:
   void sendDlgSignal(int type,QVariant dlgInfo);
+  void sendOpenTitleWindowSignal();
+  void sendCloseTitleWindowSignal();
 };
 
 #endif // REQUESTHANDLER_H

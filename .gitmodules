@@ -13,3 +13,6 @@
 [submodule "3rd/md5"]
 	path = 3rd/md5
 	url = https://github.com/JieweiWei/md5.git
+[submodule "3rd/QCefView"]
+	path = 3rd/QCefView
+	url = https://github.com/CefView/QCefView.git

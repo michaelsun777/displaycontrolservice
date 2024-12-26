@@ -5,6 +5,7 @@
 
 #include "../common.h"
 #include "../3rd/json/include/nlohmann/json.hpp"
+#include <QTimer>
 
 using namespace nlohmann;
 
@@ -205,6 +206,38 @@ void MainWindow::onMouseEventRequested(int type,QVariant dlgInfo)
         ;
     }
 
+}
+
+void MainWindow::onOpenTitleWindow()
+{
+    onCloseTitleWindow();
+
+    int multiple = 5;
+    cmyxrandr* pcmxrandr =  cmyxrandr::GetInstance();
+    CMYSIZE currentSize, maxSize;
+    vector<MOutputInfo> vOutputInfo;  
+    short shRet = pcmxrandr->getAllScreenInfoXrandr(vOutputInfo,currentSize,maxSize);
+
+    for(auto &v : vOutputInfo)
+    {
+        MyMainWindow *w = new MyMainWindow(v.name);;
+        w->createWindow(v.pos.xPos,v.pos.yPos,v.size.width/multiple,v.size.height/multiple);
+        m_titleWindows[v.name]=w;
+    }
+    // 创建一个一次性定时器，设置间隔为5分钟
+    QTimer::singleShot(300000, this, &MainWindow::onCloseTitleWindow);
+}
+
+void MainWindow::onCloseTitleWindow()
+{
+    auto itr = m_titleWindows.begin();
+    for(;itr!=m_titleWindows.end();itr++)
+    {
+        auto w = itr->second;
+        w->close();
+        delete w;
+    }
+    m_titleWindows.clear();
 }
 
 void MainWindow::Init()

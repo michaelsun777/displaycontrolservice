@@ -18,6 +18,7 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <cstring>
 #include "../qtcommon.h"
+#include "mymainwindow.h"
 
 using namespace std;
 
@@ -44,6 +45,7 @@ public:
     bool modifyDlg(QtDlgInfo & info);
     bool getDlgInfo(string dlgId,QtDlgInfo & info);
     bool getAllDlgInfo(std::vector<QtDlgInfo> & vInfo);
+    void removeTitleWindow(std::string name){m_titleWindows.erase(name);}
 private:
     bool parseJsonToDlgInfo(QtDlgInfo * info,string str);
     bool dlgInfoToJson(QtDlgInfo * info,string & str);
@@ -59,6 +61,8 @@ public slots:
     void onInitSlots();
     bool showNewDlg(string dlgId);
     void onMouseEventRequested(int type,QVariant dlgInfo);
+    void onOpenTitleWindow();
+    void onCloseTitleWindow();
     
 
 public:
@@ -70,6 +74,7 @@ private:
     //cdataProcess * m_process;
     std::map<std::string,DlgUrl *> m_mDlgs;
     std::map<std::string,QtDlgInfo *> m_mDlgProperty;
+    std::map<std::string,MyMainWindow *> m_titleWindows;
     
 
 private:
