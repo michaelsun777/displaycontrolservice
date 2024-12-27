@@ -130,17 +130,10 @@ INCLUDE_DIRECTORIES(3rd/spdlog/include)
 INCLUDE_DIRECTORIES(3rd/md5/src/)
 #INCLUDE_DIRECTORIES(/usr/include/spdlog)
 INCLUDE_DIRECTORIES(/usr/include/X11)
+INCLUDE_DIRECTORIES(/usr/include)
 
 # INCLUDE_DIRECTORIES(/usr/include/gtk-2.0/)
-# INCLUDE_DIRECTORIES(/usr/include/glib-2.0)
-# INCLUDE_DIRECTORIES(/usr/include/glib-2.0/glib)
-# INCLUDE_DIRECTORIES(/usr/lib/x86_64-linux-gnu/glib-2.0/include)
-# INCLUDE_DIRECTORIES(/usr/lib/x86_64-linux-gnu/gtk-2.0/include/)
-# INCLUDE_DIRECTORIES(/usr/include/cairo)
-# INCLUDE_DIRECTORIES(/usr/include/pango-1.0)
-# INCLUDE_DIRECTORIES(/usr/include/harfbuzz)
-# INCLUDE_DIRECTORIES(3rd/cpp-httplib/cpp-httplib-base/)
-# INCLUDE_DIRECTORIES(3rd/cpp-subprocess/)
+
 INCLUDE_DIRECTORIES(3rd/nvidia-settings/src/libXNVCtrl)
 INCLUDE_DIRECTORIES(3rd/nvidia-settings/src/libXNVCtrlAttributes)
 INCLUDE_DIRECTORIES(3rd/httpserver/)
@@ -152,41 +145,15 @@ endif()
 INCLUDE_DIRECTORIES(src/UI)
 
 INCLUDE_DIRECTORIES(src)
-# INCLUDE_DIRECTORIES(src/communication)
-# INCLUDE_DIRECTORIES(src/DLPTriangle)
-# INCLUDE_DIRECTORIES(src/include_bd)
-# INCLUDE_DIRECTORIES(src/include_hk)
-# INCLUDE_DIRECTORIES(src/other)
-# INCLUDE_DIRECTORIES(src/spdlog)
-# INCLUDE_DIRECTORIES(src/dlp/)
-# INCLUDE_DIRECTORIES(/usr/local/include/hidapi)
-# INCLUDE_DIRECTORIES(/usr/local/cuda/include/)
 
-#INCLUDE_DIRECTORIES(nlohmann_json)
-#INCLUDE_DIRECTORIES(nlohmann_json/include)
-
-
-# aux_source_directory(src/communication communication_SRC)
-# aux_source_directory(src/PCLAlgorithm PCLAlgorithm_SRC)
-# aux_source_directory(hidapi hidapi_SRC)
-# aux_source_directory(hidapi/linux hidapi_linux_SRC)
-
-
-# aux_source_directory(src/include_hk include_hk_SRC)
-# aux_source_directory(src/other other_SRC)
-# aux_source_directory(src/spdlog spdlog_SRC)
 
 aux_source_directory(3rd/httpserver http_SRC)
 
-##find_path(CPPUNIT_INCLUDE_DIR PATHS "/usr/include/x86_64-linux-gnu" NO_DEFAULT_PATH)       
-##find_library(CPPUNIT_LIBRARY PATHS "/usr/lib/x86_64-linux-gnu" NO_DEFAULT_PATH)
+
 
 #link_directories(/opt/Qt5.14.2/5.14.2/gcc_64/lib/)
 link_directories(${QT_LIBRARIES})
 link_directories(/usr/lib/x86_64-linux-gnu)
-# link_directories(/opt/MVS/lib/64/)
-# link_directories(hidapi/linux/.libs)
-#link_directories(src/arm_tool/lib)
 link_directories(/usr/local/lib/)
 
 if(USE_CEF_SWITCH)
@@ -309,6 +276,7 @@ else()
         ${QT_LIBRARIES}
         -lspdlog 
         -lX11 -lXrandr -lm -lXext #-lXNVCtrl #  // 
+        -lxcb -lxcb-randr
         #-LXNVCtrl
         #-L/usr/lib/x86_64-linux-gnu/libXNVCtrl.so.0
         pthread

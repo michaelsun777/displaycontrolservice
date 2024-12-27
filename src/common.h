@@ -213,6 +213,8 @@ struct MONITORSETTINGINFO
 struct MOutputInfo
 {
     std::string name;
+    unsigned long crtc;
+    std::vector<unsigned long> crtcs;
     int connected;//1"connected", 2"disconnected", 3'unknown-connection'
     bool primary;
     int current_rotation;
@@ -225,6 +227,31 @@ struct MOutputInfo
     MyModelInfoEX currentMode;
     MyModelInfoEX preferredMode;
     bool bIsSeted;
+
+    void operator=(MOutputInfo info)
+    {
+        name = info.name;
+        crtc = info.crtc;
+        crtcs = info.crtcs;
+        connected = info.connected;
+        primary = info.primary;
+        current_rotation = info.current_rotation;
+        outputId = info.outputId;
+        pos = info.pos;
+        size = info.size;
+        mmsize = info.mmsize;
+        geometry = info.geometry;
+        //modes = info.modes;
+        modes.clear();
+        for (size_t i = 0; i < info.modes.size(); i++)
+        {
+            MyModelInfoEX mode = info.modes[i];
+            modes.push_back(mode);
+        }
+        
+        currentMode = info.currentMode;
+        preferredMode =info.preferredMode;
+    }
     
 };
 

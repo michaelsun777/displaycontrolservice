@@ -16,6 +16,8 @@
 
 #include <X11/Xlib.h>
 #include "NVCtrlLib.h"
+#include <xcb/randr.h>
+#include <xcb/xcb.h>
 
 
 #define EVENT_TYPE_START TARGET_ATTRIBUTE_CHANGED_EVENT
@@ -29,13 +31,15 @@ struct target_info {
 
 class CNvControlEvents {
 private:
-    pthread_t m_thread;
+    pthread_t m_threadlistenXcb;
+    pthread_t m_threadlistenNv;
     pthread_t m_threadDeal;
     Display * m_display;
     bool m_bRunning;
     int m_event_base;
     std::atomic<int> m_AtomicCounter;
 private:
+    static void * xcb_Listen(void * p);
     static void * workerThreadListen(void * p);
     static void * workerThread(void * p);
 public:

@@ -82,6 +82,9 @@ private:
     boost::mutex m_mutexGPUInterface;
     boost::mutex m_mutexSetOutput;
 
+    vector<MOutputInfo> m_underManagementOutputs;
+    boost::mutex m_mutexUnderManagementOutputs;
+
 private:
     cdataProcess(/* args */);
     static void * workerThreadListen(void * p);
@@ -94,7 +97,9 @@ private:
     bool setOutputMode(string &strOutputName, string &strModeName,string & strRate,string & outputMode);
     bool setOutputPos(string &strOutputName, int x,int y);
     bool setOutputModeAndPos(string &strOutputName,string &strModeName,string & strRate, int w,int h,string & outputLayout);
-    bool InitOutputInfo();    
+    bool InitOutputInfo();
+    bool updateUnderManagementOutputs(json & js);
+    bool getUnderManagementOutputs(vector<MOutputInfo> & vOutputs);
 
 
 public:
