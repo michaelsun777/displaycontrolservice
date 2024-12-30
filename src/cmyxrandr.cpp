@@ -35,6 +35,10 @@ cmyxrandr::cmyxrandr(string strDisplayName, RROutput output) : m_screen(0), m_ou
             m_screen = DefaultScreen(m_pDpy);
             m_root = RootWindow(m_pDpy, m_screen);
             m_pRes = XRRGetScreenResources(m_pDpy, m_root);
+
+            // vector<MOutputInfo> vOutputInfo;
+            // getSupportMode(vOutputInfo);
+            
             m_crtc = getCrtc();
             Bool bRet = XRRQueryExtension(m_pDpy, &m_event_base, &m_error_base);
             int nRet = XRRQueryVersion(m_pDpy, &m_major, &m_minor);
@@ -239,7 +243,8 @@ int cmyxrandr::setScreenSize(const int &width, const int &height, bool bForce /*
                      m_root,
                      mwidth, mheight,
                      widthMM, heightMM);
-    XSync(m_pDpy, false);
+    int nret = XSync(m_pDpy, false);
+    XINFO("setScreenSize nret={}\n",nret);
     return EXIT_SUCCESS;
 }
 
@@ -300,7 +305,8 @@ int cmyxrandr::setOffset(CMYPOINT offset)
                                    pInfo->outputs,
                                    pInfo->noutput);
 
-            XSync(m_pDpy, false);
+            int nxSyncRet = XSync(m_pDpy, false);
+            XINFO("nxSyncRet={}\n",nxSyncRet);
             XRRFreeCrtcInfo(pInfo);
         }
         this->feedScreen();
@@ -865,9 +871,76 @@ unsigned short cmyxrandr::getCurrentConfigRotation()
     XINFO("rotation:{}", current_rotation);
     return current_rotation;
 }
+short cmyxrandr::getSupportMode(vector<MOutputInfo> & vOutputInfo)
+{
+    try
+    {
+        if(m_pRes && m_pRes->nmode >0)
+        {
+            CMYSIZE currentSize, maxSize;
+            vector<MOutputInfo> _vOutputInfo;
+            getAllScreenInfoXrandr(_vOutputInfo,currentSize,maxSize);
 
+            MOutputInfo moutputinfo;
+            for (size_t loop = 0; loop < m_pRes->nmode; loop++)
+            {
+                bool bfound = true;
+                for (size_t i = 0; i < _vOutputInfo.size(); i++)
+                {
+                    bool bTmpFound = false;
+                    for (size_t j = 0; j < _vOutputInfo[i].modes.size(); j++)
+                    {
+                        if(_vOutputInfo[i].modes[j].id == m_pRes->modes[loop].id)
+                        {
+                            bTmpFound =true;                            
+                            break;
+                        }
+                    }
+                    if(!bTmpFound)
+                    {
+                        bfound = false;
+                        break;
+                    }
 
-short cmyxrandr::getAllScreenInfoXrandr(vector<MOutputInfo> & vOutputInfo,CMYSIZE & currentSize,CMYSIZE & maxSize)
+                }
+                if(bfound)
+                {   
+                    bool bIsPushed = false;
+                    for (size_t itmp = 0; itmp < moutputinfo.modes.size(); itmp++)
+                    {
+                        if(moutputinfo.modes[itmp].id == m_pRes->modes[loop].id)
+                        {
+                            bIsPushed = true;
+                            break;
+                        }                
+                    }
+                    if(!bIsPushed)
+                    {
+                        XRRModeInfo *mode = &m_pRes->modes[loop];
+                        MyModelInfoEX modex(mode);
+                        moutputinfo.modes.push_back(modex);
+                        printf("%s,%x\n",m_pRes->modes[loop].name,m_pRes->modes[loop].id);
+                    }
+                }
+
+                // XRRModeInfo *mode = &m_pRes->modes[i];
+                // MyModelInfoEX modex(mode);              
+                // 
+            }
+            vOutputInfo.push_back(moutputinfo);
+            return 0;
+        }
+
+        return -1;
+    }
+    catch(...)
+    {
+        return -1;
+    }
+
+}
+
+short cmyxrandr::getAllScreenInfoXrandr(vector<MOutputInfo> & vOutputInfo,CMYSIZE & currentSize,CMYSIZE & maxSize,bool bIsAll)
 {
     try
     {
@@ -903,8 +976,19 @@ short cmyxrandr::getAllScreenInfoXrandr(vector<MOutputInfo> & vOutputInfo,CMYSIZ
                 moutputinfo.mmsize.height = outinfo->mm_height;
                 moutputinfo.connected = true;
                 moutputinfo.primary = false;
+                moutputinfo.crtc = outinfo->crtc;
+
                 if (moutputinfo.name.find("VGA") != string::npos || moutputinfo.name.find("Virtual") != string::npos)
                 {
+                    if(bIsAll)
+                    {
+                        for (size_t i = 0; i < outinfo->ncrtc; i++)
+                        {
+                            moutputinfo.crtcs.push_back(outinfo->crtcs[i]);                            
+                        }
+                        
+                        vOutputInfo.push_back(moutputinfo);
+                    }
                     continue;
                 }
 
@@ -1019,6 +1103,7 @@ short cmyxrandr::getAllScreenInfoXrandr(vector<MOutputInfo> & vOutputInfo,CMYSIZ
     return 0;
 }
 
+/*
 short cmyxrandr::getAllScreenInfoEx(vector<MOutputInfo> & vOutputInfo,CMYSIZE & currentSize,CMYSIZE & maxSize)
 {
     try
@@ -1274,55 +1359,8 @@ short cmyxrandr::getAllScreenInfoEx(vector<MOutputInfo> & vOutputInfo,CMYSIZE & 
     return 0;
 
 
-    // MONITORINFO test;
-    // for(int i = 0;i<devices.size();i++)
-    // {
-    //     string strTmp(devices[i].c_str());
-    //     strTmp = CMDEXEC::replaceAll(strTmp,"unknown connection","unknown-connection");
-    //     devices[i] = strTmp.c_str();
-    //     vector<string> vItemsTmp = CMDEXEC::Split(devices[i].c_str()," ");
-    //     string output = vItemsTmp[0];
-    //     test.name = output;
-    //     if(CMDEXEC::StartsWith(vItemsTmp[1],"connected"))
-    //         test.connected = 1;
-    //     else if(CMDEXEC::StartsWith(vItemsTmp[1],"disconnected"))
-    //         test.connected = 2;
-    //     else if(CMDEXEC::StartsWith(vItemsTmp[1],"unknown-connection"))
-    //         test.connected = 3;
-    //     else
-    //         test.connected = 0;
-    //     test.primary = false;
-
-    //     for(int i = 0;i < vItemsTmp.size(); i++)
-    //     {
-    //         if (vItemsTmp[i].find("primary") != string::npos)
-    //         {
-    //             test.primary = true;
-    //             vItemsTmp.erase(vItemsTmp.begin() + i);
-    //             break;
-    //         }
-    //     }
-
-    //     if(!CMDEXEC::StartsWith(vItemsTmp[2],"("))
-    //     {            
-    //         test.geometry = vItemsTmp[2].c_str();
-
-    //         if (CMDEXEC::StartsWith(vItemsTmp[4], "normal"))
-    //             test.current_rotation = 1;
-    //         else if (CMDEXEC::StartsWith(vItemsTmp[4], "right"))
-    //             test.connected = 2;
-    //         else if (CMDEXEC::StartsWith(vItemsTmp[4], "inverted"))
-    //             test.connected = 3;
-    //         else if (CMDEXEC::StartsWith(vItemsTmp[4], "left"))
-    //             test.connected = 4;
-    //         else 
-    //             test.connected = 1;
-    //     }
-    // }
-
-    //return 0;
 }
-
+*/
 
 int cmyxrandr::getScreenSizeRange(CMYSIZE & min,CMYSIZE & max)
 {
@@ -1335,6 +1373,33 @@ int cmyxrandr::getScreenSizeRange(CMYSIZE & min,CMYSIZE & max)
     max.height = maxHeight;
     XINFO("state:{},minWidth:{},minHeight:{},maxWidth:{},maxHeight:{}", state,minWidth,minHeight,maxWidth,maxHeight);
     return state;
+}
+
+
+
+int cmyxrandr::GetNvXScreen(Display *dpy)
+{
+    int defaultScreen, screen;
+
+    defaultScreen = DefaultScreen(dpy);
+
+    if (XNVCTRLIsNvScreen(dpy, defaultScreen)) {
+        return defaultScreen;
+    }
+
+    for (screen = 0; screen < ScreenCount(dpy); screen++) {
+        if (XNVCTRLIsNvScreen(dpy, screen)) {
+            printf("Default X screen %d is not an NVIDIA X screen.  "
+                   "Using X screen %d instead.\n",
+                   defaultScreen, screen);
+            return screen;
+        }
+    }
+
+    fprintf(stderr, "Unable to find any NVIDIA X screens; aborting.\n");
+    XERROR("请确认是否关闭了VGA输出!!!!!!!!!!\n");
+    return -1;
+    //exit(1);
 }
 
 void cmyxrandr::print_display_name(Display *dpy, int target_id, int attr,char *name,string & displayName)
@@ -1357,30 +1422,6 @@ void cmyxrandr::print_display_name(Display *dpy, int target_id, int attr,char *n
     XINFO("cmyxrandr::print_display_name1 {}:{}\n", name, str);
     displayName = str;
     XFree(str);
-}
-
-int cmyxrandr::GetNvXScreen(Display *dpy)
-{
-    int defaultScreen, screen;
-
-    defaultScreen = DefaultScreen(dpy);
-
-    if (XNVCTRLIsNvScreen(dpy, defaultScreen)) {
-        return defaultScreen;
-    }
-
-    for (screen = 0; screen < ScreenCount(dpy); screen++) {
-        if (XNVCTRLIsNvScreen(dpy, screen)) {
-            printf("Default X screen %d is not an NVIDIA X screen.  "
-                   "Using X screen %d instead.\n",
-                   defaultScreen, screen);
-            return screen;
-        }
-    }
-
-    fprintf(stderr, "Unable to find any NVIDIA X screens; aborting.\n");
-
-    exit(1);
 }
 
 void cmyxrandr::print_display_id_and_name(Display *dpy, int target_id, const char *tab)
@@ -1420,6 +1461,9 @@ bool cmyxrandr::GetOutputAndGpuName(vector<MYGPUINTERFACE> & vgpu)
 
     
     int screen = GetNvXScreen(dpy);
+    if(screen < 0)
+        return false;
+
     Bool ret = XNVCTRLQueryVersion(dpy, &major, &minor);
     if (ret != True)
     {

@@ -106,8 +106,9 @@ public:
     XRRMonitorInfo * getScreenInfo();
     XRRScreenSize * getCurrentConfigSizes();
     unsigned short getCurrentConfigRotation();
-    short getAllScreenInfoXrandr(vector<MOutputInfo> & vOutputInfo,CMYSIZE & currentSize,CMYSIZE & maxSize);
-    short getAllScreenInfoEx(vector<MOutputInfo> & vOutputInfo,CMYSIZE & currentSize,CMYSIZE & maxSize);
+    short getSupportMode(vector<MOutputInfo> & vOutputInfo);
+    short getAllScreenInfoXrandr(vector<MOutputInfo> & vOutputInfo,CMYSIZE & currentSize,CMYSIZE & maxSize,bool bIsAll=false);
+    //short getAllScreenInfoEx(vector<MOutputInfo> & vOutputInfo,CMYSIZE & currentSize,CMYSIZE & maxSize);
     int getScreenInfoEx(MOutputInfo & vOutputInfo);
     int getScreenSizeRange(CMYSIZE & min,CMYSIZE & max);
     bool update();

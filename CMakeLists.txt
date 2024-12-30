@@ -2,7 +2,8 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12)
 
 project(DisplayControlServer)
 
-
+# 定义一个CMake选项来控制是否使用CEF
+#option(USE_CEF_SWITCH "" ON)
 
 # 添加自定义命令来运行Makefile???
 # add_custom_command(
@@ -129,155 +130,173 @@ INCLUDE_DIRECTORIES(3rd/spdlog/include)
 INCLUDE_DIRECTORIES(3rd/md5/src/)
 #INCLUDE_DIRECTORIES(/usr/include/spdlog)
 INCLUDE_DIRECTORIES(/usr/include/X11)
+INCLUDE_DIRECTORIES(/usr/include)
 
 # INCLUDE_DIRECTORIES(/usr/include/gtk-2.0/)
-# INCLUDE_DIRECTORIES(/usr/include/glib-2.0)
-# INCLUDE_DIRECTORIES(/usr/include/glib-2.0/glib)
-# INCLUDE_DIRECTORIES(/usr/lib/x86_64-linux-gnu/glib-2.0/include)
-# INCLUDE_DIRECTORIES(/usr/lib/x86_64-linux-gnu/gtk-2.0/include/)
-# INCLUDE_DIRECTORIES(/usr/include/cairo)
-# INCLUDE_DIRECTORIES(/usr/include/pango-1.0)
-# INCLUDE_DIRECTORIES(/usr/include/harfbuzz)
-# INCLUDE_DIRECTORIES(3rd/cpp-httplib/cpp-httplib-base/)
-# INCLUDE_DIRECTORIES(3rd/cpp-subprocess/)
+
 INCLUDE_DIRECTORIES(3rd/nvidia-settings/src/libXNVCtrl)
 INCLUDE_DIRECTORIES(3rd/nvidia-settings/src/libXNVCtrlAttributes)
 INCLUDE_DIRECTORIES(3rd/httpserver/)
-INCLUDE_DIRECTORIES(3rd/QCefView/include)
-INCLUDE_DIRECTORIES(3rd/QCefView)
+if(USE_CEF_SWITCH)
+        INCLUDE_DIRECTORIES(3rd/QCefView/include)
+        INCLUDE_DIRECTORIES(3rd/QCefView)
+endif()
+
 INCLUDE_DIRECTORIES(src/UI)
 
 INCLUDE_DIRECTORIES(src)
-# INCLUDE_DIRECTORIES(src/communication)
-# INCLUDE_DIRECTORIES(src/DLPTriangle)
-# INCLUDE_DIRECTORIES(src/include_bd)
-# INCLUDE_DIRECTORIES(src/include_hk)
-# INCLUDE_DIRECTORIES(src/other)
-# INCLUDE_DIRECTORIES(src/spdlog)
-# INCLUDE_DIRECTORIES(src/dlp/)
-# INCLUDE_DIRECTORIES(/usr/local/include/hidapi)
-# INCLUDE_DIRECTORIES(/usr/local/cuda/include/)
 
-#INCLUDE_DIRECTORIES(nlohmann_json)
-#INCLUDE_DIRECTORIES(nlohmann_json/include)
-
-
-# aux_source_directory(src/communication communication_SRC)
-# aux_source_directory(src/PCLAlgorithm PCLAlgorithm_SRC)
-# aux_source_directory(hidapi hidapi_SRC)
-# aux_source_directory(hidapi/linux hidapi_linux_SRC)
-
-
-# aux_source_directory(src/include_hk include_hk_SRC)
-# aux_source_directory(src/other other_SRC)
-# aux_source_directory(src/spdlog spdlog_SRC)
 
 aux_source_directory(3rd/httpserver http_SRC)
 
-##find_path(CPPUNIT_INCLUDE_DIR PATHS "/usr/include/x86_64-linux-gnu" NO_DEFAULT_PATH)       
-##find_library(CPPUNIT_LIBRARY PATHS "/usr/lib/x86_64-linux-gnu" NO_DEFAULT_PATH)
+
 
 #link_directories(/opt/Qt5.14.2/5.14.2/gcc_64/lib/)
 link_directories(${QT_LIBRARIES})
 link_directories(/usr/lib/x86_64-linux-gnu)
-# link_directories(/opt/MVS/lib/64/)
-# link_directories(hidapi/linux/.libs)
-#link_directories(src/arm_tool/lib)
 link_directories(/usr/local/lib/)
 
-link_directories(${PROJECT_SOURCE_DIR}/3rd/nvidia-settings/src/_out/Linux_x86_64/)
-link_directories(3rd/QCefView/build/output/Debug/bin)
+if(USE_CEF_SWITCH)
+        link_directories(${PROJECT_SOURCE_DIR}/3rd/nvidia-settings/src/_out/Linux_x86_64/)
+        link_directories(3rd/QCefView/build/output/Debug/bin)
+endif()
 
 
 aux_source_directory(src/ SRC_SRC)
 # aux_source_directory(src/UI SRC_SRC_UI)
 
-add_executable(dpcs
-main.cpp
-# ${SRC_SRC}
-src/build_date_time.cpp
-src/cspdlog.cpp
-# src/dlgManager.cpp
-src/cmyxrandr.cpp
-src/exec_cmd.cpp
-
-3rd/nvidia-settings/src/libXNVCtrl/NVCtrl.c
-src/UI/dlgurl.cpp
-src/UI/dlgurl.h
-src/UI/dlgurl.ui
-src/UI/mainwindow.cpp
-src/UI/mainwindow.h
-src/UI/mainwindow.ui
-src/UI/mymainwindow.cpp
-src/UI/mymainwindow.h
-src/UI/mymainwindow.ui
-src/cdataProcess.cpp
-src/config.cpp
-# src/httpManager.cpp
-src/nvControlInfo.cpp
-######dlg
-src/dialogController.cpp
-src/requesthandler.cpp
-3rd/cpp-subprocess/subprocess.hpp
-src/CNvControlEvents.cpp
-3rd/md5/src/md5.cpp
-src/autoDelete.cpp
-
-${http_SRC}
-
-3rd/QCefView/example/QCefViewTest/CefViewWidget.cpp
-3rd/QCefView/example/QCefViewTest/DownloadManager.cpp
-
-# ${spdlog_SRC} 
-)
-
-#add_subdirectory(3rd/nvidia-settings)
 add_subdirectory(3rd/spdlog)
 
-target_link_libraries(dpcs PRIVATE
-#"-Wl,--no-as-needed /home/amplesky/work/displaycontrolservice/3rd/QCefView/build/output/Debug/bin/libQCefView.so"
-#"-Wl,--no-as-needed /home/amplesky/work/displaycontrolservice/3rd/QCefView/build/output/Debug/bin/libcef.so"
--Wl,--no-as-needed ${CMAKE_SOURCE_DIR}/3rd/QCefView/build/output/Debug/bin/libQCefView.so
--Wl,--no-as-needed ${CMAKE_SOURCE_DIR}/3rd/QCefView/build/output/Debug/bin/libcef.so
+if(USE_CEF_SWITCH)
 
-#  -lusb -ludev -lhidapi-hidraw
-# -lboost_system -lboost_thread -lboost_filesystem -lboost_iostreams -lboost_chrono
-# -lMvCameraControl -luuid -lcurl -lstdc++fs
-${QT_LIBRARIES}
--lspdlog 
--lX11 -lXrandr -lm -lXext #-lXNVCtrl #  // 
-#-LXNVCtrl
-#-L/usr/lib/x86_64-linux-gnu/libXNVCtrl.so.0
-pthread
--ldl
+        add_executable(dpcs
+        main.cpp
+        # ${SRC_SRC}
+        src/build_date_time.cpp
+        src/cspdlog.cpp
+        # src/dlgManager.cpp
+        src/cmyxrandr.cpp
+        src/exec_cmd.cpp
+
+        3rd/nvidia-settings/src/libXNVCtrl/NVCtrl.c
+        src/UI/dlgurl.cpp
+        src/UI/dlgurl.h
+        src/UI/dlgurl.ui
+        src/UI/mainwindow.cpp
+        src/UI/mainwindow.h
+        src/UI/mainwindow.ui
+        src/UI/mymainwindow.cpp
+        src/UI/mymainwindow.h
+        src/UI/mymainwindow.ui
+        src/cdataProcess.cpp
+        src/config.cpp
+        # src/httpManager.cpp
+        src/nvControlInfo.cpp
+        ######dlg
+        src/dialogController.cpp
+        src/requesthandler.cpp
+        3rd/cpp-subprocess/subprocess.hpp
+        src/CNvControlEvents.cpp
+        3rd/md5/src/md5.cpp
+        src/autoDelete.cpp
+
+        ${http_SRC}
+        src/UI/dugiswidget.cpp
+        src/UI/dugiswidget.ui
+
+        3rd/QCefView/example/QCefViewTest/CefViewWidget.cpp
+        3rd/QCefView/example/QCefViewTest/DownloadManager.cpp
+        )
+
+        target_link_libraries(dpcs PRIVATE
+        #"-Wl,--no-as-needed /home/amplesky/work/displaycontrolservice/3rd/QCefView/build/output/Debug/bin/libQCefView.so"
+        #"-Wl,--no-as-needed /home/amplesky/work/displaycontrolservice/3rd/QCefView/build/output/Debug/bin/libcef.so"
+
+        -Wl,--no-as-needed ${CMAKE_SOURCE_DIR}/3rd/QCefView/build/output/Debug/bin/libQCefView.so
+        -Wl,--no-as-needed ${CMAKE_SOURCE_DIR}/3rd/QCefView/build/output/Debug/bin/libcef.so
+
+        #  -lusb -ludev -lhidapi-hidraw
+        # -lboost_system -lboost_thread -lboost_filesystem -lboost_iostreams -lboost_chrono
+        # -lMvCameraControl -luuid -lcurl -lstdc++fs
+        ${QT_LIBRARIES}
+        -lspdlog 
+        -lX11 -lXrandr -lm -lXext #-lXNVCtrl #  // 
+        #-LXNVCtrl
+        #-L/usr/lib/x86_64-linux-gnu/libXNVCtrl.so.0
+        pthread
+        -ldl
+
+        # ${OpenCV_LIBS} 
+        ${Boost_LIBRARIES}
+
+        )
+
+else()
+
+        add_executable(dpcs
+        main.cpp
+        # ${SRC_SRC}
+        src/build_date_time.cpp
+        src/cspdlog.cpp
+        # src/dlgManager.cpp
+        src/cmyxrandr.cpp
+        src/exec_cmd.cpp
+
+        3rd/nvidia-settings/src/libXNVCtrl/NVCtrl.c
+        src/UI/dlgurl.cpp
+        src/UI/dlgurl.h
+        src/UI/dlgurl.ui
+        src/UI/mainwindow.cpp
+        src/UI/mainwindow.h
+        src/UI/mainwindow.ui
+
+        src/cdataProcess.cpp
+        src/config.cpp
+        # src/httpManager.cpp
+        src/nvControlInfo.cpp
+        ######dlg
+        src/dialogController.cpp
+        src/requesthandler.cpp
+        3rd/cpp-subprocess/subprocess.hpp
+        src/CNvControlEvents.cpp
+        3rd/md5/src/md5.cpp
+        src/autoDelete.cpp
+
+        ${http_SRC}
+        src/UI/dugiswidget.cpp
+        src/UI/dugiswidget.ui
+
+        # ${spdlog_SRC} 
+        )
+
+        target_link_libraries(dpcs PRIVATE
+
+        #  -lusb -ludev -lhidapi-hidraw
+        # -lboost_system -lboost_thread -lboost_filesystem -lboost_iostreams -lboost_chrono
+        # -lMvCameraControl -luuid -lcurl -lstdc++fs
+        ${QT_LIBRARIES}
+        -lspdlog 
+        -lX11 -lXrandr -lm -lXext #-lXNVCtrl #  // 
+        -lxcb -lxcb-randr
+        #-LXNVCtrl
+        #-L/usr/lib/x86_64-linux-gnu/libXNVCtrl.so.0
+        pthread
+        -ldl
+
+        # ${OpenCV_LIBS} 
+        ${Boost_LIBRARIES}
+
+        )
 
 
-# ${OpenCV_LIBS} 
-${Boost_LIBRARIES}
-
-# osgearth lib
-# -lOpenThreads
-# -losg
-# -losgDB
-# -losgGA
-# -losgUtil
-# -losgViewer
-
-####FastDDS lib#####
-# fastcdr fastrtps #to_robot_lib to_camera_lib
+endif()
 
 
-#######��ʱ�ò���
-#Qt5::Gui Qt5::Widgets Qt5::Core Qt5::Network 
-# /opt/Qt5.14.2/5.14.2/gcc_64/lib/libQt5OpenGL.so.5
-# /opt/Qt5.14.2/5.14.2/gcc_64/lib/libQt5Sql.so.5
-# /opt/Qt5.14.2/5.14.2/gcc_64/lib/libQt5Network.so.5
-# /opt/Qt5.14.2/5.14.2/gcc_64/lib/libQt5Widgets.so.5
-# /opt/Qt5.14.2/5.14.2/gcc_64/lib/libQt5Gui.so.5
-# /opt/Qt5.14.2/5.14.2/gcc_64/lib/libQt5Core.so.5
-# /opt/Qt5.14.2/5.14.2/gcc_64/lib/libQt5WebEngine.so.5
 
-)
+#add_subdirectory(3rd/nvidia-settings)
+
+
+
 
 
 #file(GLOB infer_lib  ${PROJECT_SOURCE_DIR}/src/infer_lib/*)

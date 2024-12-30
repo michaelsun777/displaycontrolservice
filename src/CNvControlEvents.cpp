@@ -281,15 +281,112 @@ void * CNvControlEvents::workerThreadListen(void * p)
             }
 
         }       
-
+        return 0;
     }
     catch (...)
     {
         XERROR("CNvControlEvents::workerThreadListen error,exit");
     }
+    return 0; 
+
+}
+
+void * CNvControlEvents::xcb_Listen(void * p)
+{
+    xcb_connection_t *connection = NULL;
+    CNvControlEvents * pThis = (CNvControlEvents *)p;
+    try
+    {
+        connection = xcb_connect(NULL, NULL);
+        const xcb_setup_t *setup = xcb_get_setup(connection);
+        xcb_screen_iterator_t iter = xcb_setup_roots_iterator(setup);
+        xcb_screen_t *pscreen = iter.data;
+
+        // 获取RandR扩展版本
+        xcb_randr_query_version_reply_t *version_reply = xcb_randr_query_version_reply(connection, xcb_randr_query_version(connection, 1, 2), NULL);
+        if (version_reply) {
+            free(version_reply);
+        }
 
 
-   
+    
+
+        //xcb_get_extension_data
+        // const xcb_query_extension_reply_t *randr_ext = xcb_get_extension_data(connection, &xcb_randr_id);
+        // if (!randr_ext->present)
+        // {
+        //     printf("X server does not support the RANDR extension.\n");
+        //     return 0;
+        // }
+
+        // 
+        // XCB_RANDR_NOTIFY
+        // 获取RANDR扩展信息
+        // int major_opcode, first_event, first_error;
+        // xcb_connection_t *c, xcb_extension_t *ext;
+        // int status = xcb_get_extension_data();
+
+        
+        
+        //XCB_RANDR_NOTIFY_RESIZE
+        uint32_t mask = XCB_RANDR_NOTIFY_MASK_SCREEN_CHANGE;
+        // 请求配置通知
+        xcb_void_cookie_t cookie = xcb_randr_select_input_checked(connection, pscreen->root, mask);
+        xcb_flush(connection);
+        // 检查请求是否成功
+        xcb_generic_error_t* error = xcb_request_check(connection, cookie);
+        if (error) {
+            std::cerr << "Failed to select RANDR input event" << std::endl;
+            //xcb_free_error(error);
+            //delete error;
+            free(error);
+            xcb_disconnect(connection);
+            return 0;
+        }
+
+        
+        //XCB_RANDR_NOTIFY_MASK_SCREEN_CHANGE
+        //xcb_randr_select_input_checked(connection, pscreen->root, XCB_RANDR_NOTIFY_MASK_SCREEN_CHANGE);
+        //xcb_flush(connection);
+        
+
+        xcb_generic_event_t *event;
+        while ((event = xcb_wait_for_event(connection)))
+        {
+            switch (event->response_type & ~0x80)
+            {
+            // case XCB_RANDR_SCREEN_CHANGE_NOTIFY:
+            // {
+            //     // 解析屏幕变更事件
+            //     xcb_randr_screen_change_notify_event_t *scne = (xcb_randr_screen_change_notify_event_t *)event;
+            //     printf("Screen resolution changed to %dx%d\n", scne->width, scne->height);
+            //     break;
+            // }
+            default:
+                 {//XCB_EVENT_MASK_EXPOSURE
+                    //xcb_randr_notify_event_t* notify_event = reinterpret_cast<xcb_randr_notify_event_t*>(event);
+                    if(event->response_type == 89)
+                    {
+                        printf("%d,", event->response_type);
+                        xcb_randr_screen_change_notify_event_t *xcbevent = (xcb_randr_screen_change_notify_event_t *)event;
+                        printf("22222222222分辨率改变:%dx%d\n", xcbevent->width, xcbevent->height);
+                        pThis->m_AtomicCounter.fetch_add(1);
+                    }
+                }
+                break;
+            }
+
+            
+            free(event);
+        }
+        return 0;
+    }
+    catch(...)
+    {
+        XERROR("CNvControlEvents::xcb_Listen error,exit");
+        xcb_disconnect(connection);
+    }
+    return 0;
 
 }
 
@@ -314,17 +411,19 @@ void * CNvControlEvents::workerThread(void * p)
 
             if (n == pThis->m_AtomicCounter)
             {
-                usleep(2900 * 1000);
+                usleep(5000 * 1000);
                 cdataProcess * pcdataProcess = cdataProcess::GetInstance();
                 pcdataProcess->OnCheckAndUpdate();                
                 pThis->m_AtomicCounter = 0;                
             }           
         }
+        return 0;
     }
     catch (...)
     {
         XERROR("CNvControlEvents::workerThread error,exit");
     }
+    return 0;
 }
 
 
@@ -333,12 +432,17 @@ void * CNvControlEvents::workerThread(void * p)
 void CNvControlEvents::start()
 {
     m_bRunning = true;
-    if(pthread_create(&m_thread, NULL, workerThreadListen, (void *)this) != 0)
+    pthread_t _tthread;
+    // if(pthread_create(&m_threadlistenXcb, NULL, xcb_Listen, (void *)this) != 0)
+    // {
+    //     printf("Failed to create thread\n");
+    // }
+    if(pthread_create(&m_threadlistenNv, NULL, workerThreadListen, (void *)this) != 0)
     {
         printf("Failed to create thread\n");
     }
 
-    if(pthread_create(&m_thread, NULL, workerThread, (void *)this) != 0)
+    if(pthread_create(&m_threadDeal, NULL, workerThread, (void *)this) != 0)
     {
         printf("Failed to create thread\n");
     }
