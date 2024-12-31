@@ -3,7 +3,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12)
 project(DisplayControlServer)
 
 # 定义一个CMake选项来控制是否使用CEF
-#option(USE_CEF_SWITCH "" ON)
+option(USE_CEF_SWITCH "" ON)
 
 # 添加自定义命令来运行Makefile???
 # add_custom_command(
@@ -221,6 +221,7 @@ if(USE_CEF_SWITCH)
         ${QT_LIBRARIES}
         -lspdlog 
         -lX11 -lXrandr -lm -lXext #-lXNVCtrl #  // 
+        -lxcb -lxcb-randr
         #-LXNVCtrl
         #-L/usr/lib/x86_64-linux-gnu/libXNVCtrl.so.0
         pthread
@@ -243,28 +244,30 @@ else()
         src/exec_cmd.cpp
 
         3rd/nvidia-settings/src/libXNVCtrl/NVCtrl.c
-        src/UI/dlgurl.cpp
-        src/UI/dlgurl.h
-        src/UI/dlgurl.ui
-        src/UI/mainwindow.cpp
-        src/UI/mainwindow.h
-        src/UI/mainwindow.ui
-
-        src/cdataProcess.cpp
-        src/config.cpp
+        # src/UI/dlgurl.cpp
+        # src/UI/dlgurl.h
+        # src/UI/dlgurl.ui
+        # src/UI/mainwindow.cpp
+        # src/UI/mainwindow.h
+        # src/UI/mainwindow.ui
+        # src/UI/dugiswidget.cpp
+        # src/UI/dugiswidget.ui
+        # src/cdataProcess.cpp
+        
         # src/httpManager.cpp
-        src/nvControlInfo.cpp
+        # src/requesthandler.cpp
+        # src/nvControlInfo.cpp
+        # src/CNvControlEvents.cpp
+        # src/dialogController.cpp
+        src/config.cpp
         ######dlg
-        src/dialogController.cpp
-        src/requesthandler.cpp
-        3rd/cpp-subprocess/subprocess.hpp
-        src/CNvControlEvents.cpp
+                
+        3rd/cpp-subprocess/subprocess.hpp        
         3rd/md5/src/md5.cpp
         src/autoDelete.cpp
 
         ${http_SRC}
-        src/UI/dugiswidget.cpp
-        src/UI/dugiswidget.ui
+        
 
         # ${spdlog_SRC} 
         )

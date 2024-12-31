@@ -45,7 +45,7 @@ void MyMainWindow::createRightCefView()
     m_pRightCefViewWidget->resize(500, 500);    
     m_pRightCefViewWidget->setContextMenuPolicy(Qt::DefaultContextMenu);
     //m_ui.Container->layout()->addWidget(m_pRightCefViewWidget);
-    m_pRightCefViewWidget->setRounded(20);
+    //m_pRightCefViewWidget->setRounded(20);
     m_layout = new QVBoxLayout(this);
     m_layout->addWidget(m_pRightCefViewWidget);
 

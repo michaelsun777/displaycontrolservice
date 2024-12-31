@@ -1,37 +1,41 @@
-
+#define USE_CEF_SWITCH
 
 #include <QApplication>
 #include <QStandardPaths>
+#include <QFile>
+#include <QDir>
+#include "autoDelete.h"
 #ifdef USE_CEF_SWITCH
     #include <QCefContext.h>
     #include "UI/mymainwindow.h"
+    #include "UI/dlgurl.h"
+    #include "UI/mainwindow.h"
+    #include "UI/dugiswidget.h"
+    #include "3rd/httpserver/httplistener.h"
+    #include "requesthandler.h"
+    #include "cmyxrandr.h"
+    #include "cdataProcess.h"
 #endif
 
 #include <QObject>
 #include <QSettings>
-#include "3rd/httpserver/httplistener.h"
-#include "requesthandler.h"
+
 #include <iostream>
 #include <unistd.h>
 #include "cspdlog.h"
 #include <list>
 //#include "httpManager.h"
-#include "UI/dlgurl.h"
-#include "UI/mainwindow.h"
 
-#include "UI/dugiswidget.h"
 
 #include "build_date_time.h"
 //#include "dlgManager.h"
-#include "cmyxrandr.h"
 
-#include "cdataProcess.h"
 
 #include "nvControlInfo.h"
 
 //#include <X11/extensions/Xrandr.h>
 #include "../3rd/md5/src/md5.h"
-#include "autoDelete.h"
+
 
 
 
@@ -154,7 +158,7 @@ int main(int argc, char *argv[])
             _port = value.toString();
         }
         
-
+#ifdef USE_CEF_SWITCH
         MainWindow w;
 
         QSettings settings(&app);
@@ -191,8 +195,8 @@ int main(int argc, char *argv[])
         // dlg.UpdateUrl("https://www.baidu.com");
         // std::shared_ptr<HttpManager> pHttpManager = HttpManager::GetInstance();
         // build QCefConfig
-#ifdef USE_CEF_SWITCH
-        MyMainWindow *pMyW = nullptr;
+
+        //MyMainWindow *pMyW = nullptr;
         QCefConfig config;
         bool bretQCef = InitQCefConfig(config, app, argc, argv);
         if (!bretQCef)
@@ -201,18 +205,25 @@ int main(int argc, char *argv[])
            return -1;
         }
         QCefContext cefContext(&app, argc, argv, &config);
-        pMyW = new MyMainWindow();
-        pMyW->show();
-#endif
+        //pMyW = new MyMainWindow();
+        //pMyW->show();
 
         DuGisWidget dugis;
         dugis.show();
-
 
         w.show();
         w.Init();
         w.hide();
         nRet = app.exec();
+        //delete pMyW;
+#else
+        while (1)
+        {
+            sleep(1);
+        }
+        
+
+#endif
     }
     catch (const std::exception &e)
     {
