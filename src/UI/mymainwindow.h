@@ -4,7 +4,8 @@
 #include <QMainWindow>
 #include <QResizeEvent>
 #include <QHBoxLayout>
-#include "../3rd/QCefView/example/QCefViewTest/CefViewWidget.h"
+// #include "../3rd/QCefView/example/QCefViewTest/CefViewWidget.h"
+#include "cef/CefViewWidget.h"
 #include "ui_mymainwindow.h"
 
 

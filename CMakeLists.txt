@@ -188,6 +188,8 @@ if(USE_CEF_SWITCH)
         src/UI/mymainwindow.cpp
         src/UI/mymainwindow.h
         src/UI/mymainwindow.ui
+        src/UI/cef/CefViewWidget.cpp
+        src/UI/cef/DownloadManager.cpp
         src/cdataProcess.cpp
         src/config.cpp
         # src/httpManager.cpp
@@ -204,16 +206,16 @@ if(USE_CEF_SWITCH)
         src/UI/dugiswidget.cpp
         src/UI/dugiswidget.ui
 
-        3rd/QCefView/example/QCefViewTest/CefViewWidget.cpp
-        3rd/QCefView/example/QCefViewTest/DownloadManager.cpp
+        # 3rd/QCefView/example/QCefViewTest/CefViewWidget.cpp
+        # 3rd/QCefView/example/QCefViewTest/DownloadManager.cpp
         )
 
         target_link_libraries(dpcs PRIVATE
-        #"-Wl,--no-as-needed /home/amplesky/work/displaycontrolservice/3rd/QCefView/build/output/Debug/bin/libQCefView.so"
-        #"-Wl,--no-as-needed /home/amplesky/work/displaycontrolservice/3rd/QCefView/build/output/Debug/bin/libcef.so"
+        "-Wl,--no-as-needed /home/amplesky/ccc/displaycontrolservice/3rd/QCefView/build/output/Debug/bin/libQCefView.so"
+        "-Wl,--no-as-needed /home/amplesky/ccc/displaycontrolservice/3rd/QCefView/build/output/Debug/bin/libcef.so"
 
-        -Wl,--no-as-needed ${CMAKE_SOURCE_DIR}/3rd/QCefView/build/output/Debug/bin/libQCefView.so
-        -Wl,--no-as-needed ${CMAKE_SOURCE_DIR}/3rd/QCefView/build/output/Debug/bin/libcef.so
+        # -Wl,--no-as-needed ${CMAKE_SOURCE_DIR}/3rd/QCefView/build/output/Debug/bin/libQCefView.so
+        # -Wl,--no-as-needed ${CMAKE_SOURCE_DIR}/3rd/QCefView/build/output/Debug/bin/libcef.so
 
         #  -lusb -ludev -lhidapi-hidraw
         # -lboost_system -lboost_thread -lboost_filesystem -lboost_iostreams -lboost_chrono
