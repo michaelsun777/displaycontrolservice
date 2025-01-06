@@ -211,6 +211,8 @@ src/UI/mainwindow.ui
 src/UI/mymainwindow.cpp
 src/UI/mymainwindow.h
 src/UI/mymainwindow.ui
+src/UI/cef/CefViewWidget.cpp
+src/UI/cef/DownloadManager.cpp
 src/cdataProcess.cpp
 src/config.cpp
 # src/httpManager.cpp
@@ -225,8 +227,8 @@ src/autoDelete.cpp
 
 ${http_SRC}
 
-3rd/QCefView/example/QCefViewTest/CefViewWidget.cpp
-3rd/QCefView/example/QCefViewTest/DownloadManager.cpp
+# 3rd/QCefView/example/QCefViewTest/CefViewWidget.cpp
+# 3rd/QCefView/example/QCefViewTest/DownloadManager.cpp
 
 # ${spdlog_SRC} 
 )
@@ -235,8 +237,8 @@ ${http_SRC}
 add_subdirectory(3rd/spdlog)
 
 target_link_libraries(dpcs PRIVATE
-#"-Wl,--no-as-needed /home/amplesky/work/displaycontrolservice/3rd/QCefView/build/output/Debug/bin/libQCefView.so"
-#"-Wl,--no-as-needed /home/amplesky/work/displaycontrolservice/3rd/QCefView/build/output/Debug/bin/libcef.so"
+# "-Wl,--no-as-needed /home/amplesky/work/displaycontrolservice/3rd/QCefView/build/output/Debug/bin/libQCefView.so"
+# "-Wl,--no-as-needed /home/amplesky/work/displaycontrolservice/3rd/QCefView/build/output/Debug/bin/libcef.so"
 -Wl,--no-as-needed ${CMAKE_SOURCE_DIR}/3rd/QCefView/build/output/Debug/bin/libQCefView.so
 -Wl,--no-as-needed ${CMAKE_SOURCE_DIR}/3rd/QCefView/build/output/Debug/bin/libcef.so
 
