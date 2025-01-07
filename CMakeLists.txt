@@ -211,11 +211,11 @@ if(USE_CEF_SWITCH)
         )
 
         target_link_libraries(dpcs PRIVATE
-        "-Wl,--no-as-needed /home/amplesky/ccc/displaycontrolservice/3rd/QCefView/build/output/Debug/bin/libQCefView.so"
-        "-Wl,--no-as-needed /home/amplesky/ccc/displaycontrolservice/3rd/QCefView/build/output/Debug/bin/libcef.so"
+        # "-Wl,--no-as-needed /home/amplesky/ccc/displaycontrolservice/3rd/QCefView/build/output/Debug/bin/libQCefView.so"
+        # "-Wl,--no-as-needed /home/amplesky/ccc/displaycontrolservice/3rd/QCefView/build/output/Debug/bin/libcef.so"
 
-        # -Wl,--no-as-needed ${CMAKE_SOURCE_DIR}/3rd/QCefView/build/output/Debug/bin/libQCefView.so
-        # -Wl,--no-as-needed ${CMAKE_SOURCE_DIR}/3rd/QCefView/build/output/Debug/bin/libcef.so
+        -Wl,--no-as-needed ${CMAKE_SOURCE_DIR}/3rd/QCefView/build/output/Debug/bin/libQCefView.so
+        -Wl,--no-as-needed ${CMAKE_SOURCE_DIR}/3rd/QCefView/build/output/Debug/bin/libcef.so
 
         #  -lusb -ludev -lhidapi-hidraw
         # -lboost_system -lboost_thread -lboost_filesystem -lboost_iostreams -lboost_chrono
@@ -410,3 +410,19 @@ set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
 
 #设置priority
 set(CPACK_DEBIAN_PACKAGE_PRIORITY "Optional")
+
+
+# 自动拷贝需要的文件到build目录下
+set(COPY_SOURCE_DIR "${CMAKE_SOURCE_DIR}/3rd/QCefView/build/output/Debug/bin")
+
+add_custom_command(
+    OUTPUT copied
+    COMMAND cp -r ${COPY_SOURCE_DIR}/* ${CMAKE_BINARY_DIR}
+    DEPENDS ${COPY_SOURCE_DIR}
+    COMMENT "Copying directory ${COPY_SOURCE_DIR} to ${CMAKE_BINARY_DIR}"
+)
+
+add_custom_target(
+    CopyDirectory ALL
+    DEPENDS copied
+)
