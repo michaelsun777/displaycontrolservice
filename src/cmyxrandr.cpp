@@ -1574,11 +1574,13 @@ bool cmyxrandr::GetOutputAndGpuName(vector<MYGPUINTERFACE> & vgpu)
             XINFO("print_display_name ff\n");
         }
 
-        // if(pData[0] <= 0)
-        // {
-        //     node["display"].push_back("");  
-        //     gpu.outputName.push_back("");
-        // }
+        if(pData[0] <= 0)
+        {
+            nlohmann::json json_array = nlohmann::json::array();
+            node["display"] = json_array; 
+            node["displayIndex"] = json_array; 
+            gpu.outputName.push_back("");
+        }
 
         XFree(pData); 
         js["gpu"].push_back(node);
