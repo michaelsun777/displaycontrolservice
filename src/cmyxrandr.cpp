@@ -960,7 +960,7 @@ short cmyxrandr::getAllScreenInfoXrandr(vector<MOutputInfo> & vOutputInfo,CMYSIZ
         
 
 
-
+        int nIndex = 0;
         RROutput primaryRroutput = XRRGetOutputPrimary(m_pDpy, m_root);
         for (int nout = 0; nout < m_pRes->noutput; nout++)
         {
@@ -986,11 +986,13 @@ short cmyxrandr::getAllScreenInfoXrandr(vector<MOutputInfo> & vOutputInfo,CMYSIZ
                         {
                             moutputinfo.crtcs.push_back(outinfo->crtcs[i]);                            
                         }
-                        
+                        moutputinfo.nIndex = -1;
                         vOutputInfo.push_back(moutputinfo);
                     }
                     continue;
                 }
+
+                moutputinfo.nIndex = ++nIndex;
 
                 if(primaryRroutput == m_pRes->outputs[nout])//主显示器
                 {
@@ -1450,6 +1452,10 @@ bool cmyxrandr::GetOutputAndGpuName(vector<MYGPUINTERFACE> & vgpu)
     char *start, *str0, *str1;
     int *enabledDpyIds;
 
+    CMYSIZE currentSize, maxSize;
+    vector<MOutputInfo> _vOutputInfo;
+    getAllScreenInfoXrandr(_vOutputInfo,currentSize,maxSize);
+
     Display *dpy = XOpenDisplay(NULL);
     if (!dpy) 
     {
@@ -1492,7 +1498,6 @@ bool cmyxrandr::GetOutputAndGpuName(vector<MYGPUINTERFACE> & vgpu)
     for (int i = 0; i < num_gpus; i++)
     {
         json node;
-
         int deprecated;
         int *pData;
         MYGPUINTERFACE gpu;
@@ -1550,16 +1555,30 @@ bool cmyxrandr::GetOutputAndGpuName(vector<MYGPUINTERFACE> & vgpu)
             string strDisplayName;
             XINFO("print_display_name\n");
             print_display_name(dpy, dpyId,NV_CTRL_STRING_DISPLAY_NAME_RANDR,"RANDR",strDisplayName);
-            node["display"].push_back(strDisplayName);  
+            node["display"].push_back(strDisplayName); 
+
+            for (size_t iLoop = 0; iLoop < _vOutputInfo.size(); iLoop++)
+            {
+                if(strDisplayName.compare(_vOutputInfo[iLoop].name) == 0)
+                {
+                    node["displayIndex"].push_back(_vOutputInfo[iLoop].nIndex);
+                    break;
+                }
+                /* code */
+            }
+            
+
+
+            //node["displayIndex"].push_back
             gpu.outputName.push_back(strDisplayName);
             XINFO("print_display_name ff\n");
         }
 
-        if(pData[0] <= 0)
-        {
-            node["display"].push_back("");  
-            gpu.outputName.push_back("");
-        }
+        // if(pData[0] <= 0)
+        // {
+        //     node["display"].push_back("");  
+        //     gpu.outputName.push_back("");
+        // }
 
         XFree(pData); 
         js["gpu"].push_back(node);

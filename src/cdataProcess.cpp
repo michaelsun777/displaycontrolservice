@@ -477,6 +477,7 @@ int cdataProcess::GetOutputsInfo_shell(json & js)
                 node["coordinateOrderX"] = 0;
                 node["coordinateOrderY"] = 0;
                 node["primary"] = false;
+                node["index"] = -1;
                 jsdata.push_back(node);
             }
 
@@ -524,6 +525,7 @@ int cdataProcess::GetOutputsInfo_shell(json & js)
             sortBuf[id] = 1;
             node["id"] = id;
             node["primary"] = vOutputInfo[i].primary;
+            node["index"] = vOutputInfo[i].nIndex;
             if(vOutputInfo[i].connected)
             {
                 node["connected"] = true;                
@@ -549,6 +551,7 @@ int cdataProcess::GetOutputsInfo_shell(json & js)
                 node["coordinateOrderX"] = 0;
                 node["coordinateOrderY"] = 0;
                 node["primary"] = false;
+                node["index"] = -1;
                 jsdata.push_back(node);
             }
         }
