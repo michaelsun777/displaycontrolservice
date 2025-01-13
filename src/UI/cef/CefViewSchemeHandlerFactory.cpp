@@ -27,6 +27,9 @@ CefViewSchemeHandlerFactory::Create(CefRefPtr<CefBrowser> browser,
     url.erase(0, urlPrefix.size());
     std::string backgroundColor = "skyblue";
     std::string fontColor = "green";
+    int p = url.find(",");
+    std::string number = url.substr(0, p);
+    url.erase(0, p + 1);
     static std::string s;
     s = "<!DOCTYPE html><html><head><meta "
         "charset=\"UTF-8\"><script>resetrem();window.addEventListener(\"orientationchange\", "
@@ -39,8 +42,14 @@ CefViewSchemeHandlerFactory::Create(CefRefPtr<CefBrowser> browser,
     s += fontColor;
     s += ";text-align: center;position: absolute;top: 50%;left: 50%;transform: translate(-50%, -50%);width: "
          "100%;height: 100%;display: flex;align-items: center;justify-content: center;border-radius: 0 "
-         "!important;}</style></head><body><div class=\"text\">";
+         "!important;}.number {color: ";
+    s += fontColor;
+    s += ";text-align: center;position: absolute;top: 10%;left: 10%;font-weight: bold;font-size: 0.5em;transform: "
+         "translate(-50%, -50%);width: 100%;height: 100%;display: flex;align-items: center;justify-content: "
+         "center;}</style></head><body><div class=\"text\">";
     s += url;
+    s += "</div><div class=\" number \">";
+    s += number;
     s += "</div></body></html>";
 
     std::string mime_type_ = "text/html";

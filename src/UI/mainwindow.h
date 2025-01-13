@@ -2,7 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include "UI/dlgurl.h"
+#include "UI/qcefwidget.h"
 //#include "common.h"
 #include <iostream>
 #include <QSettings>
@@ -35,7 +35,7 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
-    bool QDlgShow(DlgUrl * qdlg,QtDlgInfo & info);
+    bool QDlgShow(QCefWidget * qdlg,QtDlgInfo & info);
     void test();
 
 public:
@@ -72,7 +72,7 @@ signals:
 
 private:
     //cdataProcess * m_process;
-    std::map<std::string,DlgUrl *> m_mDlgs;
+    std::map<std::string,QCefWidget *> m_mDlgs;
     std::map<std::string,QtDlgInfo *> m_mDlgProperty;
     std::map<std::string,MyMainWindow *> m_titleWindows;
 

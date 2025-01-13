@@ -97,11 +97,11 @@ void RequestHandler::service(HttpRequest& request, HttpResponse& response)
         {
             login(request, response);
         }
-        else if (path.startsWith("/cef/opentitle"))
+        else if (path.startsWith("/displayctrlserver/cef/opentitle"))
         {
             openTitleWindow(request, response);
         }
-        else if (path.startsWith("/cef/closetitle"))
+        else if (path.startsWith("/displayctrlserver/cef/closetitle"))
         {
             closeTitleWindow(request, response);
         }

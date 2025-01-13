@@ -22,7 +22,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    for (std::map<std::string,DlgUrl *> ::iterator it = m_mDlgs.begin(); it != m_mDlgs.end(); it++)
+    for (std::map<std::string,QCefWidget *> ::iterator it = m_mDlgs.begin(); it != m_mDlgs.end(); it++)
     {
         delete it->second;
     }
@@ -127,7 +127,7 @@ bool MainWindow::deleteSettings(string key)
     return true;
 }
 
-bool MainWindow::QDlgShow(DlgUrl * qdlg,QtDlgInfo & info)
+bool MainWindow::QDlgShow(QCefWidget * qdlg,QtDlgInfo & info)
 {
     qdlg->setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
     // qdlg->show();    
@@ -143,7 +143,7 @@ void MainWindow::test()
 void MainWindow::on_pbtn_test_clicked()
 {
     //emit testSignal();
-    // DlgUrl * qdlg = new DlgUrl();
+    // QCefWidget * qdlg = new QCefWidget();
     // QDlgShow(qdlg);
 }
 
@@ -159,7 +159,7 @@ void MainWindow::onInitSlots()
     for (std::map<std::string,QtDlgInfo *> ::iterator it = m_mDlgProperty.begin(); it != m_mDlgProperty.end(); it++)
     {
         vInfo.push_back(it->second);
-        // DlgUrl *qdlg = new DlgUrl(it->second->dlgId);
+        // QCefWidget *qdlg = new QCefWidget(it->second->dlgId);
         // QDlgShow(qdlg, *it->second);        
         // m_mDlgs.insert(make_pair(it->second->dlgId, qdlg));
     }
@@ -167,7 +167,7 @@ void MainWindow::onInitSlots()
     sort(vInfo.begin(),vInfo.end(),cmp);
     for (size_t i = 0; i < vInfo.size(); i++)
     {
-        DlgUrl *qdlg = new DlgUrl(vInfo[i]->dlgId);         
+        QCefWidget *qdlg = new QCefWidget();         
         QDlgShow(qdlg, *vInfo[i]);        
         m_mDlgs.insert(make_pair(vInfo[i]->dlgId, qdlg));
 
@@ -188,10 +188,11 @@ void MainWindow::onMouseEventRequested(int type,QVariant dlgInfo)
     }
     else if(type == 2)
     {
-        std::map<std::string, DlgUrl *>::iterator it = m_mDlgs.find(dlg.dlgId);
+        std::map<std::string, QCefWidget *>::iterator it = m_mDlgs.find(dlg.dlgId);
         if(it != m_mDlgs.end())
         {
-            it->second->CloseDlg(dlg.dlgId);
+            // it->second->CloseDlg(dlg.dlgId);
+            it->second->close();
             delete it->second;
             m_mDlgs.erase(it);
         }
@@ -212,7 +213,7 @@ void MainWindow::onOpenTitleWindow()
 {
     onCloseTitleWindow();
 
-    int multiple = 5;
+    int multiple = 1;
     cmyxrandr* pcmxrandr =  cmyxrandr::GetInstance();
     CMYSIZE currentSize, maxSize;
     vector<MOutputInfo> vOutputInfo;  
@@ -220,7 +221,12 @@ void MainWindow::onOpenTitleWindow()
 
     for(auto &v : vOutputInfo)
     {
-        MyMainWindow *w = new MyMainWindow(v.name);;
+        if(v.nIndex < 0)
+            continue;
+        std::string name = std::to_string(v.nIndex);
+        name += ",";
+        name += v.name;
+        MyMainWindow *w = new MyMainWindow(name);
         w->createWindow(v.pos.xPos,v.pos.yPos,v.size.width/multiple,v.size.height/multiple);
         m_titleWindows[v.name]=w;
     }
@@ -250,7 +256,7 @@ bool MainWindow::showNewDlg(string dlgId)
     std::map<std::string,QtDlgInfo *> ::iterator itp = m_mDlgProperty.find(dlgId);
     if(itp != m_mDlgProperty.end())
     {
-        std::map<std::string, DlgUrl *>::iterator it = m_mDlgs.find(dlgId);
+        std::map<std::string, QCefWidget *>::iterator it = m_mDlgs.find(dlgId);
         if (it != m_mDlgs.end())
         {            
             QDlgShow(it->second, *itp->second);       
@@ -258,7 +264,7 @@ bool MainWindow::showNewDlg(string dlgId)
         }
         else
         {
-            DlgUrl *qdlg = new DlgUrl(dlgId);
+            QCefWidget *qdlg = new QCefWidget();
             QDlgShow(qdlg, *itp->second);
             m_mDlgs.insert(make_pair(dlgId, qdlg));
         }
@@ -313,14 +319,14 @@ bool MainWindow::modifyDlg(QtDlgInfo & info)
         }
 
 
-        // std::map<std::string, DlgUrl *>::iterator it = m_mDlgs.find(info.dlgId);
+        // std::map<std::string, QCefWidget *>::iterator it = m_mDlgs.find(info.dlgId);
         // if(it != m_mDlgs.end())
         // {
         //     it->second->UpdateSetting(&info);
         // }
         // else
         // {
-        //     DlgUrl *qdlg = new DlgUrl(info.dlgId);            
+        //     QCefWidget *qdlg = new QCefWidget(info.dlgId);            
         //     QDlgShow(qdlg, info);
         //     m_mDlgs.insert(make_pair(info.dlgId, qdlg));
         // }

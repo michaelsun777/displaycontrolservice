@@ -20,7 +20,16 @@ DlgUrl::DlgUrl(string strDlgId,QWidget *parent) : m_qsUrl(""),
 
 DlgUrl::~DlgUrl()
 {
- 
+    if (m_pRightCefViewWidget)
+    {
+        delete m_pRightCefViewWidget;
+        m_pRightCefViewWidget =nullptr;
+    }
+    if (m_layout)
+    {
+        delete m_layout;
+        m_layout = nullptr;
+    }
     delete ui;
 }
 
@@ -85,6 +94,11 @@ void DlgUrl::createRightCefView()
 {
     if (m_pRightCefViewWidget)
     {
+        if (m_layout)
+        {
+            delete m_layout;
+            m_layout = nullptr;
+        }
         m_pRightCefViewWidget->deleteLater();
         m_pRightCefViewWidget = nullptr;
     }

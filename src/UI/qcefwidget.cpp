@@ -1,18 +1,18 @@
-#include "mymainwindow.h"
+#include "qcefwidget.h"
 
-MyMainWindow::MyMainWindow(std::string name, QWidget *parent) :
-    QMainWindow(parent),m_name(name)
-    //,    ui(new Ui::MyMainWindow)
+QCefWidget::QCefWidget(QWidget *parent) :
+    QMainWindow(parent)
+    //,    ui(new Ui::QCefWidget)
 {
     m_ui.setupUi(this);
     // 背景透明
     setAttribute(Qt::WA_TranslucentBackground);
     // 去掉边框
-    setWindowFlags(Qt::FramelessWindowHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowStaysOnTopHint);
+    setWindowFlags(Qt::FramelessWindowHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint);
 
 }
 
-MyMainWindow::~MyMainWindow()
+QCefWidget::~QCefWidget()
 {
     if (m_pRightCefViewWidget)
     {
@@ -28,12 +28,13 @@ MyMainWindow::~MyMainWindow()
 }
 
 
-void MyMainWindow::createRightCefView()
+void QCefWidget::createRightCefView()
 {
     if (m_pRightCefViewWidget)
     {
         if(m_layout)
         {
+            m_layout->removeWidget(m_pRightCefViewWidget);
             delete m_layout;
             m_layout = nullptr;
         }
@@ -52,35 +53,27 @@ void MyMainWindow::createRightCefView()
     setting.setWindowlessFrameRate(60);
     // setting.setBackgroundColor(QColor::fromRgba(qRgba(255, 255, 220, 255)));
     // setting.setBackgroundColor(QColor::fromRgb(0, 0, 255));
-    setting.setBackgroundColor(Qt::lightGray);
-    std::string url = "CefView://";
-    url += m_name;
+    // setting.setBackgroundColor(Qt::lightGray);
     // create the QCefView widget and add it to the layout container
-    m_pRightCefViewWidget = new CefViewWidget(url.c_str(), &setting, this);
+    m_pRightCefViewWidget = new CefViewWidget(m_QtDlgInfo.url.c_str(), &setting, this);
     m_pRightCefViewWidget->resize(500, 500);    
     m_pRightCefViewWidget->setContextMenuPolicy(Qt::DefaultContextMenu);
     //m_ui.Container->layout()->addWidget(m_pRightCefViewWidget);
-    //m_pRightCefViewWidget->setRounded(20);
+
     m_layout = new QVBoxLayout(this);
     m_layout->addWidget(m_pRightCefViewWidget);
-
-    //QString uri ="https://map.baidu.com/";
-    //QCefView * cefViewWidget = new QCefView(uri, &setting, this);
-    // QVBoxLayout *layout = new QVBoxLayout(this);
-    // cefViewWidget->resize(500, 500);
-    // layout->addWidget(cefViewWidget);
-    // cefViewWidget->setContextMenuPolicy(Qt::DefaultContextMenu);
-   
-
-    // 
-
-    // allow show context menu for both OSR and NCW mode
-    
+        
 }
 
+void QCefWidget::UpdateSetting(QtDlgInfo * dlg)
+{
+    m_QtDlgInfo = *dlg;
+    createRightCefView();
+    setGeometry(dlg->xPos, dlg->yPos, dlg->width, dlg->height);
+    show();
+}
 
-
-void MyMainWindow::resizeEvent(QResizeEvent *event)
+void QCefWidget::resizeEvent(QResizeEvent *event)
 {
     QSize newSize = event->size();
 
@@ -89,7 +82,7 @@ void MyMainWindow::resizeEvent(QResizeEvent *event)
     QWidget::resizeEvent(event); 
 }
 
-void MyMainWindow::createWindow(int x, int y, int w, int h)
+void QCefWidget::createWindow(int x, int y, int w, int h)
 {
     createRightCefView();
     setGeometry(x, y, w, h);
