@@ -121,6 +121,7 @@ public://xrandr
     //bool GetOutputsInfo();
     bool ResetOutputsInfo();
     bool GetGpuInfo(json & js);
+    std::string GetAllResolution();
     bool SetMonitorsInfo(vector<MONITORSETTINGINFO> *vSetInfo);
     bool setOutputsXrandr(json & js);
     bool setOutputsXrandrLock(json & js);

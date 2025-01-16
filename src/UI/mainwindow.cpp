@@ -259,13 +259,14 @@ bool MainWindow::showNewDlg(string dlgId)
         std::map<std::string, QCefWidget *>::iterator it = m_mDlgs.find(dlgId);
         if (it != m_mDlgs.end())
         {            
-            QDlgShow(it->second, *itp->second);       
+            it->second->updateWindow(itp->second);       
             return true;
         }
         else
         {
             QCefWidget *qdlg = new QCefWidget();
-            QDlgShow(qdlg, *itp->second);
+            qdlg->UpdateSetting(itp->second);
+            // QDlgShow(qdlg, *itp->second);
             m_mDlgs.insert(make_pair(dlgId, qdlg));
         }
     }
@@ -384,5 +385,19 @@ bool MainWindow::getAllDlgInfo(std::vector<QtDlgInfo> & vInfo)
         vInfo.push_back(info);
     } 
 
+    return true;
+}
+
+bool MainWindow::checkOrder(int order, std::string id)
+{
+    for (std::map<std::string,QtDlgInfo *> ::iterator it = m_mDlgProperty.begin(); it != m_mDlgProperty.end(); it++)
+    {
+        if(it->second->order == order)
+        {
+            if(!id.empty() && it->second->dlgId == id)
+                return true;
+            return false;
+        }
+    }
     return true;
 }

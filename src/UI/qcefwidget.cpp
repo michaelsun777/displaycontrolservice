@@ -1,15 +1,13 @@
 #include "qcefwidget.h"
 
-QCefWidget::QCefWidget(QWidget *parent) :
-    QMainWindow(parent)
-    //,    ui(new Ui::QCefWidget)
+QCefWidget::QCefWidget(QWidget *parent) : QMainWindow(parent)
+//,    ui(new Ui::QCefWidget)
 {
     m_ui.setupUi(this);
     // 背景透明
     setAttribute(Qt::WA_TranslucentBackground);
     // 去掉边框
     setWindowFlags(Qt::FramelessWindowHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint);
-
 }
 
 QCefWidget::~QCefWidget()
@@ -17,28 +15,27 @@ QCefWidget::~QCefWidget()
     if (m_pRightCefViewWidget)
     {
         delete m_pRightCefViewWidget;
-        m_pRightCefViewWidget =nullptr;
+        m_pRightCefViewWidget = nullptr;
     }
     if (m_layout)
     {
         delete m_layout;
         m_layout = nullptr;
     }
-    //delete ui;
+    // delete ui;
 }
-
 
 void QCefWidget::createRightCefView()
 {
     if (m_pRightCefViewWidget)
     {
-        if(m_layout)
+        if (m_layout)
         {
             m_layout->removeWidget(m_pRightCefViewWidget);
             delete m_layout;
             m_layout = nullptr;
         }
-        m_pRightCefViewWidget->deleteLater();
+        delete m_pRightCefViewWidget;
         m_pRightCefViewWidget = nullptr;
     }
 
@@ -56,16 +53,15 @@ void QCefWidget::createRightCefView()
     // setting.setBackgroundColor(Qt::lightGray);
     // create the QCefView widget and add it to the layout container
     m_pRightCefViewWidget = new CefViewWidget(m_QtDlgInfo.url.c_str(), &setting, this);
-    m_pRightCefViewWidget->resize(500, 500);    
+    // m_pRightCefViewWidget->resize(500, 500);
     m_pRightCefViewWidget->setContextMenuPolicy(Qt::DefaultContextMenu);
-    //m_ui.Container->layout()->addWidget(m_pRightCefViewWidget);
+    // m_ui.Container->layout()->addWidget(m_pRightCefViewWidget);
 
     m_layout = new QVBoxLayout(this);
     m_layout->addWidget(m_pRightCefViewWidget);
-        
 }
 
-void QCefWidget::UpdateSetting(QtDlgInfo * dlg)
+void QCefWidget::UpdateSetting(QtDlgInfo *dlg)
 {
     m_QtDlgInfo = *dlg;
     createRightCefView();
@@ -79,12 +75,24 @@ void QCefWidget::resizeEvent(QResizeEvent *event)
 
     m_pRightCefViewWidget->resize(newSize);
 
-    QWidget::resizeEvent(event); 
+    QWidget::resizeEvent(event);
 }
 
 void QCefWidget::createWindow(int x, int y, int w, int h)
 {
     createRightCefView();
     setGeometry(x, y, w, h);
+    show();
+}
+
+void QCefWidget::updateUrl(QString url)
+{
+    m_pRightCefViewWidget->navigateToUrl(url);
+}
+
+void QCefWidget::updateWindow(QtDlgInfo *dlg)
+{
+    updateUrl(dlg->url.c_str());
+    setGeometry(dlg->xPos, dlg->yPos, dlg->width, dlg->height);
     show();
 }

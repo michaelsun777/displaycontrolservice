@@ -23,6 +23,8 @@ public:
     ~QCefWidget();
     void createWindow(int x,int y,int w, int h);
     void UpdateSetting(QtDlgInfo * dlg);
+    void updateUrl(QString url);
+    void updateWindow(QtDlgInfo * dlg);
 
 protected:
   void createRightCefView();

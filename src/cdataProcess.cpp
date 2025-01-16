@@ -53,7 +53,18 @@ cdataProcess::cdataProcess(/* args */)
     m_nHight = settings.value("screen/height",0).toInt();
     m_layout_horizontal = settings.value("screen/layout_horizontal",0).toInt();
     m_layout_vertical = settings.value("screen/layout_vertical",0).toInt();
-    m_allLayouts = settings.value("screen/allResolution","").toString().toStdString();
+    std::string outputs = settings.value("outputsSettings/outputs","").toString().toStdString();
+    try
+    {
+        nlohmann::json j = nlohmann::json::parse(outputs);
+        if(j.find("allResolution") != j.end())
+            m_allLayouts = j["allResolution"];
+    }
+    catch(const std::exception& e)
+    {
+        m_allLayouts = "";
+    }
+    
 
     if(m_nWidth == 0)
     {
@@ -845,6 +856,11 @@ bool cdataProcess::GetGpuInfo(json & js)
     return false;
 }
 
+std::string cdataProcess::GetAllResolution()
+{
+    return m_allLayouts;
+}
+
 bool cdataProcess::setOutputMode(string &strOutputName, string &strModeName,string & strRate,string & outputMode)
 {
     outputMode = " --output ";
@@ -1266,7 +1282,18 @@ bool cdataProcess::InitOutputInfo()
     m_nHight = settings.value("screen/height",0).toInt();
     m_layout_horizontal = settings.value("screen/layout_horizontal",0).toInt();
     m_layout_vertical = settings.value("screen/layout_vertical",0).toInt();
-    m_allLayouts = settings.value("screen/allResolution","").toString().toStdString();
+    // m_allLayouts = settings.value("screen/allResolution","").toString().toStdString();
+    std::string outputs = settings.value("outputsSettings/outputs","").toString().toStdString();
+    try
+    {
+        nlohmann::json j = nlohmann::json::parse(outputs);
+        if(j.find("allResolution") != j.end())
+            m_allLayouts = j["allResolution"];
+    }
+    catch(const std::exception& e)
+    {
+        m_allLayouts = "";
+    }
 
     if(m_nWidth < 1680)//增加最低分辨率限制1680*1050，默认为1080p
     {

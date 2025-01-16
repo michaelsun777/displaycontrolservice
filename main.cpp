@@ -208,8 +208,8 @@ int main(int argc, char *argv[])
         //pMyW = new MyMainWindow();
         //pMyW->show();
 
-        DuGisWidget dugis;
-        dugis.show();
+        // DuGisWidget dugis;
+        // dugis.show();
 
         w.show();
         w.Init();

@@ -111,6 +111,14 @@ int DialogController::dlgAdd(RequestHandler* pRequestHandler,MainWindow * pMain,
 {
     try
     {
+        cdataProcess* pcdataProcess = cdataProcess::GetInstance();
+        std::string resolution = pcdataProcess->GetAllResolution();
+        int allWidth = std::stoi(resolution.substr(0, resolution.find("x")));
+        int allHeight = std::stoi(resolution.substr(resolution.find("x") + 1));
+
+        cmyxrandr* pcmyXrandr = cmyxrandr::GetInstance();
+        CMYSIZE currentSize = pcmyXrandr->getScreenSize();
+
         QByteArray barray = request.getBody();
         std::string body = barray.data();
         // auto body = req.body;
@@ -127,6 +135,9 @@ int DialogController::dlgAdd(RequestHandler* pRequestHandler,MainWindow * pMain,
         int yVirtual = 0;
         int xPos = 0;
         int yPos = 0;
+        int height = 0;
+        int width = 0;
+        int order = 0;
 
         if(jdata.find("name") != jdata.end())
         {
@@ -159,26 +170,118 @@ int DialogController::dlgAdd(RequestHandler* pRequestHandler,MainWindow * pMain,
 
         if(jdata.find("xVirtual") != jdata.end())
         {
-            xVirtual = jdata["xVirtual"].template get<int>();
+            xVirtual = (jdata["xVirtual"].template get<float>())*allWidth;
         }
         
         if(jdata.find("yVirtual") != jdata.end())
         {
-            yVirtual = jdata["yVirtual"].template get<int>();
+            yVirtual = (jdata["yVirtual"].template get<float>())*allHeight;
         }
         
         if(jdata.find("xPos") != jdata.end())
         {
-            xPos = jdata["xPos"].template get<int>();
+            xPos = (jdata["xPos"].template get<float>())*allWidth;
+            if(xPos >= currentSize.width)
+            {
+                json js;
+                js["error"] = "The x-coordinate exceeds the actual width!";
+                createRet(response, 400, js);
+                return -1;
+            }
+        }
+        else
+        {
+            json js;
+            js["error"] = "xPos null or error!";
+            createRet(response, 400, js);
+            return -1;
         }
         
         if(jdata.find("yPos") != jdata.end())
         {
-            yPos = jdata["yPos"].template get<int>();
+            yPos = (jdata["yPos"].template get<float>())*allHeight;
+            if(yPos >= currentSize.height)
+            {
+                json js;
+                js["error"] = "The y-coordinate exceeds the actual height!";
+                createRet(response, 400, js);
+                return -1;
+            }
+        }
+        else
+        {
+            json js;
+            js["error"] = "yPos null or error!";
+            createRet(response, 400, js);
+            return -1;
         }
 
-        int height = jdata["height"].template get<int>();
-        int width = jdata["width"].template get<int>();
+        if(jdata.find("height") != jdata.end())
+        {
+            height = (jdata["height"].template get<float>())*allHeight;
+            if(yPos + height > currentSize.height)
+            {
+                height = currentSize.height - yPos;
+            }
+            if(height <= 0)
+            {
+                json js;
+                js["error"] = "The height exceeds the actual height!";
+                createRet(response, 400, js);
+                return -1;
+            }
+        }
+        else
+        {
+            json js;
+            js["error"] = "height null or error!";
+            createRet(response, 400, js);
+            return -1;
+        }
+
+        if(jdata.find("width") != jdata.end())
+        {
+            width = (jdata["width"].template get<float>())*allWidth;
+            if (xPos + width > currentSize.width)
+            {
+                width = currentSize.width - xPos;
+            }
+            if (width <= 0)
+            {
+                json js;
+                js["error"] = "The width exceeds the actual width!";
+                createRet(response, 400, js);
+                return -1;
+            }
+        }
+        else
+        {
+            json js;
+            js["error"] = "width null or error!";
+            createRet(response, 400, js);
+            return -1;
+        }
+
+        if(jdata.find("order") != jdata.end())
+        {
+            order = jdata["order"].template get<int>();
+        }
+        else
+        {
+            json js;
+            js["error"] = "order null!";
+            createRet(response, 400, js);
+            return -1;
+        }
+
+        if (!pMain->checkOrder(order))
+        {
+            json js;
+            js["error"] = "order duplication!";
+            createRet(response, 400, js);
+            return -1;
+        }
+
         QtDlgInfo dlg;
         dlg.name = name;
         dlg.url = url;
@@ -192,14 +295,7 @@ int DialogController::dlgAdd(RequestHandler* pRequestHandler,MainWindow * pMain,
         dlg.yPos = yPos;
         dlg.height = height;
         dlg.width = width;
-        if(jdata.find("order") != jdata.end())
-        {
-            dlg.order = jdata["yPos"].template get<int>();
-        }
-        else
-        {
-            dlg.order = 0;
-        }
+        dlg.order = order;
         
         // QtDlgInfo dlg;
         // dlg.height = 1080;
@@ -212,9 +308,7 @@ int DialogController::dlgAdd(RequestHandler* pRequestHandler,MainWindow * pMain,
         if (pMain->addDlg(dlg))
         {
             pRequestHandler->sendSignal(1, dlg);
-            json js;
-            dlg.toJson(js);
-            createRet(response, 200,js);
+            createRet(response,200);
         }
         else
         {
@@ -238,6 +332,14 @@ int DialogController::dlgModify(RequestHandler *pRequestHandler,MainWindow * pMa
     XINFO("received msg:{}", body);
     json jdata = json::parse(body);
 
+    cdataProcess* pcdataProcess = cdataProcess::GetInstance();
+    std::string resolution = pcdataProcess->GetAllResolution();
+    int allWidth = std::stoi(resolution.substr(0, resolution.find("x")));
+    int allHeight = std::stoi(resolution.substr(resolution.find("x") + 1));
+
+    cmyxrandr* pcmyxrandr = cmyxrandr::GetInstance();
+    CMYSIZE currentSize = pcmyxrandr->getScreenSize();
+
     string dlgid = "";
     string name = "";
     string path = "";
@@ -249,6 +351,8 @@ int DialogController::dlgModify(RequestHandler *pRequestHandler,MainWindow * pMa
     int yVirtual = 0;
     int xPos = 0;
     int yPos = 0;
+    int height = 0;
+    int width = 0;
 
     if (jdata.find("dlgId") != jdata.end())
     {
@@ -293,37 +397,117 @@ int DialogController::dlgModify(RequestHandler *pRequestHandler,MainWindow * pMa
 
     if (jdata.find("xVirtual") != jdata.end())
     {
-        xVirtual = jdata["xVirtual"].template get<int>();
+        xVirtual = (jdata["xVirtual"].template get<float>())*allWidth;
     }
 
     if (jdata.find("yVirtual") != jdata.end())
     {
-        yVirtual = jdata["yVirtual"].template get<int>();
+        yVirtual = (jdata["yVirtual"].template get<float>())*allHeight;
     }
 
     if (jdata.find("xPos") != jdata.end())
     {
-        xPos = jdata["xPos"].template get<int>();
+        xPos = (jdata["xPos"].template get<float>())*allWidth;
+        if (xPos >= currentSize.width)
+        {
+            json js;
+            js["error"] = "The x-coordinate exceeds the actual width!";
+            createRet(response, 400, js);
+            return -1;
+        }
+    }
+    else
+    {
+        json js;
+        js["error"] = "xPos null or error!";
+        createRet(response, 400, js);
+        return -1;
     }
 
     if (jdata.find("yPos") != jdata.end())
     {
-        yPos = jdata["yPos"].template get<int>();
-    }
-    QtDlgInfo dlg;
-    if(jdata.find("order") != jdata.end())
-    {
-        dlg.order = jdata["yPos"].template get<int>();
+        yPos = (jdata["yPos"].template get<float>())*allHeight;
+        if (yPos >= currentSize.height)
+        {
+            json js;
+            js["error"] = "The y-coordinate exceeds the actual height!";
+            createRet(response, 400, js);
+            return -1;
+        }
     }
     else
     {
-        dlg.order = 0;
+        json js;
+        js["error"] = "yPos null or error!";
+        createRet(response, 400, js);
+        return -1;
+    }
+    if (jdata.find("height") != jdata.end())
+    {
+        height = (jdata["height"].template get<float>())*allHeight;
+        if (yPos + height > currentSize.height)
+        {
+            height = currentSize.height - yPos;
+        }
+        if (height <= 0)
+        {
+            json js;
+            js["error"] = "The height exceeds the actual height!";
+            createRet(response, 400, js);
+            return -1;
+        }
+    }
+    else
+    {
+        json js;
+        js["error"] = "height null or error!";
+        createRet(response, 400, js);
+        return -1;
+    }
+    if (jdata.find("width") != jdata.end())
+    {
+        width = (jdata["width"].template get<float>())*allWidth;
+        if (xPos + width > currentSize.width)
+        {
+            width = currentSize.width - xPos;
+        }
+        if (width <= 0)
+        {
+            json js;
+            js["error"] = "The width exceeds the actual width!";
+            createRet(response, 400, js);
+            return -1;
+        }
+    }
+    else
+    {
+        json js;
+        js["error"] = "width null or error!";
+        createRet(response, 400, js);
+        return -1;
     }
 
+    QtDlgInfo dlg;
+    if(jdata.find("order") != jdata.end())
+    {
+        dlg.order = jdata["order"].template get<int>();
+    }
+    else
+    {
+        json js;
+        js["error"] = "order null!";
+        createRet(response, 400, js);
+        return -1;
+    }
 
-    int height = jdata["height"].template get<int>();
-    int width = jdata["width"].template get<int>();
-    
+    if (!pMain->checkOrder(dlg.order, dlgid))
+    {
+        json js;
+        js["error"] = "order duplication!";
+        createRet(response, 400, js);
+        return -1;
+    }
+
     dlg.dlgId = dlgid;
     dlg.name = name;
     dlg.url = url;
@@ -370,8 +554,20 @@ int DialogController::dlgSearch(RequestHandler *pRequestHandler,MainWindow * pMa
         QtDlgInfo info;
         if(pMain->getDlgInfo(dlgid,info))
         {
+            cdataProcess* pcdataProcess = cdataProcess::GetInstance();
+            std::string resolution = pcdataProcess->GetAllResolution();
+            int allWidth = std::stoi(resolution.substr(0, resolution.find("x")));
+            int allHeight = std::stoi(resolution.substr(resolution.find("x") + 1));
+            cmyxrandr* pcmyxrandr = cmyxrandr::GetInstance();
+            CMYSIZE currentSize = pcmyxrandr->getScreenSize();
             nlohmann::json js;
             info.toJson(js);
+            js["xVirtual"] = ((float)info.xVirtual)/allWidth;
+            js["yVirtual"] = ((float)info.yVirtual)/allHeight;
+            js["xPos"] = ((float)info.xPos)/allWidth;
+            js["yPos"] = ((float)info.yPos)/allHeight;
+            js["width"] = ((float)info.width)/allWidth;
+            js["height"] = ((float)info.height)/allHeight;
             createRet(response,200,js);
         }
         else
@@ -395,6 +591,11 @@ int DialogController::dlgSearch(RequestHandler *pRequestHandler,MainWindow * pMa
 int DialogController::dlgGetAll(RequestHandler* pRequestHandler,MainWindow * pMain,HttpRequest& request, HttpResponse& response)
 {
     XINFO("received msg:{dlgGetAll}");
+    cdataProcess* pcdataProcess = cdataProcess::GetInstance();
+    std::string resolution = pcdataProcess->GetAllResolution();
+    int allWidth = std::stoi(resolution.substr(0, resolution.find("x")));
+    int allHeight = std::stoi(resolution.substr(resolution.find("x") + 1));
+
     std::vector<QtDlgInfo> vInfo;
     if (pMain->getAllDlgInfo(vInfo))
     {
@@ -406,6 +607,12 @@ int DialogController::dlgGetAll(RequestHandler* pRequestHandler,MainWindow * pMa
             {
                 json data;
                 vInfo[i].toJson(data);
+                data["xVirtual"] = ((float)vInfo[i].xVirtual)/allWidth;
+                data["yVirtual"] = ((float)vInfo[i].yVirtual)/allHeight;
+                data["xPos"] = ((float)vInfo[i].xPos)/allWidth;
+                data["yPos"] = ((float)vInfo[i].yPos)/allHeight;
+                data["width"] = ((float)vInfo[i].width)/allWidth;
+                data["height"] = ((float)vInfo[i].height)/allHeight;
                 dataArray.push_back(data);               
             }
             js["dlgInfos"] = dataArray;

@@ -99,7 +99,7 @@ void DlgUrl::createRightCefView()
             delete m_layout;
             m_layout = nullptr;
         }
-        m_pRightCefViewWidget->deleteLater();
+        delete m_pRightCefViewWidget;
         m_pRightCefViewWidget = nullptr;
     }
 
