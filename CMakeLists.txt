@@ -3,7 +3,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12)
 project(DisplayControlServer)
 
 # 定义一个CMake选项来控制是否使用CEF
-option(USE_CEF_SWITCH "" ON)
+#option(USE_CEF_SWITCH "" ON)
 
 # 添加自定义命令来运行Makefile???
 # add_custom_command(
@@ -137,6 +137,7 @@ INCLUDE_DIRECTORIES(/usr/include)
 INCLUDE_DIRECTORIES(3rd/nvidia-settings/src/libXNVCtrl)
 INCLUDE_DIRECTORIES(3rd/nvidia-settings/src/libXNVCtrlAttributes)
 INCLUDE_DIRECTORIES(3rd/httpserver/)
+
 if(USE_CEF_SWITCH)
         INCLUDE_DIRECTORIES(3rd/QCefView/include)
         INCLUDE_DIRECTORIES(3rd/QCefView)
@@ -201,6 +202,8 @@ if(USE_CEF_SWITCH)
         src/CNvControlEvents.cpp
         3rd/md5/src/md5.cpp
         src/autoDelete.cpp
+        src/UI/qcefwidget.cpp
+        src/UI/qcefwidget.ui
 
         ${http_SRC}
         src/UI/dugiswidget.cpp
@@ -246,30 +249,21 @@ else()
         src/exec_cmd.cpp
 
         3rd/nvidia-settings/src/libXNVCtrl/NVCtrl.c
-        # src/UI/dlgurl.cpp
-        # src/UI/dlgurl.h
-        # src/UI/dlgurl.ui
-        # src/UI/mainwindow.cpp
-        # src/UI/mainwindow.h
-        # src/UI/mainwindow.ui
-        # src/UI/dugiswidget.cpp
-        # src/UI/dugiswidget.ui
-        # src/cdataProcess.cpp
-        
+        src/cdataProcess.cpp
+        # src/config.cpp
         # src/httpManager.cpp
-        # src/requesthandler.cpp
-        # src/nvControlInfo.cpp
-        # src/CNvControlEvents.cpp
-        # src/dialogController.cpp
-        src/config.cpp
+        src/nvControlInfo.cpp
         ######dlg
-                
-        3rd/cpp-subprocess/subprocess.hpp        
+        # src/dialogController.cpp
+        src/requesthandler.cpp
+        3rd/cpp-subprocess/subprocess.hpp
+        src/CNvControlEvents.cpp
         3rd/md5/src/md5.cpp
         src/autoDelete.cpp
+        # src/UI/qcefwidget.cpp
+        # src/UI/qcefwidget.ui
 
-        ${http_SRC}
-        
+        ${http_SRC}      
 
         # ${spdlog_SRC} 
         )

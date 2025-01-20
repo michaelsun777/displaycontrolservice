@@ -1,8 +1,13 @@
 #ifndef CDATA_PROCESS_H
 #define CDATA_PROCESS_H
 
+#include "def_common.h"
 #include <QApplication>
+#include <QSettings>
+
+#ifdef USE_CEF_SWITCH
 #include "UI/mainwindow.h"
+#endif
 
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrandr.h>
@@ -72,7 +77,10 @@ private:
     int m_layout_vertical;
     int m_layout_horizontal;
     string m_allLayouts;
+
+#ifdef USE_CEF_SWITCH
     MainWindow * m_pMainWindow;
+#endif
     static cdataProcess *  m_instance;
     vector<MAINOUTPUTSUPPORTMODESTR> m_supportModes;
     vector<MAINOUTPUTSUPPORTMODESTR> m_InitSupportModes;
@@ -125,9 +133,14 @@ public://xrandr
     bool SetMonitorsInfo(vector<MONITORSETTINGINFO> *vSetInfo);
     bool setOutputsXrandr(json & js);
     bool setOutputsXrandrLock(json & js);
+    bool setGpuInterface(json & js);
     
     bool TestMonitorInfo();
+
+#ifdef USE_CEF_SWITCH
     void SetMainWindow(MainWindow * p);
+#endif
+
     bool GetServerInfo(json & js);
     void get_memoccupy(MEM_OCCUPY *mem); //对无类型get函数含有一个形参结构体类弄的指针O
     int get_cpuoccupy(CPU_OCCUPY *cpust); //对无类型get函数含有一个形参结构体类弄的指针O

@@ -8,6 +8,9 @@
 #include "requesthandler.h"
 #include "cdataProcess.h"
 
+
+
+#ifdef USE_CEF_SWITCH
 #include "dialogController.h"
 
 RequestHandler::RequestHandler(MainWindow * pMain,QObject* parent)
@@ -29,12 +32,33 @@ RequestHandler::RequestHandler(MainWindow * pMain,QObject* parent)
     m_mCodeMsg[500] = "Internal Server Error";//服务器内部错误
     m_mCodeMsg[503] = "Service Unavailable";//服务器暂时不可用‌
 }
+#endif
 
+RequestHandler::RequestHandler(QObject* parent)
+    :HttpRequestHandler(parent)
+{
+    XINFO("RequestHandler: created");
+    m_mCodeMsg[200] = "success";//请求成功,资源已成功返回
+    m_mCodeMsg[201] = "Created";//请求已成功,且服务器创建了新的资源
+    m_mCodeMsg[202] = "Accepted";//请求已接受，但处理尚未完成
+    m_mCodeMsg[203] = "Non-Authoritative Information";//返回的信息可能不完整
+    m_mCodeMsg[204] = "No Content";//请求成功，但响应中没有内容
+    m_mCodeMsg[206] = "Partial Content";//返回部分资源内容
+    m_mCodeMsg[400] = "Bad Request";//请求有语法错误
+    m_mCodeMsg[401] = "Unauthorized";//未授权访问
+    m_mCodeMsg[403] = "Forbidden";//禁止访问
+    m_mCodeMsg[404] = "Not Found";//资源不存在
+    m_mCodeMsg[405] = "Method Not Allowed";//不允许使用的方法
+    m_mCodeMsg[500] = "Internal Server Error";//服务器内部错误
+    m_mCodeMsg[503] = "Service Unavailable";//服务器暂时不可用‌
+}
 
 RequestHandler::~RequestHandler()
 {
     XINFO("RequestHandler: deleted");
 }
+
+
 
 void RequestHandler::sendSignal(int type,QtDlgInfo & dlgInfo)
 {
@@ -77,6 +101,10 @@ void RequestHandler::service(HttpRequest& request, HttpResponse& response)
         {
             getGpuInterface(request, response);
         }
+        else if (path.startsWith("/displayctrlserver/set/gpu/Interface"))
+        {
+            setGpuInterface(request, response);
+        }
         else if (path.startsWith("/displayctrlserver/set/monitor/info"))
         {
             setMonitorInfo(request, response);
@@ -84,11 +112,7 @@ void RequestHandler::service(HttpRequest& request, HttpResponse& response)
         else if (path.startsWith("/displayctrlserver/set/outputs/info"))
         {
             setOutputsInfo(request, response);
-        }
-        else if (path.startsWith("/displayctrlserver/dialog"))
-        {
-            DialogController().service(this, m_pMain, request, response);
-        }
+        }        
         else if (path.startsWith("/displayctrlserver/get/server/info"))
         {
             getServerInfo(request, response);
@@ -96,6 +120,11 @@ void RequestHandler::service(HttpRequest& request, HttpResponse& response)
         else if (path.startsWith("/displayctrlserver/login"))
         {
             login(request, response);
+        }
+#ifdef USE_CEF_SWITCH
+        else if (path.startsWith("/displayctrlserver/dialog"))
+        {
+            DialogController().service(this, m_pMain, request, response);
         }
         else if (path.startsWith("/displayctrlserver/cef/opentitle"))
         {
@@ -105,6 +134,7 @@ void RequestHandler::service(HttpRequest& request, HttpResponse& response)
         {
             closeTitleWindow(request, response);
         }
+#endif //USE_CEF_SWITCH
         else
         {
             createRet(response, 404);
@@ -180,6 +210,7 @@ std::string RequestHandler::getRetMessage(int code)
     return "未定义错误码";
 }
 
+#include "../3rd/md5/src/md5.h"
 void RequestHandler::login(const HttpRequest &req, HttpResponse &res)
 {
     QByteArray barray = req.getBody();
@@ -196,6 +227,9 @@ void RequestHandler::login(const HttpRequest &req, HttpResponse &res)
         QSettings config("user.db", QSettings::IniFormat);
         config.value("user/name", "admin");
         string localPwd = config.value("user/pwd", "admin").toString().toStdString();
+
+        
+
         MD5 md5(localPwd);
         string loacalPwdMd5 = md5.toStr();
         //m_mutex.unlock();
@@ -383,6 +417,7 @@ void RequestHandler::resetOutputsInfo(const HttpRequest &req, HttpResponse& res)
         settings.endGroup();
         settings.beginGroup("screen");
         settings.setValue("isSetting", "false");
+        settings.setValue("isSettingOutputs", "false");
         settings.setValue("height", "1080");
         settings.setValue("width", "1920");
         settings.setValue("layout_horizontal", "1");
@@ -451,6 +486,42 @@ void RequestHandler::getGpuInterface(const HttpRequest &req, HttpResponse& res)
         XINFO("{RequestHandler::getGpuInterface unlock}\n");
     }
 
+}
+
+void RequestHandler::setGpuInterface(const HttpRequest &req, HttpResponse &res)
+{
+    string strData;
+    json js;
+    try
+    {
+        QByteArray barray = req.getBody();
+        std::string body = barray.data();
+        XINFO("received msg:{}", body);
+        json jbody = json::parse(body);
+        //json jarry = jdata["gpu"];
+
+        cdataProcess *pcdataProcess = cdataProcess::GetInstance();
+
+        boost::lock_guard<boost::mutex> lock(m_mutex);
+        XINFO("{RequestHandler::setGpuInterface lock in}\n");
+        if(pcdataProcess->setGpuInterface(jbody))
+        {
+            
+            XINFO("{RequestHandler::setGpuInterface unlock0}\n");
+            createRet(res,200);
+            return;
+        }
+        else
+        {
+            createRet(res,204);            
+        }
+        XINFO("{RequestHandler::setGpuInterface unlock}\n");
+    }
+    catch(...)
+    {
+        createRet(res,500);
+        XINFO("{RequestHandler::setGpuInterface unlock}\n");
+    }
 }
 
 
@@ -677,6 +748,8 @@ void RequestHandler::getServerInfo(const HttpRequest &req, HttpResponse &res)
     XINFO("{RequestHandler::getServerInfo unlock0}\n");
 }
 
+#ifdef USE_CEF_SWITCH
+
 void RequestHandler::openTitleWindow(const HttpRequest &req, HttpResponse &res)
 {
     emit sendOpenTitleWindowSignal();
@@ -690,3 +763,4 @@ void RequestHandler::closeTitleWindow(const HttpRequest &req, HttpResponse &res)
     createRet(res,200);
 }
 
+#endif //USE_CEF_SWITCH

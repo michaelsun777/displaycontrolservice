@@ -2,7 +2,7 @@
 #define _CNV_CONTROL_EVENTS_H
 
 #include <QApplication>
-#include "UI/mainwindow.h"
+//#include "UI/mainwindow.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
