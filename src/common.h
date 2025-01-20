@@ -228,6 +228,7 @@ struct MOutputInfo
     MyModelInfoEX preferredMode;
     bool bIsSeted;
     int nIndex;
+    bool bIsUsed;
 
     void operator=(MOutputInfo info)
     {
@@ -253,6 +254,7 @@ struct MOutputInfo
         currentMode = info.currentMode;
         preferredMode =info.preferredMode;
         nIndex = info.nIndex;
+        bIsUsed = info.bIsUsed;
     }
     
 };

@@ -1447,6 +1447,7 @@ bool cmyxrandr::GetOutputAndGpuName(vector<MYGPUINTERFACE> & vgpu)
 {
     XINFO("GetOutputAndGpuName in\n");
     //json  js;
+    
         
     int major, minor, len;
     char *start, *str0, *str1;
@@ -1546,7 +1547,7 @@ bool cmyxrandr::GetOutputAndGpuName(vector<MYGPUINTERFACE> & vgpu)
             return 1;
         }
 
-        nlohmann::ordered_json jdisplay,jdisplayIndex;
+        nlohmann::ordered_json jdisplay,jdisplayIndex,jIsUsed;
         XINFO("XNVCTRLQueryTargetBinaryData ret={}\n",ret);
         for (int j = 0; j < pData[0]; j++)
         {
@@ -1566,6 +1567,7 @@ bool cmyxrandr::GetOutputAndGpuName(vector<MYGPUINTERFACE> & vgpu)
                 {
                     //node["displayIndex"].push_back(_vOutputInfo[iLoop].nIndex);
                     jdisplayIndex.push_back(_vOutputInfo[iLoop].nIndex);
+                    jIsUsed.push_back(_vOutputInfo[iLoop].bIsUsed);
                     break;
                 }
             }
@@ -1596,14 +1598,15 @@ bool cmyxrandr::GetOutputAndGpuName(vector<MYGPUINTERFACE> & vgpu)
 
             node["display"] = json_array; 
             node["displayIndex"] = json_array; 
+            node["isUsed"] = json_array; 
             gpu.outputName.push_back("");
         }
         else
         {
             node["display"] = jdisplay;
             node["displayIndex"] = jdisplayIndex;
+            node["isUsed"] = jIsUsed; 
         }
-
 
 
         XFree(pData); 

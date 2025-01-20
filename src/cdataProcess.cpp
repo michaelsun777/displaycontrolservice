@@ -98,10 +98,14 @@ cdataProcess::~cdataProcess()
 {
 }
 
+#ifdef USE_CEF_SWITCH
+
 void cdataProcess::SetMainWindow(MainWindow * p)
 {
     m_pMainWindow = p;
 }
+
+#endif
 
 void cdataProcess::print_display_name(Display *dpy, int target_id, int attr,char *name,string & displayName)
 {
@@ -959,6 +963,57 @@ bool cdataProcess::setOutputsXrandrLock(json & js)
 {
     boost::lock_guard<boost::mutex> lock(m_mutexSetOutput);
     return setOutputsXrandr(js);
+}
+
+bool cdataProcess::setGpuInterface(json & js)
+{
+    try
+    {
+        for (json::iterator itgpu = js["gpu"].begin();itgpu != js["gpu"].end();++itgpu)
+        {
+            json temp = *itgpu;
+
+            XINFO("00{}\n",temp.dump());
+        }
+        
+
+
+        string strarry = js["gpu"];
+        XINFO("1{}\n",strarry);
+        json jarry = json::parse(strarry);
+        json jIsUsedArray = jarry["jIsUsed"];
+        json jOutpusName;
+
+        for (json::iterator it = jarry.begin(); it != jarry.end(); ++it)
+        {
+            json::iterator itIsUsed = jIsUsedArray.begin();
+            for(int iloop = 0; itIsUsed != jIsUsedArray.end(); ++itIsUsed,++iloop)
+            {
+                if(*itIsUsed == "true")
+                {
+                    jOutpusName.push_back(jarry["display"].at(iloop));
+                }
+
+            }
+
+            std::cout << *it << '\n';
+        }
+        XINFO("setGpuInterface:{}\n",jOutpusName.dump());
+
+        // QSettings settings("config.ini", QSettings::IniFormat);
+        // settings.beginGroup("outputsSettings");
+        // // settings.setValue("outputs", js.dump().c_str());
+        // settings.setValue("isSettingOutputs", "true");
+
+
+        // settings.setValue("Outputs", js.dump());       
+        // settings.sync();
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+    
 }
 
 bool cdataProcess::setOutputsXrandr(json & js)

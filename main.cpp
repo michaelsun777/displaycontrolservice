@@ -1,4 +1,7 @@
-#define USE_CEF_SWITCH
+//#define USE_CEF_SWITCH
+
+
+#include "def_common.h"
 
 #include <QApplication>
 #include <QStandardPaths>
@@ -11,11 +14,14 @@
     #include "UI/dlgurl.h"
     #include "UI/mainwindow.h"
     #include "UI/dugiswidget.h"
-    #include "3rd/httpserver/httplistener.h"
-    #include "requesthandler.h"
-    #include "cmyxrandr.h"
-    #include "cdataProcess.h"
+   
 #endif
+
+#include "3rd/httpserver/httplistener.h"
+
+#include "cmyxrandr.h"
+#include "cdataProcess.h"
+#include "requesthandler.h"
 
 #include <QObject>
 #include <QSettings>
@@ -158,9 +164,6 @@ int main(int argc, char *argv[])
             _port = value.toString();
         }
         
-#ifdef USE_CEF_SWITCH
-        MainWindow w;
-
         QSettings settings(&app);
         settings.setValue("host",_ip);
         settings.setValue("port",_port);
@@ -170,12 +173,14 @@ int main(int argc, char *argv[])
         settings.setValue("readTimeout","60000");
         settings.setValue("maxRequestSize","16000");
         settings.setValue("maxMultiPartSize","10000000");
+
+        
+
+#ifdef USE_CEF_SWITCH
+        MainWindow w;
         RequestHandler * pRequestHandler = new RequestHandler(&w,&app);
         new HttpListener(&settings,pRequestHandler,&app);
-
-
         QApplication::setQuitOnLastWindowClosed(false);
-        
         //cdataProcess dataProcess;
         // dataProcess.TestMonitorInfo();
         // sleep(3);
@@ -198,14 +203,15 @@ int main(int argc, char *argv[])
         // build QCefConfig
 
         //MyMainWindow *pMyW = nullptr;
-        QCefConfig config;
-        bool bretQCef = InitQCefConfig(config, app, argc, argv);
-        if (!bretQCef)
-        {
-           XERROR("InitQCefConfig failed\n");
-           return -1;
-        }
-        QCefContext cefContext(&app, argc, argv, &config);
+        // QCefConfig config;
+        // bool bretQCef = InitQCefConfig(config, app, argc, argv);
+        // if (!bretQCef)
+        // {
+        //    XERROR("InitQCefConfig failed\n");
+        //    return -1;
+        // }
+        //QCefContext cefContext(&app, argc, argv, &config);
+
         //pMyW = new MyMainWindow();
         //pMyW->show();
 
@@ -217,7 +223,14 @@ int main(int argc, char *argv[])
         w.hide();
         nRet = app.exec();
         //delete pMyW;
+
+
 #else
+        RequestHandler * pRequestHandler = new RequestHandler(&app);
+        new HttpListener(&settings,pRequestHandler,&app);
+        cdataProcess* pcdataProcess = cdataProcess::GetInstance();
+        pcdataProcess->Init();
+        nRet = app.exec();
         while (1)
         {
             sleep(1);

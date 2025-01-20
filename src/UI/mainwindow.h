@@ -2,7 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include "UI/qcefwidget.h"
+#include "qcefwidget.h"
 //#include "common.h"
 #include <iostream>
 #include <QSettings>
