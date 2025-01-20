@@ -1950,6 +1950,7 @@ bool cdataProcess::OnCheckAndUpdate()
     if(vOutputInfo.size() > 0)
     {
         boost::lock_guard<boost::mutex> lock(m_mutexGPUInterface);
+        m_vGPUInterface.clear();
         pcmxrandr->GetOutputAndGpuName(m_vGPUInterface);
     }    
     XINFO("cmyxrandr::OnUpdate out\n");

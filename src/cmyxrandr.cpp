@@ -1446,7 +1446,7 @@ void cmyxrandr::print_display_id_and_name(Display *dpy, int target_id, const cha
 bool cmyxrandr::GetOutputAndGpuName(vector<MYGPUINTERFACE> & vgpu)
 {
     XINFO("GetOutputAndGpuName in\n");
-    json  js;
+    //json  js;
         
     int major, minor, len;
     char *start, *str0, *str1;
@@ -1546,6 +1546,7 @@ bool cmyxrandr::GetOutputAndGpuName(vector<MYGPUINTERFACE> & vgpu)
             return 1;
         }
 
+        nlohmann::ordered_json jdisplay,jdisplayIndex;
         XINFO("XNVCTRLQueryTargetBinaryData ret={}\n",ret);
         for (int j = 0; j < pData[0]; j++)
         {
@@ -1553,37 +1554,60 @@ bool cmyxrandr::GetOutputAndGpuName(vector<MYGPUINTERFACE> & vgpu)
             XINFO("print_display_id_and_name\n");
             print_display_id_and_name(dpy, dpyId, "    ");
             string strDisplayName;
+            
             XINFO("print_display_name\n");
             print_display_name(dpy, dpyId,NV_CTRL_STRING_DISPLAY_NAME_RANDR,"RANDR",strDisplayName);
-            node["display"].push_back(strDisplayName); 
-
+            //node["display"].push_back(strDisplayName);
+            jdisplay.push_back(strDisplayName);
+            
             for (size_t iLoop = 0; iLoop < _vOutputInfo.size(); iLoop++)
             {
                 if(strDisplayName.compare(_vOutputInfo[iLoop].name) == 0)
                 {
-                    node["displayIndex"].push_back(_vOutputInfo[iLoop].nIndex);
+                    //node["displayIndex"].push_back(_vOutputInfo[iLoop].nIndex);
+                    jdisplayIndex.push_back(_vOutputInfo[iLoop].nIndex);
                     break;
                 }
-                /* code */
             }
-            
-
+            // json snode;
+            // snode["name"] = strDisplayName;
+            // for (size_t iLoop = 0; iLoop < _vOutputInfo.size(); iLoop++)
+            // {
+            //     if(strDisplayName.compare(_vOutputInfo[iLoop].name) == 0)
+            //     {
+            //         snode["displayIndex"] = _vOutputInfo[iLoop].nIndex;
+            //         break;
+            //     }
+            //     /* code */
+            // }
+            // node["display"].push_back(snode);
 
             //node["displayIndex"].push_back
             gpu.outputName.push_back(strDisplayName);
             XINFO("print_display_name ff\n");
         }
+        
 
         if(pData[0] <= 0)
         {
             nlohmann::json json_array = nlohmann::json::array();
+            // json snode;
+            // snode["name"] = "";
+
             node["display"] = json_array; 
             node["displayIndex"] = json_array; 
             gpu.outputName.push_back("");
         }
+        else
+        {
+            node["display"] = jdisplay;
+            node["displayIndex"] = jdisplayIndex;
+        }
+
+
 
         XFree(pData); 
-        js["gpu"].push_back(node);
+        //js["gpu"].push_back(node);
         gpu.jsonStr = node.dump();
         vgpu.push_back(gpu);
 

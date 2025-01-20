@@ -181,6 +181,7 @@ int main(int argc, char *argv[])
         // sleep(3);
         // return 0;
         cdataProcess* pcdataProcess = cdataProcess::GetInstance();
+        //pcdataProcess->TestMonitorInfo();
         pcdataProcess->SetMainWindow(&w);        
         pcdataProcess->Init();
         QObject::connect(pRequestHandler,&RequestHandler::sendDlgSignal,&w,&MainWindow::onMouseEventRequested);
@@ -208,8 +209,8 @@ int main(int argc, char *argv[])
         //pMyW = new MyMainWindow();
         //pMyW->show();
 
-        DuGisWidget dugis;
-        dugis.show();
+        // DuGisWidget dugis;
+        // dugis.show();
 
         w.show();
         w.Init();
