@@ -188,6 +188,9 @@ if(USE_CEF_SWITCH)
         src/UI/mymainwindow.cpp
         src/UI/mymainwindow.h
         src/UI/mymainwindow.ui
+        src/UI/qcefwidget.cpp
+        src/UI/qcefwidget.h
+        src/UI/qcefwidget.ui
         src/UI/cef/CefViewWidget.cpp
         src/UI/cef/DownloadManager.cpp
         src/cdataProcess.cpp
