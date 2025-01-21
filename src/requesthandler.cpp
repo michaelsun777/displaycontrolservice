@@ -210,7 +210,7 @@ std::string RequestHandler::getRetMessage(int code)
     return "未定义错误码";
 }
 
-#include "../3rd/md5/src/md5.h"
+#include "md5.h"
 void RequestHandler::login(const HttpRequest &req, HttpResponse &res)
 {
     QByteArray barray = req.getBody();

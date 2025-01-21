@@ -203,7 +203,7 @@ if(USE_CEF_SWITCH)
         src/requesthandler.cpp
         3rd/cpp-subprocess/subprocess.hpp
         src/CNvControlEvents.cpp
-        3rd/md5/src/md5.cpp
+        src/md5.cpp
         src/autoDelete.cpp
         src/UI/qcefwidget.cpp
         src/UI/qcefwidget.ui

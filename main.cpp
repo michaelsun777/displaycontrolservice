@@ -40,7 +40,7 @@
 #include "nvControlInfo.h"
 
 //#include <X11/extensions/Xrandr.h>
-#include "../3rd/md5/src/md5.h"
+#include "src/md5.h"
 
 
 
