@@ -203,14 +203,14 @@ int main(int argc, char *argv[])
         // build QCefConfig
 
         //MyMainWindow *pMyW = nullptr;
-        // QCefConfig config;
-        // bool bretQCef = InitQCefConfig(config, app, argc, argv);
-        // if (!bretQCef)
-        // {
-        //    XERROR("InitQCefConfig failed\n");
-        //    return -1;
-        // }
-        //QCefContext cefContext(&app, argc, argv, &config);
+        QCefConfig config;
+        bool bretQCef = InitQCefConfig(config, app, argc, argv);
+        if (!bretQCef)
+        {
+           XERROR("InitQCefConfig failed\n");
+           return -1;
+        }
+        QCefContext cefContext(&app, argc, argv, &config);
 
         //pMyW = new MyMainWindow();
         //pMyW->show();
