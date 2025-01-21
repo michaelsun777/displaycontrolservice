@@ -4,6 +4,10 @@
 #include <sys/statfs.h>
 #include <QFile>
 
+//#include "lest.hpp"
+#include "ini.h"
+#include "IniReader.h"
+
 
 cdataProcess* cdataProcess::m_instance = NULL;
 
@@ -969,49 +973,74 @@ bool cdataProcess::setGpuInterface(json & js)
 {
     try
     {
+        
+        json jOutpusName;
+        vector<std::string> vOutputsName;
         for (json::iterator itgpu = js["gpu"].begin();itgpu != js["gpu"].end();++itgpu)
         {
             json temp = *itgpu;
-
             XINFO("00{}\n",temp.dump());
-        }
-        
-
-
-        string strarry = js["gpu"];
-        XINFO("1{}\n",strarry);
-        json jarry = json::parse(strarry);
-        json jIsUsedArray = jarry["jIsUsed"];
-        json jOutpusName;
-
-        for (json::iterator it = jarry.begin(); it != jarry.end(); ++it)
-        {
-            json::iterator itIsUsed = jIsUsedArray.begin();
-            for(int iloop = 0; itIsUsed != jIsUsedArray.end(); ++itIsUsed,++iloop)
+            json jIsUsedArray = (*itgpu)["isUsed"];
+            json jDisplaysArray = (*itgpu)["display"];
+            int iloop = 0;
+            for (json::iterator it = jIsUsedArray.begin(); it != jIsUsedArray.end(); ++it,++iloop)
             {
-                if(*itIsUsed == "true")
+                if (*it)
                 {
-                    jOutpusName.push_back(jarry["display"].at(iloop));
+                    jOutpusName.push_back(jDisplaysArray.at(iloop));
+                    vOutputsName.push_back(jDisplaysArray.at(iloop));
                 }
-
+                //std::cout << *it << '\n';
             }
+        }     
+       
+        XINFO("cdataProcess::setGpuInterface:{}\n",jOutpusName.dump());
+        CIniReader iniReader("config.ini");
+        iniReader.WriteBoolean("screen", "settingUsedOutputs", true);
+        iniReader.WriteString("outputsSettings", "outputsUsed", jOutpusName.dump());
 
-            std::cout << *it << '\n';
+        // QSettings settings("config.ini", QSettings::IniFormat);       
+        // settings.setValue("screen/settingUsedOutputs", "true");
+        // settings.setValue("outputsSettings/outputsUsed", jOutpusName.dump().data());
+        // settings.sync();        
+
+        {
+            if (m_vGPUInterface.size() > 0)
+            {
+                boost::lock_guard<boost::mutex> lock(m_mutexGPUInterface);
+                for (size_t i = 0; i < m_vGPUInterface.size(); i++)
+                {
+                    XINFO("{}\n",m_vGPUInterface[i].jsonStr);
+                    json jnode = json::parse(m_vGPUInterface[i].jsonStr);
+                    json jDisplaysArray = jnode["display"];
+                    json jIsUsedArray = jnode["isUsed"];
+                    int iloop = 0;
+                    for (json::iterator it = jDisplaysArray.begin(); it != jDisplaysArray.end(); ++it,++iloop)
+                    {
+                        std::cout << *it << '\n';
+                        for (size_t num = 0; num < vOutputsName.size(); num++)
+                        {
+                            if (*it == vOutputsName[num])
+                            {
+                                jnode["isUsed"].at(iloop) = true;
+                                break;
+                            }
+                        }                        
+                    }
+                    m_vGPUInterface[i].jsonStr = jnode.dump();
+                    XINFO("{}\n",m_vGPUInterface[i].jsonStr);
+                    //todo
+                }
+            }
+            return true;
         }
-        XINFO("setGpuInterface:{}\n",jOutpusName.dump());
-
-        // QSettings settings("config.ini", QSettings::IniFormat);
-        // settings.beginGroup("outputsSettings");
-        // // settings.setValue("outputs", js.dump().c_str());
-        // settings.setValue("isSettingOutputs", "true");
 
 
-        // settings.setValue("Outputs", js.dump());       
-        // settings.sync();
     }
-    catch(const std::exception& e)
+    catch(...)
     {
-        std::cerr << e.what() << '\n';
+        XERROR("cdataProcess::setGpuInterface errno={}\n",errno);
+        return false;
     }
     
 }

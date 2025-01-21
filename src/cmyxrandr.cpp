@@ -1,5 +1,6 @@
 #include "cmyxrandr.h"
-
+#include "ini.h"
+#include "IniReader.h"
 
 cmyxrandr* cmyxrandr::m_instance = NULL;
 
@@ -944,6 +945,32 @@ short cmyxrandr::getAllScreenInfoXrandr(vector<MOutputInfo> & vOutputInfo,CMYSIZ
 {
     try
     {
+        CIniReader iniReader("config.ini");
+        bool bSettingUsedOutputs = iniReader.ReadBoolean("screen", "settingUsedOutputs", false);
+        string valueOutpusName = iniReader.ReadString("outputsSettings", "outputsUsed", "");
+        std::cout << valueOutpusName << std::endl;
+    
+        std::vector<std::string> _vOutputNames;
+        
+        if(bSettingUsedOutputs)
+        {
+
+            json joutputsNameArray = json::parse(valueOutpusName);
+
+            for (json::iterator it = joutputsNameArray.begin(); it != joutputsNameArray.end(); ++it)
+            {
+                std::cout << *it << std::endl;
+                _vOutputNames.push_back(*it);
+            }
+
+            if (_vOutputNames.size() > 0)            
+                bSettingUsedOutputs = true;
+            else
+                bSettingUsedOutputs = false;            
+
+        }
+        
+
         boost::lock_guard<boost::mutex> lock(m_mutexGetAllScreenInfoXrandr);
         getCurrentConfigSizes();
         CMYSIZE min,max;
@@ -957,8 +984,6 @@ short cmyxrandr::getAllScreenInfoXrandr(vector<MOutputInfo> & vOutputInfo,CMYSIZ
         //XRRScreenConfiguration *config = XRRGetScreenInfo(m_pDpy, m_root);
         //int x_return, y_return;
         //unsigned int width, height;
-        
-
 
         int nIndex = 0;
         RROutput primaryRroutput = XRRGetOutputPrimary(m_pDpy, m_root);
@@ -977,6 +1002,7 @@ short cmyxrandr::getAllScreenInfoXrandr(vector<MOutputInfo> & vOutputInfo,CMYSIZ
                 moutputinfo.connected = true;
                 moutputinfo.primary = false;
                 moutputinfo.crtc = outinfo->crtc;
+                moutputinfo.bIsUsed = false;
 
                 if (moutputinfo.name.find("VGA") != string::npos || moutputinfo.name.find("Virtual") != string::npos)
                 {
@@ -990,6 +1016,17 @@ short cmyxrandr::getAllScreenInfoXrandr(vector<MOutputInfo> & vOutputInfo,CMYSIZ
                         vOutputInfo.push_back(moutputinfo);
                     }
                     continue;
+                }
+
+                if(bSettingUsedOutputs)
+                {
+                    for (size_t sloop = 0; sloop < _vOutputNames.size(); sloop++)
+                    {
+                        if (_vOutputNames[sloop].compare(outinfo->name) == 0)
+                        {
+                            moutputinfo.bIsUsed = true;
+                        }
+                    }
                 }
 
                 moutputinfo.nIndex = ++nIndex;

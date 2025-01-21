@@ -231,10 +231,10 @@ int main(int argc, char *argv[])
         cdataProcess* pcdataProcess = cdataProcess::GetInstance();
         pcdataProcess->Init();
         nRet = app.exec();
-        while (1)
-        {
-            sleep(1);
-        }
+        // while (1)
+        // {
+        //     sleep(1);
+        // }
         
 
 #endif

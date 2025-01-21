@@ -1,3 +1,3 @@
 #pragma once
 
-//#define USE_CEF_SWITCH
+#define USE_CEF_SWITCH

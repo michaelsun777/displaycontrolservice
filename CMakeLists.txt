@@ -3,7 +3,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12)
 project(DisplayControlServer)
 
 # 定义一个CMake选项来控制是否使用CEF
-#option(USE_CEF_SWITCH "" ON)
+option(USE_CEF_SWITCH "" ON)
 
 # 添加自定义命令来运行Makefile???
 # add_custom_command(
@@ -35,7 +35,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON) #相当于-fpic
 
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -195,7 +195,7 @@ if(USE_CEF_SWITCH)
         src/UI/cef/CefViewWidget.cpp
         src/UI/cef/DownloadManager.cpp
         src/cdataProcess.cpp
-        src/config.cpp
+        # src/config.cpp
         # src/httpManager.cpp
         src/nvControlInfo.cpp
         ######dlg
@@ -253,7 +253,7 @@ else()
 
         3rd/nvidia-settings/src/libXNVCtrl/NVCtrl.c
         src/cdataProcess.cpp
-        # src/config.cpp
+        src/config.cpp
         # src/httpManager.cpp
         src/nvControlInfo.cpp
         ######dlg
