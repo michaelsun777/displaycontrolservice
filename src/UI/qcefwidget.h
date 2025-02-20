@@ -9,9 +9,9 @@
 #include "ui_qcefwidget.h"
 #include "../qtcommon.h"
 
-
-namespace Ui {
-class QCefWidget;
+namespace Ui
+{
+    class QCefWidget;
 }
 
 class QCefWidget : public QMainWindow
@@ -21,20 +21,20 @@ class QCefWidget : public QMainWindow
 public:
     explicit QCefWidget(QWidget *parent = nullptr);
     ~QCefWidget();
-    void createWindow(int x,int y,int w, int h);
-    void UpdateSetting(QtDlgInfo * dlg);
+    void createWindow(int x, int y, int w, int h);
+    void UpdateSetting(QtDlgInfo *dlg);
     void updateUrl(QString url);
-    void updateWindow(QtDlgInfo * dlg);
+    void updateWindow(QtDlgInfo *dlg);
 
 protected:
-  void createRightCefView();
-  void resizeEvent(QResizeEvent *event) override;
+    void createRightCefView();
+    void resizeEvent(QResizeEvent *event) override;
 
 private:
     Ui::QCefWidget m_ui;
-    QVBoxLayout * m_layout;
+    QVBoxLayout *m_layout;
     QtDlgInfo m_QtDlgInfo;
-    CefViewWidget* m_pRightCefViewWidget = nullptr;
+    CefViewWidget *m_pRightCefViewWidget = nullptr;
 };
 
 #endif // MYMAINWINDOW_H

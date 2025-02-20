@@ -52,12 +52,18 @@ cdataProcess::cdataProcess(/* args */)
         exit(0);
     }
     file.close();
-    QSettings settings("config.ini",QSettings::IniFormat);
-    m_nWidth = settings.value("screen/width",0).toInt();
-    m_nHight = settings.value("screen/height",0).toInt();
-    m_layout_horizontal = settings.value("screen/layout_horizontal",0).toInt();
-    m_layout_vertical = settings.value("screen/layout_vertical",0).toInt();
-    std::string outputs = settings.value("outputsSettings/outputs","").toString().toStdString();
+    // QSettings settings("config.ini",QSettings::IniFormat);
+    // m_nWidth = settings.value("screen/width",0).toInt();
+    // m_nHight = settings.value("screen/height",0).toInt();
+    // m_layout_horizontal = settings.value("screen/layout_horizontal",0).toInt();
+    // m_layout_vertical = settings.value("screen/layout_vertical",0).toInt();
+    // std::string outputs = settings.value("outputsSettings/outputs","").toString().toStdString();
+    CIniReader iniReader("config.ini");
+    m_nWidth = iniReader.ReadInteger("screen", "width", 0);
+    m_nHight = iniReader.ReadInteger("screen", "height", 0);
+    m_layout_horizontal = iniReader.ReadInteger("screen", "layout_horizontal", 0);
+    m_layout_vertical = iniReader.ReadInteger("screen", "layout_vertical", 0);
+    std::string outputs = iniReader.ReadString("outputsSettings", "outputs", "");
     try
     {
         nlohmann::json j = nlohmann::json::parse(outputs);
@@ -1014,6 +1020,10 @@ bool cdataProcess::setGpuInterface(json & js)
                     json jnode = json::parse(m_vGPUInterface[i].jsonStr);
                     json jDisplaysArray = jnode["display"];
                     json jIsUsedArray = jnode["isUsed"];
+                    for(auto &j: jnode["isUsed"])
+                    {
+                        j = false;
+                    }
                     int iloop = 0;
                     for (json::iterator it = jDisplaysArray.begin(); it != jDisplaysArray.end(); ++it,++iloop)
                     {
@@ -1345,13 +1355,17 @@ bool cdataProcess::InitOutputInfo()
 {
     cmyxrandr *pcmxrandr = cmyxrandr::GetInstance();
     
-    QSettings settings("config.ini", QSettings::IniFormat);
-    bool bIsSetting = settings.value("screen/isSetting",false).toBool();
+    // QSettings settings("config.ini", QSettings::IniFormat);
+    // bool bIsSetting = settings.value("screen/isSetting",false).toBool();
+
+    CIniReader iniReader("config.ini");
+    bool bIsSetting = iniReader.ReadBoolean("screen", "isSetting", false);
 
     if(bIsSetting)
     {
         string strJson = "";
-        strJson = settings.value("outputsSettings/outputs", "").toString().toStdString();
+        // strJson = settings.value("outputsSettings/outputs", "").toString().toStdString();
+        strJson = iniReader.ReadString("outputsSettings", "outputs", "");
         if(!strJson.empty())
         {
             XINFO("outputs json:{}",strJson.c_str());
@@ -1362,12 +1376,18 @@ bool cdataProcess::InitOutputInfo()
     }
 
    
-    m_nWidth = settings.value("screen/width",0).toInt();
-    m_nHight = settings.value("screen/height",0).toInt();
-    m_layout_horizontal = settings.value("screen/layout_horizontal",0).toInt();
-    m_layout_vertical = settings.value("screen/layout_vertical",0).toInt();
+    m_nWidth = iniReader.ReadInteger("screen", "width", 0);
+    m_nHight = iniReader.ReadInteger("screen", "height", 0);
+    m_layout_horizontal = iniReader.ReadInteger("screen", "layout_horizontal", 0);
+    m_layout_vertical = iniReader.ReadInteger("screen", "layout_vertical", 0);
+
+    // m_nWidth = settings.value("screen/width",0).toInt();
+    // m_nHight = settings.value("screen/height",0).toInt();
+    // m_layout_horizontal = settings.value("screen/layout_horizontal",0).toInt();
+    // m_layout_vertical = settings.value("screen/layout_vertical",0).toInt();
     // m_allLayouts = settings.value("screen/allResolution","").toString().toStdString();
-    std::string outputs = settings.value("outputsSettings/outputs","").toString().toStdString();
+    // std::string outputs = settings.value("outputsSettings/outputs","").toString().toStdString();
+    std::string outputs = iniReader.ReadString("outputsSettings", "outputs", "");
     try
     {
         nlohmann::json j = nlohmann::json::parse(outputs);
@@ -1780,7 +1800,7 @@ bool cdataProcess::GetServerInfo(json & js)
     get_memoccupy((MEM_OCCUPY *)&mem_stat);  
     //printf(" [MemTotal] = %lu \n [MemFree] = %lu \n [Buffers] = %lu \n [Cached] = %lu \n [SwapCached] = %lu \n", mem_stat.MemTotal, mem_stat.MemFree, mem_stat.Buffers, mem_stat.Cached, mem_stat.SwapCached);  
     //(MemTotal - MemFree)/ MemTotal //1-(内存空闲 / 内存总数)*100
-    printf("%.3f\n", (mem_stat.MemTotal - mem_stat.MemFree) / ( mem_stat.MemTotal * 1.0f) * 100.0f);
+    //printf("%.3f\n", (mem_stat.MemTotal - mem_stat.MemFree) / ( mem_stat.MemTotal * 1.0f) * 100.0f);
     float fMemUtil = (mem_stat.MemTotal - mem_stat.MemFree) / ( mem_stat.MemTotal * 1.0f) * 100.0f;
     //第一次获取cpu使用情况  
     get_cpuoccupy((CPU_OCCUPY *)&cpu_stat1);  
@@ -1904,7 +1924,7 @@ void cdataProcess::cal_cpuoccupy(CPU_OCCUPY *o, CPU_OCCUPY *n,float & util)
     cpu_use = idle / sum;  
     idle = n->user + n->system + n->nice - o->user - o->system - o->nice;  
     cpu_use = idle / sum;  
-    printf("%.3f\n",cpu_use);
+    //printf("%.3f\n",cpu_use);
     XINFO("cal_cpuoccupy={}",cpu_use);
     util = cpu_use;
 }
@@ -1953,7 +1973,7 @@ std::string cdataProcess::getCpuName()
     auto res = cut.communicate().first;
 
 
-    printf("%s\n",res.buf.data());
+    //printf("%s\n",res.buf.data());
     //cpu cores
     string strCpuInfo = cpuName +" " + cpuCores + "核" + siblings + "线程 * ";
     if(res.buf.size() > 0)

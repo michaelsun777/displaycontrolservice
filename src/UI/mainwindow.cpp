@@ -6,17 +6,26 @@
 #include "../common.h"
 #include "../3rd/json/include/nlohmann/json.hpp"
 #include <QTimer>
-
+#include <chrono>
 using namespace nlohmann;
 
+static std::string GetCurrentDateTime()
+{
+    auto now = std::chrono::system_clock::now();
+    std::time_t now_time_t = std::chrono::system_clock::to_time_t(now);
+    std::tm* now_tm = std::localtime(&now_time_t);
+    std::ostringstream oss;
+    oss << std::put_time(now_tm, "%Y-%m-%d %H:%M:%S");
+    return oss.str();
+}
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    readSettings();
     connect(this,&MainWindow::initSignal,this,&MainWindow::onInitSlots);
-    readSettings();    
 
 }
 
@@ -54,6 +63,7 @@ bool MainWindow::parseJsonToDlgInfo(QtDlgInfo * info,string str)
         info->height = jdata["height"].template get<int>();
         info->width = jdata["width"].template get<int>();
         info->order = jdata["order"].template get<int>();
+        info->order = jdata["show"].template get<bool>();
 
     }
     catch(...)
@@ -80,6 +90,7 @@ bool MainWindow::dlgInfoToJson(QtDlgInfo * info,string & str)
     jdata["height"] = info->height;
     jdata["width"] = info->width;
     jdata["order"] = info->order;
+    jdata["show"] = info->show;
     str = jdata.dump();
     return true;
 }
@@ -99,6 +110,8 @@ bool MainWindow::readSettings()
             std::cout << key.toStdString() << ": " << value.toString().toStdString() << std::endl;
             QtDlgInfo * info = new QtDlgInfo;
             parseJsonToDlgInfo(info,value.toString().toStdString());
+            
+            info->createTime = GetCurrentDateTime();
             m_mDlgProperty.insert(make_pair(info->dlgId,info));
         }
     }    
@@ -129,7 +142,8 @@ bool MainWindow::deleteSettings(string key)
 
 bool MainWindow::QDlgShow(QCefWidget * qdlg,QtDlgInfo & info)
 {
-    qdlg->setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
+    qdlg->setWindowFlags(Qt::FramelessWindowHint);
+    // qdlg->setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
     // qdlg->show();    
     qdlg->UpdateSetting(&info);
     return true;
@@ -170,7 +184,6 @@ void MainWindow::onInitSlots()
         QCefWidget *qdlg = new QCefWidget();         
         QDlgShow(qdlg, *vInfo[i]);        
         m_mDlgs.insert(make_pair(vInfo[i]->dlgId, qdlg));
-
     }
     
 
@@ -285,6 +298,7 @@ bool MainWindow::addDlg(QtDlgInfo & dlg)
         if(dlg.order == 0)
             dlg.order = m_mDlgProperty.size() + 1;
         *info = dlg;
+        info->createTime = GetCurrentDateTime();
         m_mDlgProperty.insert(make_pair(dlg.dlgId,info));
         string strJson;
         dlgInfoToJson(&dlg,strJson);
@@ -308,6 +322,8 @@ bool MainWindow::modifyDlg(QtDlgInfo & info)
         std::map<std::string,QtDlgInfo *> ::iterator itp = m_mDlgProperty.find(info.dlgId);
         if(itp != m_mDlgProperty.end())
         {
+            std::string time = itp->second->createTime;
+            info.createTime = time;
             *itp->second = info;
             info.order = itp->second->order;
             string strJson;

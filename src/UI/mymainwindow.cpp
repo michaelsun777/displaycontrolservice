@@ -18,10 +18,6 @@ MyMainWindow::~MyMainWindow()
     {
         delete m_pRightCefViewWidget;
         m_pRightCefViewWidget =nullptr;
-    }
-    if (m_layout)
-    {
-        delete m_layout;
         m_layout = nullptr;
     }
     //delete ui;
@@ -32,13 +28,9 @@ void MyMainWindow::createRightCefView()
 {
     if (m_pRightCefViewWidget)
     {
-        if(m_layout)
-        {
-            delete m_layout;
-            m_layout = nullptr;
-        }
         delete m_pRightCefViewWidget;
         m_pRightCefViewWidget = nullptr;
+        m_layout = nullptr;
     }
 
     ///*
@@ -57,12 +49,12 @@ void MyMainWindow::createRightCefView()
     url += m_name;
     // create the QCefView widget and add it to the layout container
     m_pRightCefViewWidget = new CefViewWidget(url.c_str(), &setting, this);
-    m_pRightCefViewWidget->resize(500, 500);    
+    // m_pRightCefViewWidget->resize(500, 500);    
     m_pRightCefViewWidget->setContextMenuPolicy(Qt::DefaultContextMenu);
     //m_ui.Container->layout()->addWidget(m_pRightCefViewWidget);
     //m_pRightCefViewWidget->setRounded(20);
-    m_layout = new QVBoxLayout(this);
-    m_layout->addWidget(m_pRightCefViewWidget);
+    m_layout = new QVBoxLayout(m_pRightCefViewWidget);
+    // m_layout->addWidget(m_pRightCefViewWidget);
 
     //QString uri ="https://map.baidu.com/";
     //QCefView * cefViewWidget = new QCefView(uri, &setting, this);

@@ -16,10 +16,6 @@ QCefWidget::~QCefWidget()
     {
         delete m_pRightCefViewWidget;
         m_pRightCefViewWidget = nullptr;
-    }
-    if (m_layout)
-    {
-        delete m_layout;
         m_layout = nullptr;
     }
     // delete ui;
@@ -29,14 +25,9 @@ void QCefWidget::createRightCefView()
 {
     if (m_pRightCefViewWidget)
     {
-        if (m_layout)
-        {
-            m_layout->removeWidget(m_pRightCefViewWidget);
-            delete m_layout;
-            m_layout = nullptr;
-        }
         delete m_pRightCefViewWidget;
         m_pRightCefViewWidget = nullptr;
+        m_layout = nullptr;
     }
 
     ///*
@@ -57,8 +48,8 @@ void QCefWidget::createRightCefView()
     m_pRightCefViewWidget->setContextMenuPolicy(Qt::DefaultContextMenu);
     // m_ui.Container->layout()->addWidget(m_pRightCefViewWidget);
 
-    m_layout = new QVBoxLayout(this);
-    m_layout->addWidget(m_pRightCefViewWidget);
+    m_layout = new QVBoxLayout(m_pRightCefViewWidget);
+    // m_layout->addWidget(m_pRightCefViewWidget);
 }
 
 void QCefWidget::UpdateSetting(QtDlgInfo *dlg)
@@ -66,15 +57,18 @@ void QCefWidget::UpdateSetting(QtDlgInfo *dlg)
     m_QtDlgInfo = *dlg;
     createRightCefView();
     setGeometry(dlg->xPos, dlg->yPos, dlg->width, dlg->height);
-    show();
+    if (dlg->show)
+        show();
+    else
+        hide();
 }
 
 void QCefWidget::resizeEvent(QResizeEvent *event)
 {
     QSize newSize = event->size();
-
-    m_pRightCefViewWidget->resize(newSize);
-
+    {
+        m_pRightCefViewWidget->resize(newSize);
+    }
     QWidget::resizeEvent(event);
 }
 
@@ -87,12 +81,15 @@ void QCefWidget::createWindow(int x, int y, int w, int h)
 
 void QCefWidget::updateUrl(QString url)
 {
-    m_pRightCefViewWidget->navigateToUrl(url);
+        m_pRightCefViewWidget->navigateToUrl(url);
 }
 
 void QCefWidget::updateWindow(QtDlgInfo *dlg)
 {
     updateUrl(dlg->url.c_str());
     setGeometry(dlg->xPos, dlg->yPos, dlg->width, dlg->height);
-    show();
+    if (dlg->show)
+        show();
+    else
+        hide();
 }

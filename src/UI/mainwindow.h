@@ -46,7 +46,7 @@ public:
     bool getDlgInfo(string dlgId,QtDlgInfo & info);
     bool getAllDlgInfo(std::vector<QtDlgInfo> & vInfo);
     void removeTitleWindow(std::string name){m_titleWindows.erase(name);}
-    bool checkOrder(int order, std::string id = nullptr);
+    bool checkOrder(int order, std::string id = "");
 private:
     bool parseJsonToDlgInfo(QtDlgInfo * info,string str);
     bool dlgInfoToJson(QtDlgInfo * info,string & str);

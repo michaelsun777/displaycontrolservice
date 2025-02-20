@@ -8,6 +8,7 @@
 #include "requesthandler.h"
 #include "cdataProcess.h"
 
+#include "IniReader.h"
 
 
 #ifdef USE_CEF_SWITCH
@@ -414,6 +415,7 @@ void RequestHandler::resetOutputsInfo(const HttpRequest &req, HttpResponse& res)
         settings.beginGroup("outputsSettings");
         // settings.setValue("outputs", js.dump().c_str());
         settings.remove("outputs");
+        settings.remove("outputsused");
         settings.endGroup();
         settings.beginGroup("screen");
         settings.setValue("isSetting", "false");
@@ -683,19 +685,28 @@ void RequestHandler::setOutputsInfo(const HttpRequest &req, HttpResponse &res)
             int _layout_w = js["layout_vertical"].get<int>();
  
 
-            QSettings settings("config.ini", QSettings::IniFormat);
-            settings.beginGroup("outputsSettings");
-            settings.setValue("outputs", js.dump().c_str());
-            settings.endGroup();
-            settings.beginGroup("screen");
-            settings.setValue("isSetting", "true");
-            settings.setValue("width", _width);
-            settings.setValue("height", _hight);
-            settings.setValue("layout_horizontal", _layout_h);
-            settings.setValue("layout_vertical", _layout_w);
-            settings.setValue("allResolution", allResolution.c_str());
-            settings.endGroup();
-            settings.sync();
+            // QSettings settings("config.ini", QSettings::IniFormat);
+            // settings.beginGroup("outputsSettings");
+            // settings.setValue("outputs", js.dump().c_str());
+            // settings.endGroup();
+            // settings.beginGroup("screen");
+            // settings.setValue("isSetting", "true");
+            // settings.setValue("width", _width);
+            // settings.setValue("height", _hight);
+            // settings.setValue("layout_horizontal", _layout_h);
+            // settings.setValue("layout_vertical", _layout_w);
+            // settings.setValue("allResolution", allResolution.c_str());
+            // settings.endGroup();
+            // settings.sync();
+
+            CIniReader iniReader("config.ini");
+            iniReader.WriteString("outputsSettings", "outputs", js.dump());
+            iniReader.WriteString("screen", "isSetting", "true");
+            iniReader.WriteInteger("screen", "width", _width);
+            iniReader.WriteInteger("screen", "height", _hight);
+            iniReader.WriteInteger("screen", "layout_horizontal", _layout_h);
+            iniReader.WriteInteger("screen", "layout_vertical", _layout_w);
+            iniReader.WriteString("screen", "allResolution", allResolution);
             
             createRet(res, 200);
             return;
@@ -728,9 +739,13 @@ void RequestHandler::getServerInfo(const HttpRequest &req, HttpResponse &res)
     json js;
     XINFO("{RequestHandler::getServerInfo lock}\n");
     //m_mutex.lock();
-    boost::lock_guard<boost::mutex> lock(m_mutex);
-    XINFO("{RequestHandler::getServerInfo lock in}\n");
-    if(pcdataProcess->GetServerInfo(js))
+    bool ok = false;
+    {
+        boost::lock_guard<boost::mutex> lock(m_mutex);
+        XINFO("{RequestHandler::getServerInfo lock in}\n");
+        ok = pcdataProcess->GetServerInfo(js);
+    }
+    if(ok)
     {
         //m_mutex.unlock();
         XINFO("{RequestHandler::getServerInfo unlock}\n");

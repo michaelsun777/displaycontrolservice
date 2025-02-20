@@ -22,6 +22,8 @@ public:
     int height;
     bool titleEnable; //是否显示标题
     int order;
+    bool show;
+    std::string createTime;
     void operator=(QtDlgInfo & src)
     {
         name = src.name.c_str();
@@ -38,6 +40,7 @@ public:
         width = src.width;
         height = src.height;
         titleEnable = src.titleEnable;
+        show = src.show;
         if(src.order != 0)     
             order = src.order;
     }
@@ -91,6 +94,16 @@ public:
         if (jdata.find("yVirtual") != jdata.end())
         {
             yVirtual = jdata["yVirtual"].template get<int>();
+        }
+
+        if (jdata.find("show") != jdata.end())
+        {
+            show = jdata["show"].template get<bool>();
+        }
+
+        if (jdata.find("createTime") != jdata.end())
+        {
+            param = jdata["createTime"].template get<std::string>();
         }
 
         if (jdata.find("xPos") != jdata.end())
@@ -163,6 +176,8 @@ public:
             jdata["height"] = height;
             jdata["width"] = width;
             jdata["order"] = order;
+            jdata["show"] = show;
+            jdata["createTime"] = createTime;
             return true;
         }
         catch (...)

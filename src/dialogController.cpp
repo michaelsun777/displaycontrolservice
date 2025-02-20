@@ -138,6 +138,7 @@ int DialogController::dlgAdd(RequestHandler* pRequestHandler,MainWindow * pMain,
         int height = 0;
         int width = 0;
         int order = 0;
+        bool show = true;
 
         if(jdata.find("name") != jdata.end())
         {
@@ -176,6 +177,11 @@ int DialogController::dlgAdd(RequestHandler* pRequestHandler,MainWindow * pMain,
         if(jdata.find("yVirtual") != jdata.end())
         {
             yVirtual = (jdata["yVirtual"].template get<float>())*allHeight;
+        }
+
+        if(jdata.find("show") != jdata.end())
+        {
+            show = jdata["show"].template get<bool>();
         }
         
         if(jdata.find("xPos") != jdata.end())
@@ -273,7 +279,6 @@ int DialogController::dlgAdd(RequestHandler* pRequestHandler,MainWindow * pMain,
             createRet(response, 400, js);
             return -1;
         }
-
         if (!pMain->checkOrder(order))
         {
             json js;
@@ -296,6 +301,7 @@ int DialogController::dlgAdd(RequestHandler* pRequestHandler,MainWindow * pMain,
         dlg.height = height;
         dlg.width = width;
         dlg.order = order;
+        dlg.show = show;
         
         // QtDlgInfo dlg;
         // dlg.height = 1080;
@@ -353,6 +359,7 @@ int DialogController::dlgModify(RequestHandler *pRequestHandler,MainWindow * pMa
     int yPos = 0;
     int height = 0;
     int width = 0;
+    bool show = true;
 
     if (jdata.find("dlgId") != jdata.end())
     {
@@ -403,6 +410,11 @@ int DialogController::dlgModify(RequestHandler *pRequestHandler,MainWindow * pMa
     if (jdata.find("yVirtual") != jdata.end())
     {
         yVirtual = (jdata["yVirtual"].template get<float>())*allHeight;
+    }
+
+    if(jdata.find("show") != jdata.end())
+    {
+        show = jdata["show"].template get<bool>();
     }
 
     if (jdata.find("xPos") != jdata.end())
@@ -521,6 +533,7 @@ int DialogController::dlgModify(RequestHandler *pRequestHandler,MainWindow * pMa
     dlg.yPos = yPos;
     dlg.height = height;
     dlg.width = width;
+    dlg.show = show;
 
     // QtDlgInfo dlg;
     // dlg.height = 1080;
