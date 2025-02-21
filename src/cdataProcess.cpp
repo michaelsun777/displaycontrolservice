@@ -1958,6 +1958,7 @@ std::string cdataProcess::getCpuName()
         }
         
     }
+    ifs.close();
     //CMDEXEC::CmdRes res;
     //bool bret = CMDEXEC::Execute("cat /proc/cpuinfo |grep \'physical id\'|sort|uniq",res);
     //printf("%s\n",res.StdoutString.c_str());
