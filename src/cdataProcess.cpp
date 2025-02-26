@@ -1966,19 +1966,29 @@ std::string cdataProcess::getCpuName()
     //auto obuf = sp::check_output({"cat", "/proc/cpuinfo|grep 'physical id'|sort|uniq|wc -l"});
     //auto obuf = sp::pipeline("cat /proc/cpuinfo", "grep \'physical id\'");//, "sort","uniq"
 
-    auto cat = sp::Popen({"cat", "/proc/cpuinfo"}, sp::output{sp::PIPE});
-    auto grep = sp::Popen({"grep", "physical id"}, sp::input{cat.output()}, sp::output{sp::PIPE});
-    auto sort = sp::Popen({"sort"}, sp::input{grep.output()}, sp::output{sp::PIPE});
-    auto uniq = sp::Popen({"uniq"}, sp::input{sort.output()}, sp::output{sp::PIPE});   
-    auto cut = sp::Popen({"wc", "-l"}, sp::input{uniq.output()}, sp::output{sp::PIPE});
-    auto res = cut.communicate().first;
-
+    // auto cat = sp::Popen({"cat", "/proc/cpuinfo"}, sp::output{sp::PIPE});
+    // auto grep = sp::Popen({"grep", "'physical id'"}, sp::input{cat.output()}, sp::output{sp::PIPE});
+    // auto sort = sp::Popen({"sort"}, sp::input{grep.output()}, sp::output{sp::PIPE});
+    // auto uniq = sp::Popen({"uniq"}, sp::input{sort.output()}, sp::output{sp::PIPE});   
+    // auto cut = sp::Popen({"wc", "-l"}, sp::input{uniq.output()}, sp::output{sp::PIPE});
+    // auto res = cut.communicate().first;
+    std::string cpuNumber;
+    FILE *fp = popen("cat /proc/cpuinfo |grep 'physical id'|sort|uniq|wc -l", "r");
+    if(fp)
+    {
+        char buf[8] = {0};
+        fgets(buf,sizeof(buf),fp);
+        cpuNumber.append(buf);
+    }
+    pclose(fp);
 
     //printf("%s\n",res.buf.data());
     //cpu cores
     string strCpuInfo = cpuName +" " + cpuCores + "核" + siblings + "线程 * ";
-    if(res.buf.size() > 0)
-        strCpuInfo = strCpuInfo + res.buf[0];
+    if(!cpuNumber.empty())
+        strCpuInfo = strCpuInfo + cpuNumber;
+    // if(res.buf.size() > 0)
+    //     strCpuInfo = strCpuInfo + res.buf[0];
     return strCpuInfo;
 }
 

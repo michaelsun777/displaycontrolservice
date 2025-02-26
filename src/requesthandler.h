@@ -44,8 +44,8 @@ public:
 #ifdef USE_CEF_SWITCH
 
   RequestHandler(MainWindow *pMain, QObject *parent = 0);
-  void openTitleWindow(const HttpRequest &req, HttpResponse &res);
-  void closeTitleWindow(const HttpRequest &req, HttpResponse &res);
+  void setTitleWindow(const HttpRequest &req, HttpResponse &res);
+  void getTitleWindow(const HttpRequest &req, HttpResponse &res);
 
 private:
   MainWindow *m_pMain;

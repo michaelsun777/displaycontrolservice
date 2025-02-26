@@ -21,6 +21,7 @@ static std::string GetCurrentDateTime()
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
+    m_isOpen(false),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
@@ -142,9 +143,7 @@ bool MainWindow::deleteSettings(string key)
 
 bool MainWindow::QDlgShow(QCefWidget * qdlg,QtDlgInfo & info)
 {
-    qdlg->setWindowFlags(Qt::FramelessWindowHint);
-    // qdlg->setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
-    // qdlg->show();    
+    qdlg->setWindowFlags(windowFlags() & ~Qt::WindowFullScreen | Qt::FramelessWindowHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::SubWindow);
     qdlg->UpdateSetting(&info);
     return true;
 
@@ -240,15 +239,18 @@ void MainWindow::onOpenTitleWindow()
         name += ",";
         name += v.name;
         MyMainWindow *w = new MyMainWindow(name);
+        w->setWindowFlags(windowFlags() | Qt::FramelessWindowHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowStaysOnTopHint);
         w->createWindow(v.pos.xPos,v.pos.yPos,v.size.width/multiple,v.size.height/multiple);
         m_titleWindows[v.name]=w;
     }
+    m_isOpen = true;
     // 创建一个一次性定时器，设置间隔为5分钟
     QTimer::singleShot(300000, this, &MainWindow::onCloseTitleWindow);
 }
 
 void MainWindow::onCloseTitleWindow()
 {
+    m_isOpen = false;
     auto itr = m_titleWindows.begin();
     for(;itr!=m_titleWindows.end();itr++)
     {
@@ -278,6 +280,8 @@ bool MainWindow::showNewDlg(string dlgId)
         else
         {
             QCefWidget *qdlg = new QCefWidget();
+
+            qdlg->setWindowFlags(windowFlags() & ~Qt::WindowFullScreen | Qt::FramelessWindowHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::SubWindow);
             qdlg->UpdateSetting(itp->second);
             // QDlgShow(qdlg, *itp->second);
             m_mDlgs.insert(make_pair(dlgId, qdlg));

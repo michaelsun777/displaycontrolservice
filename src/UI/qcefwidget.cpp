@@ -7,24 +7,18 @@ QCefWidget::QCefWidget(QWidget *parent) : QMainWindow(parent)
     // 背景透明
     setAttribute(Qt::WA_TranslucentBackground);
     // 去掉边框
-    setWindowFlags(Qt::FramelessWindowHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint);
+    // setWindowFlags(windowFlags() & ~Qt::WindowFullScreen | Qt::FramelessWindowHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::SubWindow);
+    setAttribute(Qt::WA_ShowWithoutActivating);
+    setWindowState(Qt::WindowNoState);
 }
 
-QCefWidget::~QCefWidget()
-{
-    if (m_pRightCefViewWidget)
-    {
-        delete m_pRightCefViewWidget;
-        m_pRightCefViewWidget = nullptr;
-        m_layout = nullptr;
-    }
-    // delete ui;
-}
+QCefWidget::~QCefWidget() {}
 
 void QCefWidget::createRightCefView()
 {
     if (m_pRightCefViewWidget)
     {
+        m_pRightCefViewWidget->setParent(nullptr);
         delete m_pRightCefViewWidget;
         m_pRightCefViewWidget = nullptr;
         m_layout = nullptr;
@@ -58,7 +52,7 @@ void QCefWidget::UpdateSetting(QtDlgInfo *dlg)
     createRightCefView();
     setGeometry(dlg->xPos, dlg->yPos, dlg->width, dlg->height);
     if (dlg->show)
-        show();
+        showNormal();
     else
         hide();
 }
@@ -76,12 +70,12 @@ void QCefWidget::createWindow(int x, int y, int w, int h)
 {
     createRightCefView();
     setGeometry(x, y, w, h);
-    show();
+    showNormal();
 }
 
 void QCefWidget::updateUrl(QString url)
 {
-        m_pRightCefViewWidget->navigateToUrl(url);
+    m_pRightCefViewWidget->navigateToUrl(url);
 }
 
 void QCefWidget::updateWindow(QtDlgInfo *dlg)
@@ -89,7 +83,7 @@ void QCefWidget::updateWindow(QtDlgInfo *dlg)
     updateUrl(dlg->url.c_str());
     setGeometry(dlg->xPos, dlg->yPos, dlg->width, dlg->height);
     if (dlg->show)
-        show();
+        showNormal();
     else
         hide();
 }

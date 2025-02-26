@@ -178,6 +178,7 @@ int main(int argc, char *argv[])
 
 #ifdef USE_CEF_SWITCH
         MainWindow w;
+        w.setWindowFlags(Qt::X11BypassWindowManagerHint);
         RequestHandler * pRequestHandler = new RequestHandler(&w,&app);
         new HttpListener(&settings,pRequestHandler,&app);
         QApplication::setQuitOnLastWindowClosed(false);

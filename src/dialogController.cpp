@@ -121,7 +121,7 @@ int DialogController::dlgAdd(RequestHandler* pRequestHandler,MainWindow * pMain,
         vector<MOutputInfo> vOutputInfo; 
         pcmyXrandr->getAllScreenInfoXrandr(vOutputInfo,currentSize,maxSize);
         int realWidth = 0;
-        int realHeigth = 0;
+        int realHeight = 0;
         int realX = 0;
         int realY = 0;
         for (auto &a : vOutputInfo)
@@ -130,7 +130,7 @@ int DialogController::dlgAdd(RequestHandler* pRequestHandler,MainWindow * pMain,
             realY = (a.pos.yPos > realY ? a.pos.yPos : realY);
         }
         realWidth = realX + vOutputInfo[0].size.width;
-        realHeigth = realX + vOutputInfo[0].size.height;
+        realHeight = realY + vOutputInfo[0].size.height;
 
         QByteArray barray = request.getBody();
         std::string body = barray.data();
@@ -219,7 +219,7 @@ int DialogController::dlgAdd(RequestHandler* pRequestHandler,MainWindow * pMain,
         if(jdata.find("yPos") != jdata.end())
         {
             yPos = (jdata["yPos"].template get<float>())*allHeight;
-            if(yPos >= realHeigth)
+            if(yPos >= realHeight)
             {
                 json js;
                 js["error"] = "The y-coordinate exceeds the actual height!";
@@ -238,9 +238,9 @@ int DialogController::dlgAdd(RequestHandler* pRequestHandler,MainWindow * pMain,
         if(jdata.find("height") != jdata.end())
         {
             height = (jdata["height"].template get<float>())*allHeight;
-            if(yPos + height > realHeigth)
+            if(yPos + height > realHeight)
             {
-                height = realHeigth - yPos;
+                height = realHeight - yPos;
             }
             if(height <= 0)
             {
@@ -315,7 +315,7 @@ int DialogController::dlgAdd(RequestHandler* pRequestHandler,MainWindow * pMain,
         dlg.width = width;
         dlg.order = order;
         dlg.show = show;
-        
+
         // QtDlgInfo dlg;
         // dlg.height = 1080;
         // dlg.width = 2500;
@@ -361,7 +361,7 @@ int DialogController::dlgModify(RequestHandler *pRequestHandler,MainWindow * pMa
     vector<MOutputInfo> vOutputInfo; 
     pcmyXrandr->getAllScreenInfoXrandr(vOutputInfo,currentSize,maxSize);
     int realWidth = 0;
-    int realHeigth = 0;
+    int realHeight = 0;
     int realX = 0;
     int realY = 0;
     for (auto &a : vOutputInfo)
@@ -370,7 +370,7 @@ int DialogController::dlgModify(RequestHandler *pRequestHandler,MainWindow * pMa
         realY = (a.pos.yPos > realY ? a.pos.yPos : realY);
     }
     realWidth = realX + vOutputInfo[0].size.width;
-    realHeigth = realX + vOutputInfo[0].size.height;
+    realHeight = realY + vOutputInfo[0].size.height;
 
     string dlgid = "";
     string name = "";
@@ -465,7 +465,7 @@ int DialogController::dlgModify(RequestHandler *pRequestHandler,MainWindow * pMa
     if (jdata.find("yPos") != jdata.end())
     {
         yPos = (jdata["yPos"].template get<float>())*allHeight;
-        if (yPos >= realHeigth)
+        if (yPos >= realHeight)
         {
             json js;
             js["error"] = "The y-coordinate exceeds the actual height!";
@@ -483,9 +483,9 @@ int DialogController::dlgModify(RequestHandler *pRequestHandler,MainWindow * pMa
     if (jdata.find("height") != jdata.end())
     {
         height = (jdata["height"].template get<float>())*allHeight;
-        if (yPos + height > realHeigth)
+        if (yPos + height > realHeight)
         {
-            height = realHeigth - yPos;
+            height = realHeight - yPos;
         }
         if (height <= 0)
         {

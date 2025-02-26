@@ -8,26 +8,18 @@ MyMainWindow::MyMainWindow(std::string name, QWidget *parent) :
     // 背景透明
     setAttribute(Qt::WA_TranslucentBackground);
     // 去掉边框
-    setWindowFlags(Qt::FramelessWindowHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowStaysOnTopHint);
+    // setWindowFlags(Qt::FramelessWindowHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowStaysOnTopHint);
 
 }
 
-MyMainWindow::~MyMainWindow()
-{
-    if (m_pRightCefViewWidget)
-    {
-        delete m_pRightCefViewWidget;
-        m_pRightCefViewWidget =nullptr;
-        m_layout = nullptr;
-    }
-    //delete ui;
-}
+MyMainWindow::~MyMainWindow() {}
 
 
 void MyMainWindow::createRightCefView()
 {
     if (m_pRightCefViewWidget)
     {
+        m_pRightCefViewWidget->setParent(nullptr);
         delete m_pRightCefViewWidget;
         m_pRightCefViewWidget = nullptr;
         m_layout = nullptr;
@@ -44,7 +36,7 @@ void MyMainWindow::createRightCefView()
     setting.setWindowlessFrameRate(60);
     // setting.setBackgroundColor(QColor::fromRgba(qRgba(255, 255, 220, 255)));
     // setting.setBackgroundColor(QColor::fromRgb(0, 0, 255));
-    setting.setBackgroundColor(Qt::lightGray);
+    // setting.setBackgroundColor(Qt::lightGray);
     std::string url = "CefView://";
     url += m_name;
     // create the QCefView widget and add it to the layout container

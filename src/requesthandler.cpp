@@ -127,13 +127,13 @@ void RequestHandler::service(HttpRequest& request, HttpResponse& response)
         {
             DialogController().service(this, m_pMain, request, response);
         }
-        else if (path.startsWith("/displayctrlserver/cef/opentitle"))
+        else if (path.startsWith("/displayctrlserver/set/cef/title"))
         {
-            openTitleWindow(request, response);
+            setTitleWindow(request, response);
         }
-        else if (path.startsWith("/displayctrlserver/cef/closetitle"))
+        else if (path.startsWith("/displayctrlserver/get/cef/title"))
         {
-            closeTitleWindow(request, response);
+            getTitleWindow(request, response);
         }
 #endif //USE_CEF_SWITCH
         else
@@ -765,17 +765,39 @@ void RequestHandler::getServerInfo(const HttpRequest &req, HttpResponse &res)
 
 #ifdef USE_CEF_SWITCH
 
-void RequestHandler::openTitleWindow(const HttpRequest &req, HttpResponse &res)
+void RequestHandler::setTitleWindow(const HttpRequest &req, HttpResponse &res)
 {
-    emit sendOpenTitleWindowSignal();
-    XINFO("{RequestHandler::openTitleWindow succeed}\n");
-    createRet(res,200);
+    try
+    {
+        QByteArray barray = req.getBody();
+        std::string body = barray.data();
+        json js = json::parse(body);
+        XINFO("received msg:{}",body);
+        bool isOpen = js["isOpen"].get<bool>();
+        if(isOpen)
+        {
+            emit sendOpenTitleWindowSignal();
+            XINFO("{RequestHandler::openTitleWindow succeed}\n");
+        }
+        else{
+            emit sendCloseTitleWindowSignal();
+            XINFO("{RequestHandler::closeTitleWindow succeed}\n");
+        }
+        createRet(res,200);
+    }
+    catch(const std::exception& e)
+    {
+        XINFO("{RequestHandler::setTitleWindow failed, message format error}\n");
+        createRet(res,400);
+    }
 }
-void RequestHandler::closeTitleWindow(const HttpRequest &req, HttpResponse &res)
+void RequestHandler::getTitleWindow(const HttpRequest &req, HttpResponse &res)
 {
-    emit sendCloseTitleWindowSignal();
-    XINFO("{RequestHandler::openTitleWindow succeed}\n");
-    createRet(res,200);
+    json js;
+    bool isOpen = m_pMain->getTitleStatus();
+    js["isOpen"] = isOpen;
+    createRet(res,200,js);
+    XINFO("{RequestHandler::getTitleWindow succeed}\n");
 }
 
 #endif //USE_CEF_SWITCH

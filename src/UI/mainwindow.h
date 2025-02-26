@@ -47,6 +47,7 @@ public:
     bool getAllDlgInfo(std::vector<QtDlgInfo> & vInfo);
     void removeTitleWindow(std::string name){m_titleWindows.erase(name);}
     bool checkOrder(int order, std::string id = "");
+    bool getTitleStatus() {return m_isOpen;}
 private:
     bool parseJsonToDlgInfo(QtDlgInfo * info,string str);
     bool dlgInfoToJson(QtDlgInfo * info,string & str);
@@ -76,6 +77,7 @@ private:
     std::map<std::string,QCefWidget *> m_mDlgs;
     std::map<std::string,QtDlgInfo *> m_mDlgProperty;
     std::map<std::string,MyMainWindow *> m_titleWindows;
+    bool m_isOpen;
 
 private:
     Ui::MainWindow *ui;
