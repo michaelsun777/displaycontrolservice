@@ -1,0 +1,12 @@
+#!/bin/sh
+#程序安装完成时执行，一般用于配置执行环境
+
+echo "install dpcs !"
+
+sudo chmod 777 /etc/init.d/dpcs
+
+sudo ufw allow dpcs
+
+sudo systemctl enable dpcs.service
+
+sudo service dpcs start

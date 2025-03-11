@@ -1,0 +1,19 @@
+[Unit]
+Description=The Display Control Server
+After=network.target gdm3.service
+
+[Service]
+Environment=DISPLAY=:0
+PIDFile=/usr/local/dpcs/dpcs.pid  # 会在启动ngnix服务时会创建并将其进程信息保存到该文件
+ExecStart=/usr/local/dpcs/dpcs
+ExecStop=/etc/init.d/dpcs stop
+ExecReload=/etc/init.d/dpcs restart
+PrivateTmp=true
+RestartSec=5s
+Restart=always
+WorkingDirectory=/usr/local/dpcs
+User=amplesky
+
+[Install]
+WantedBy=multi-user.target
+

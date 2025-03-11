@@ -1,0 +1,32 @@
+#!/bin/bash
+
+do_start()
+{
+    sudo /usr/local/dpcs/dpcs
+}
+
+do_stop()
+{
+    ID = `ps -ef|grep dpcs |grep -v grep| awk '{print $2}'`
+    for id in $ID
+    do
+        sudo kill -9 $id
+        echo "kill $id"
+    done
+}
+
+case "$1" in
+start)
+    do_start
+    ;;
+stop)
+    do_stop
+    ;;
+restart)
+    do_stop
+    do_start
+    ;;
+**)
+    echo "error $1"
+    ;;
+esac

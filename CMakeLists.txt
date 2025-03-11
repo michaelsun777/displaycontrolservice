@@ -408,6 +408,23 @@ set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
 #设置priority
 set(CPACK_DEBIAN_PACKAGE_PRIORITY "Optional")
 
+# 获取Git提交哈希
+execute_process(
+  COMMAND git rev-parse --short HEAD
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+  OUTPUT_VARIABLE GIT_COMMIT_ID
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  ERROR_QUIET
+)
+
+# 设置默认值（无Git环境时）
+if(NOT GIT_COMMIT_ID)
+  set(GIT_COMMIT_ID "unknown")
+endif()
+
+# 创建带版本号的打包目录
+set(VERSIONED_BUILD_DIR "${CMAKE_BINARY_DIR}/dpcs_debug_${GIT_COMMIT_ID}")
+file(MAKE_DIRECTORY ${VERSIONED_BUILD_DIR})
 
 # 自动拷贝需要的文件到build目录下
 set(COPY_SOURCE_DIR "${CMAKE_SOURCE_DIR}/3rd/QCefView/build/output/Debug/bin")
@@ -419,7 +436,40 @@ add_custom_command(
     COMMENT "Copying directory ${COPY_SOURCE_DIR} to ${CMAKE_BINARY_DIR}"
 )
 
+# 自动拷贝需要的文件到打包目录下
+add_custom_command(
+    OUTPUT copied1
+    COMMAND cp -r ${COPY_SOURCE_DIR}/* ${VERSIONED_BUILD_DIR}
+    DEPENDS ${COPY_SOURCE_DIR}
+    COMMENT "Copying directory ${COPY_SOURCE_DIR} to ${VERSIONED_BUILD_DIR}"
+)
+
+# 自动拷贝编译后的可执行文件到打包目录
+set(COPY_SOURCE_DIR1 "${CMAKE_BINARY_DIR}/3rd" "${CMAKE_BINARY_DIR}/dpcs_autogen" "${CMAKE_BINARY_DIR}/dpcs")
+
+add_custom_command(
+    OUTPUT copied2
+    COMMAND cp -r ${COPY_SOURCE_DIR1} ${VERSIONED_BUILD_DIR}
+    DEPENDS ${COPY_SOURCE_DIR1}
+    COMMENT "Copying directory ${COPY_SOURCE_DIR1} to ${VERSIONED_BUILD_DIR}"
+)
+
+# 自动拷贝打包工具和打包需要的文件到build目录
+set(COPY_SOURCE_DIR2 "${CMAKE_SOURCE_DIR}/dpcs_deb" "${CMAKE_SOURCE_DIR}/packetdeb")
+
+foreach(FILE ${COPY_SOURCE_DIR2})
+    file(COPY ${FILE} DESTINATION ${CMAKE_BINARY_DIR})
+endforeach()
+
+# 自动拷贝配置文件到打包目录
+set(COPY_SOURCE_DIR3 "${CMAKE_SOURCE_DIR}/config.ini" "${CMAKE_SOURCE_DIR}/dlgconfig.ini")
+
+foreach(FILE ${COPY_SOURCE_DIR3})
+    file(COPY ${FILE} DESTINATION ${VERSIONED_BUILD_DIR})
+endforeach()
+
+# 编译后执行命令 copied copied1 copied2
 add_custom_target(
     CopyDirectory ALL
-    DEPENDS copied
+    DEPENDS copied copied1 copied2
 )

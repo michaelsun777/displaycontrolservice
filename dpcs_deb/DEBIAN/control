@@ -1,0 +1,5 @@
+Package:dpcs
+Version:1.0.0
+Maintainer:name,e-mail
+Description:First try
+Architecture:amd64

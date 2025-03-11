@@ -1,0 +1,8 @@
+#!/bin/sh
+#程序卸载时执行，删除相关关联文件之前执行
+
+echo "delete dpcs"
+
+sudo rm /etc/init.d/dpcs
+
+sudo ufw delete allow dpcs

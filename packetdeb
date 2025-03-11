@@ -1,0 +1,44 @@
+#!/bin/bash
+
+if [ ! $1 ];then
+    echo "error:no input directory name"
+    echo "use'./packetdeb directory'"
+    exit 0
+fi
+if [ ! -d $1 ]; then
+    echo "No such directory or it's no a directory"
+    exit 0
+fi
+# name is unicore_debug_xxxx
+name=$1
+OLD_IFS="$IFS"
+IFS="_"
+array=($name)
+IFS="$OLD_IFS"
+id=""
+let index=0
+subname=""
+let first=1
+for var in ${array[@]}
+do
+    let index++
+    if [ $index -gt 2 ] ; then
+        if [ $first -eq 1 ]; then
+            let first=0
+            subname=$var
+        else
+            subname=$subname"_"$var
+        fi
+    fi
+done
+
+cd dpcs_deb
+sudo mkdir usr/local/dpcs -p
+
+road='usr/local/dpcs'
+
+sudo cp -rf ../$1/* ${road} 
+
+cd ..
+debname="dpcs_"$subname"_amd64.deb"
+sudo dpkg -b dpcs_deb $debname
