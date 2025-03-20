@@ -1,13 +1,20 @@
 #!/bin/sh
-#程序安装完成时执行，一般用于配置执行环境
+#程序安装完成时执行，一般用于配置执行环境 位于DEBIAN文件夹中，安装处理文件，在解包后执行
 
 echo "install dpcs !"
+
+sudo mv etc/systemd/system/dpcs.service /etc/systemd/system/
+sudo mv etc/init.d/dpcs /etc/init.d/
+
+sudo chmod 644 /usr/local/dpcs/dpcs.service
 
 sudo chmod 777 /etc/init.d/dpcs
 
 sudo chown amplesk:amplesky -R /usr/local/dpcs
 
 sudo ufw allow dpcs
+
+sudo systemctl daemon-reload
 
 sudo systemctl enable dpcs.service
 

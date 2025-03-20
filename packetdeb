@@ -32,13 +32,17 @@ do
     fi
 done
 
+#cd dpcs_deb
+#sudo mkdir usr/local/dpcs -p
+#road='usr/local/dpcs'
+#sudo cp -rf ../$1/* ${road} 
+#cd ..
+#debname="dpcs_"$subname"_amd64.deb"
+#sudo dpkg -b dpcs_deb $debname
 cd dpcs_deb
-sudo mkdir usr/local/dpcs -p
-
+mkdir usr/local/dpcs -p
 road='usr/local/dpcs'
-
-sudo cp -rf ../$1/* ${road} 
-
+cp -rf ../$1/* ${road}
 cd ..
 debname="dpcs_"$subname"_amd64.deb"
-sudo dpkg -b dpcs_deb $debname
+dpkg -b dpcs_deb $debname

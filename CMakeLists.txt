@@ -317,11 +317,11 @@ endif()
 
 #~/code/fastdds/Fast-DDS-Gen/scripts/fastddsgen -example CMake testSecurity.idl
 
-configure_file(${CMAKE_SOURCE_DIR}/dpcs.service.in ${CMAKE_CURRENT_BINARY_DIR}/dpcs.service @ONLY)
+#configure_file(${CMAKE_SOURCE_DIR}/dpcs.service.in ${CMAKE_CURRENT_BINARY_DIR}/dpcs.service @ONLY)
+#configure_file(${CMAKE_SOURCE_DIR}/dpcs_deb/etc/init.d/dpcs ${CMAKE_CURRENT_BINARY_DIR}/init/dpcs @ONLY)
 
 INSTALL(TARGETS dpcs CONFIGURATIONS Debug RUNTIME DESTINATION /usr/src/dpcs/)
 INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/dpcs.service DESTINATION /etc/systemd/system/)
-
 #INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/dpcs DESTINATION /usr/src/dpcs)
 
 

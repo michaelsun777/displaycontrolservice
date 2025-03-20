@@ -2,7 +2,8 @@
 
 do_start()
 {
-    sudo /usr/local/dpcs/dpcs
+    cd /usr/local/dpcs/
+    ./dpcs
 }
 
 do_stop()

@@ -3,6 +3,14 @@
 
 echo "delete dpcs"
 
+sudo systemctl stop dpcs
+
+sudo systemctl disable dpcs
+
+sudo rm /etc/systemd/system/dpcs.service
+
 sudo rm /etc/init.d/dpcs
+
+sudo systemctl daemon-reload
 
 sudo ufw delete allow dpcs
