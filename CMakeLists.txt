@@ -230,6 +230,7 @@ if(USE_CEF_SWITCH)
         -lspdlog 
         -lX11 -lXrandr -lm -lXext #-lXNVCtrl #  // 
         -lxcb -lxcb-randr
+        -lsystemd
         #-LXNVCtrl
         #-L/usr/lib/x86_64-linux-gnu/libXNVCtrl.so.0
         pthread
@@ -280,6 +281,7 @@ else()
         -lspdlog 
         -lX11 -lXrandr -lm -lXext #-lXNVCtrl #  // 
         -lxcb -lxcb-randr
+        -lsystemd
         #-LXNVCtrl
         #-L/usr/lib/x86_64-linux-gnu/libXNVCtrl.so.0
         pthread

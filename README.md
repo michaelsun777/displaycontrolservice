@@ -1,4 +1,4 @@
-sudo apt-get install cmake libboost-all-dev qtcreator qtbase5-dev qtwebengine5-dev libspdlog-dev libgtk2.0-dev libgtk-3-dev libxv-dev libxrandr-dev libgl1-mesa-dev libgtk-3-dev libxxf86vm-dev libvdpau-dev libxcb-randr0-dev -y 
+sudo apt-get install cmake libboost-all-dev qtcreator qtbase5-dev qtwebengine5-dev libspdlog-dev libgtk2.0-dev libgtk-3-dev libxv-dev libxrandr-dev libgl1-mesa-dev libgtk-3-dev libxxf86vm-dev libvdpau-dev libxcb-randr0-dev libsystemd-dev -y 
 
 ## 编译QCefView前替换指定文件
 用 src/UI/cef/CefViewSchemeHandlerFactory.cpp 文件替换子库生成的 CefViewSchemeHandlerFactory.cpp 文件。

@@ -2,6 +2,7 @@
 #include <QApplication>
 #include "CNvControlEvents.h"
 #include "cmyxrandr.h"
+#include <systemd/sd-journal.h>
 
 
 
@@ -426,6 +427,120 @@ void * CNvControlEvents::workerThread(void * p)
     return 0;
 }
 
+void * CNvControlEvents::workerThreadForSystemLog(void * p)
+{
+    CNvControlEvents * pThis = (CNvControlEvents *)p;
+    sd_journal *journal;
+    try
+    {        
+        sleep(5);
+        int ret;
+
+        // 打开 journald 日志
+        ret = sd_journal_open(&journal, SD_JOURNAL_LOCAL_ONLY);
+        if (ret < 0)
+        {
+            std::cerr << "无法打开 journald 日志: " << strerror(-ret) << std::endl;
+            return 0;
+        }
+
+        // 跳转到日志末尾
+        ret = sd_journal_seek_tail(journal);
+        if (ret < 0)
+        {
+            std::cerr << "无法跳转到日志末尾: " << strerror(-ret) << std::endl;
+            sd_journal_close(journal);
+            return 0;
+        }
+        list<string> _stringlist;
+
+        // 监听新日志条目
+        while (true)
+        {
+            ret = sd_journal_next(journal);
+            if (ret < 0)
+            {
+                std::cerr << "读取日志条目失败: " << strerror(-ret) << std::endl;
+                break;
+            }
+
+            if (ret == 0)
+            {
+                if(_stringlist.size() > 0)
+                {
+                    size_t sloop = 0;
+                    bool bCaseConnected = false; 
+                    bool bCaseDisconnected = false; 
+                    for (list<string>::iterator it = _stringlist.begin(); it != _stringlist.end(); it++)
+                    {
+                        if(sloop > 1)
+                            break;
+
+                        if(sloop == 0 && it->find("NVIDIA(GPU") != string::npos && it->find(": connected") != string::npos)
+                        {
+                            bCaseConnected = true;
+                            sloop++;
+                            continue;
+                        }
+                        else if(sloop == 0 && it->find("NVIDIA(GPU") != string::npos && it->find(": disconnected") != string::npos)
+                        {
+                            bCaseDisconnected = true;
+                            sloop++;
+                            continue;
+                        }
+
+                        if (bCaseConnected || bCaseDisconnected)
+                        {
+                            if (it->find("NVIDIA(GPU") != string::npos && it->find(": Internal TMDS") != string::npos) // 插入新
+                            {
+                                pThis->m_AtomicCounter.fetch_add(1);
+                                if (bCaseConnected)
+                                    XERROR("显示器插入，{}\n", *it);
+                                else
+                                    XERROR("显示器拨出，{}\n", *it);
+                            }
+                        }
+                        sloop++;
+                        std::cout << *it << std::endl;
+                    }
+                    _stringlist.clear();
+                }
+                
+                // 没有新日志，等待
+                sleep(1);
+                continue;
+            }
+
+            // 获取日志数据
+            const void *data;
+            size_t length;
+            ret = sd_journal_get_data(journal, "MESSAGE", &data, &length);
+            if (ret < 0)
+            {
+                std::cerr << "获取日志数据失败: " << strerror(-ret) << std::endl;
+                continue;
+            }
+
+            // 输出日志消息
+            string strData(reinterpret_cast<const char *>(data));
+            _stringlist.push_back(strData);
+            std::cout.write(reinterpret_cast<const char *>(data), length);
+            std::cout << std::endl;
+        }
+
+        
+
+        // 关闭 journald 日志
+        sd_journal_close(journal);
+    }
+    catch(...)
+    {
+        sd_journal_close(journal);
+        XERROR("workerThreadForSystemLog error,exit");
+    }
+    return 0;    
+}
+
 
 
 
@@ -443,6 +558,11 @@ void CNvControlEvents::start()
     }
 
     if(pthread_create(&m_threadDeal, NULL, workerThread, (void *)this) != 0)
+    {
+        printf("Failed to create thread\n");
+    }
+
+    if(pthread_create(&m_threadlistenLog, NULL, workerThreadForSystemLog, (void *)this) != 0)
     {
         printf("Failed to create thread\n");
     }

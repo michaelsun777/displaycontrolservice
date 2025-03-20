@@ -34,6 +34,7 @@ private:
     pthread_t m_threadlistenXcb;
     pthread_t m_threadlistenNv;
     pthread_t m_threadDeal;
+    pthread_t m_threadlistenLog;
     Display * m_display;
     bool m_bRunning;
     int m_event_base;
@@ -42,6 +43,7 @@ private:
     static void * xcb_Listen(void * p);
     static void * workerThreadListen(void * p);
     static void * workerThread(void * p);
+    static void * workerThreadForSystemLog(void * p);
 public:
     CNvControlEvents();
     ~CNvControlEvents(void);
