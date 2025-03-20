@@ -5,6 +5,8 @@ echo "install dpcs !"
 
 sudo chmod 777 /etc/init.d/dpcs
 
+sudo chown amplesk:amplesky -R /usr/local/dpcs
+
 sudo ufw allow dpcs
 
 sudo systemctl enable dpcs.service
