@@ -632,6 +632,13 @@ int DialogController::dlgGetAll(RequestHandler* pRequestHandler,MainWindow * pMa
     XINFO("received msg:{dlgGetAll}");
     cdataProcess* pcdataProcess = cdataProcess::GetInstance();
     std::string resolution = pcdataProcess->GetAllResolution();
+    if(resolution.empty())
+    {
+        json js;
+        js["error"] = "no resolution set!";
+        createRet(response, 404, js);
+        return 0;
+    }
     int allWidth = std::stoi(resolution.substr(0, resolution.find("x")));
     int allHeight = std::stoi(resolution.substr(resolution.find("x") + 1));
 

@@ -8,6 +8,7 @@
 #include "ini.h"
 #include "IniReader.h"
 
+#define SORTBUF_SIZE 16
 
 cdataProcess* cdataProcess::m_instance = NULL;
 
@@ -471,7 +472,7 @@ int cdataProcess::GetOutputsInfo_shell(json & js)
         if(currentSize.width != m_nWidth || currentSize.height != m_nHight)
         {
             json jsdata;
-            int sortBuf[m_layout_horizontal * m_layout_vertical] = {0};
+            int sortBuf[SORTBUF_SIZE] = {0};
             char bufferLayout[40] = {0};
             sprintf(bufferLayout, "%dx%d", m_layout_horizontal, m_layout_vertical);
             string layoutName = bufferLayout;
@@ -490,12 +491,12 @@ int cdataProcess::GetOutputsInfo_shell(json & js)
             {
                 json node;
                 node["name"] = "不支持的分辨率";//Unsupported resolution
-                for (size_t i = 0; i < sizeof(sortBuf) / sizeof(int); i++)
+                for (size_t j = 0; j < sizeof(sortBuf) / sizeof(int); j++)              
                 {
-                    if (sortBuf[i] == 0)
+                    if (sortBuf[j] == 0)
                     {
-                        node["id"] = i;
-                        sortBuf[i] = 1;
+                        node["id"] = j;
+                        sortBuf[j] = 1;
                         break;
                     }
                 }
@@ -513,7 +514,7 @@ int cdataProcess::GetOutputsInfo_shell(json & js)
             return -1;
         }
 
-        int sortBuf[m_layout_horizontal * m_layout_vertical] = {0};
+        int sortBuf[SORTBUF_SIZE] = {0};
         char bufferLayout[40] = {0};
         sprintf(bufferLayout, "%dx%d", m_layout_horizontal,m_layout_vertical);
         string layoutName = bufferLayout;
@@ -540,6 +541,9 @@ int cdataProcess::GetOutputsInfo_shell(json & js)
         // }
         js["layout_vertical"] = m_layout_vertical;
 
+        bool bfirstOne = false;
+        int firstOneTime = 0;
+
         for (size_t i = 0; i < vOutputInfo.size(); i++)
         {
             json node;
@@ -547,7 +551,20 @@ int cdataProcess::GetOutputsInfo_shell(json & js)
             node["coordinateOrderX"] = (vOutputInfo[i].pos.xPos / m_nWidth);
             node["coordinateOrderY"] = (vOutputInfo[i].pos.yPos / m_nHight);
             int id = (vOutputInfo[i].pos.xPos / m_nWidth) + (vOutputInfo[i].pos.yPos / m_nHight) * m_layout_vertical;
-            sortBuf[id] = 1;
+            if(id == 0 && bfirstOne)
+            {
+                bfirstOne = false;
+                firstOneTime++;
+                id = m_layout_horizontal * m_layout_vertical - firstOneTime;
+                sortBuf[id] = 1;
+
+            }
+            else
+            {
+                bfirstOne = true;
+                sortBuf[id] = 1;
+            }
+           
             node["id"] = id;
             node["primary"] = vOutputInfo[i].primary;
             node["index"] = vOutputInfo[i].nIndex;
@@ -564,12 +581,12 @@ int cdataProcess::GetOutputsInfo_shell(json & js)
             {
                 json node;             
                 node["name"] = "";
-                for (size_t i = 0; i < sizeof(sortBuf)/sizeof(int); i++)
+                for (size_t j = 0; j < sizeof(sortBuf)/sizeof(int); j++)
                 {
-                    if(sortBuf[i] == 0)
+                    if(sortBuf[j] == 0)
                     {
-                        node["id"] = i;
-                        sortBuf[i] = 1;
+                        node["id"] = j;
+                        sortBuf[j] = 1;
                         break;
                     }
                 }               
