@@ -553,7 +553,7 @@ int cdataProcess::GetOutputsInfo_shell(json & js)
             int id = (vOutputInfo[i].pos.xPos / m_nWidth) + (vOutputInfo[i].pos.yPos / m_nHight) * m_layout_vertical;
             if(id == 0 && bfirstOne)
             {
-                bfirstOne = false;
+                //bfirstOne = false;
                 firstOneTime++;
                 id = m_layout_horizontal * m_layout_vertical - firstOneTime;
                 sortBuf[id] = 1;
