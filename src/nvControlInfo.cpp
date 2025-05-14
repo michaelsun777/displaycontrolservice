@@ -27,6 +27,16 @@ bool nvControlInfo::getGpuInfo(MGPUINFOEX & gpu)
     if (!dpy)
     {
         fprintf(stderr, "Cannot open display '%s'.\n", XDisplayName(NULL));
+        XERROR("Cannot open display '{}'.\n", XDisplayName(NULL));
+        XINFO("nvControlInfo::getGpuInfo exec systemctl restart gdm start!");
+        CMDEXEC::CmdRes res;
+        bool bret = CMDEXEC::Execute("systemctl restart gdm",res);
+        if (!bret)
+        {
+            XINFO("nvControlInfo::getGpuInfo exec systemctl restart gdm end!");
+            exit(0);
+            //return false;
+        }
         return false;
     }
 
@@ -37,8 +47,8 @@ bool nvControlInfo::getGpuInfo(MGPUINFOEX & gpu)
     ret = XNVCTRLQueryExtension(dpy, &m_event_base, &m_error_base);
     if (ret != True)
     {
-        fprintf(stderr, "The NV-CONTROL X extension does not exist on '%s'.\n",
-                XDisplayName(NULL));
+        fprintf(stderr, "The NV-CONTROL X extension does not exist on '%s'.\n", XDisplayName(NULL));
+        XERROR("The NV-CONTROL X extension does not exist on '{}'.\n", XDisplayName(NULL));
         XCloseDisplay(dpy);
         return false;
     }
@@ -50,8 +60,8 @@ bool nvControlInfo::getGpuInfo(MGPUINFOEX & gpu)
     ret = XNVCTRLQueryVersion(dpy, &m_major, &m_minor);
     if (ret != True)
     {
-        fprintf(stderr, "The NV-CONTROL X extension does not exist on '%s'.\n",
-                XDisplayName(NULL));
+        fprintf(stderr, "The NV-CONTROL X extension does not exist on '%s'.\n", XDisplayName(NULL));
+        XERROR("The NV-CONTROL X extension does not exist on '{}'.\n", XDisplayName(NULL));
         XCloseDisplay(dpy);
         return false;
     }

@@ -1,12 +1,53 @@
 #ifndef INIREADER_H
 #define INIREADER_H
 
-#define MINI_CASE_SENSITIVE
+
 #include "ini.h"
 // #define WIN32_LEAN_AND_MEAN
 // #include <Windows.h>
 // #include <filesystem>
 
+
+
+#include "ini.h"
+#include <filesystem>
+#include <string_view>
+
+class CIniReader
+{
+private:
+    std::filesystem::path m_szFileName;
+    mINI::INIStructure m_ini;
+
+public:
+    CIniReader();
+    CIniReader(std::filesystem::path szFileName);
+
+    bool operator==(CIniReader& ir);
+    bool operator!=(CIniReader& ir);
+
+    bool CompareBySections(CIniReader& ir);
+    bool CompareByValues(CIniReader& ir);
+
+    const std::filesystem::path& GetIniPath();
+    void SetNewIniPathForSave(std::filesystem::path szFileName);
+    void SetIniPath();
+    void SetIniPath(std::filesystem::path szFileName);
+
+    int ReadInteger(std::string_view szSection, std::string_view szKey, int iDefaultValue);
+    float ReadFloat(std::string_view szSection, std::string_view szKey, float fltDefaultValue);
+    bool ReadBoolean(std::string_view szSection, std::string_view szKey, bool bolDefaultValue);
+    std::string ReadString(std::string_view szSection, std::string_view szKey, std::string_view szDefaultValue);
+
+    void WriteInteger(std::string_view szSection, std::string_view szKey, int iValue, bool pretty = false);
+    void WriteFloat(std::string_view szSection, std::string_view szKey, float fltValue, bool pretty = false);
+    void WriteBoolean(std::string_view szSection, std::string_view szKey, bool bolValue, bool pretty = false);
+    void WriteString(std::string_view szSection, std::string_view szKey, std::string_view szValue, bool pretty = false);
+};
+
+
+
+/*
 class CIniReader
 {
 private:
@@ -245,5 +286,5 @@ public:
         catch (...) {}
     }
 };
-
+*/
 #endif //INIREADER_H

@@ -67,11 +67,18 @@ cdataProcess::cdataProcess(/* args */)
     std::string outputs = iniReader.ReadString("outputsSettings", "outputs", "");
     try
     {
-        nlohmann::json j = nlohmann::json::parse(outputs);
-        if(j.find("allResolution") != j.end())
-            m_allLayouts = j["allResolution"];
+        if(!outputs.empty())
+        {
+            nlohmann::json j = nlohmann::json::parse(outputs);
+            if (j.find("allResolution") != j.end())
+                m_allLayouts = j["allResolution"];
+        }
+        else
+        {
+            m_allLayouts = "";
+        }        
     }
-    catch(const std::exception& e)
+    catch(...)
     {
         m_allLayouts = "";
     }
@@ -559,7 +566,7 @@ int cdataProcess::GetOutputsInfo_shell(json & js)
                 sortBuf[id] = 1;
 
             }
-            else
+            else if (id == 0 && (!bfirstOne))
             {
                 bfirstOne = true;
                 sortBuf[id] = 1;
@@ -736,7 +743,7 @@ bool cdataProcess::ResetOutputsInfo()
 {
     cmyxrandr *pcmxrandr = cmyxrandr::GetInstance();
     //pcmxrandr->SetOutputIsChanged();
-    //sleep(1);
+    //sleep(1);    
     return true;
 }
 
@@ -1691,6 +1698,33 @@ bool cdataProcess::InitOutputInfo()
         }
     }
 
+
+    //产品确认默认为所有显示器都是要使用的显示器
+    if (m_vGPUInterface.size() > 0)
+    {
+        boost::lock_guard<boost::mutex> lock(m_mutexGPUInterface);
+        for (size_t i = 0; i < m_vGPUInterface.size(); i++)
+        {
+            XINFO("{}\n", m_vGPUInterface[i].jsonStr);
+            json jnode = json::parse(m_vGPUInterface[i].jsonStr);
+            json jDisplaysArray = jnode["display"];
+            json jIsUsedArray = jnode["isUsed"];
+            for (auto &j : jnode["isUsed"])
+            {
+                j = false;
+            }
+            int iloop = 0;
+            for (json::iterator it = jDisplaysArray.begin(); it != jDisplaysArray.end(); ++it, ++iloop)
+            {
+                std::cout << *it << '\n';
+                jnode["isUsed"].at(iloop) = true;
+            }
+            m_vGPUInterface[i].jsonStr = jnode.dump();
+            XINFO("{}\n", m_vGPUInterface[i].jsonStr);
+            // todo
+        }
+    }
+
     return true;
 
 }
@@ -2036,6 +2070,35 @@ bool cdataProcess::Init()
     InitMainOutputModes();
     cmyxrandr * pcmxrandr = cmyxrandr::GetInstance();
     pcmxrandr->GetOutputAndGpuName(m_vGPUInterface);
+    CIniReader iniReader("config.ini");
+    bool bIsSetting = iniReader.ReadBoolean("screen", "isSetting", false);
+    if(!bIsSetting)
+    {
+        if (m_vGPUInterface.size() > 0)
+        {            
+            for (size_t i = 0; i < m_vGPUInterface.size(); i++)
+            {
+                XINFO("{}\n", m_vGPUInterface[i].jsonStr);
+                json jnode = json::parse(m_vGPUInterface[i].jsonStr);
+                json jDisplaysArray = jnode["display"];
+                json jIsUsedArray = jnode["isUsed"];
+                for (auto &j : jnode["isUsed"])
+                {
+                    j = false;
+                }
+                int iloop = 0;
+                for (json::iterator it = jDisplaysArray.begin(); it != jDisplaysArray.end(); ++it, ++iloop)
+                {
+                    std::cout << *it << '\n';
+                    jnode["isUsed"].at(iloop) = true;
+                }
+                m_vGPUInterface[i].jsonStr = jnode.dump();
+                XINFO("{}\n", m_vGPUInterface[i].jsonStr);
+                // todo
+            }
+        }
+    }
+
     m_pEvents = new CNvControlEvents();
     m_pEvents->init();
     m_pEvents->start();
@@ -2111,6 +2174,34 @@ bool cdataProcess::OnCheckAndUpdate()
         boost::lock_guard<boost::mutex> lock(m_mutexGPUInterface);
         m_vGPUInterface.clear();
         pcmxrandr->GetOutputAndGpuName(m_vGPUInterface);
+        CIniReader iniReader("config.ini");
+        bool bIsSetting = iniReader.ReadBoolean("screen", "isSetting", false);
+        if (!bIsSetting)
+        {
+            if (m_vGPUInterface.size() > 0)
+            {
+                for (size_t i = 0; i < m_vGPUInterface.size(); i++)
+                {
+                    XINFO("{}\n", m_vGPUInterface[i].jsonStr);
+                    json jnode = json::parse(m_vGPUInterface[i].jsonStr);
+                    json jDisplaysArray = jnode["display"];
+                    json jIsUsedArray = jnode["isUsed"];
+                    for (auto &j : jnode["isUsed"])
+                    {
+                        j = false;
+                    }
+                    int iloop = 0;
+                    for (json::iterator it = jDisplaysArray.begin(); it != jDisplaysArray.end(); ++it, ++iloop)
+                    {
+                        std::cout << *it << '\n';
+                        jnode["isUsed"].at(iloop) = true;
+                    }
+                    m_vGPUInterface[i].jsonStr = jnode.dump();
+                    XINFO("{}\n", m_vGPUInterface[i].jsonStr);
+                    // todo
+                }
+            }
+        }
     }    
     XINFO("cmyxrandr::OnUpdate out\n");
     return true;

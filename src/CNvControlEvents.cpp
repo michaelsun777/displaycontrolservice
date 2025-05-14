@@ -10,10 +10,16 @@
 CNvControlEvents::CNvControlEvents()
 {
     m_AtomicCounter = 0;
+    m_display = NULL;
 }
 
 CNvControlEvents::~CNvControlEvents(void)
 {
+    if(m_display)
+    {
+        XCloseDisplay(m_display);
+        m_display = NULL;
+    }
 }
 
 /*
@@ -102,11 +108,26 @@ bool CNvControlEvents::init()
      * Open a display connection, and make sure the NV-CONTROL X
      * extension is present on the screen we want to use.
      */
+    if(m_display)
+    {
+        XCloseDisplay(m_display);
+        m_display = NULL;
+    }
 
     m_display = XOpenDisplay(dpy_name);
     if (!m_display)
     {
         fprintf(stderr, "Cannot open display '%s'.\n", XDisplayName(dpy_name));
+        XERROR("Cannot open display '{}'.\n",XDisplayName(dpy_name));
+        XINFO("CNvControlEvents::init exec systemctl restart gdm start!");
+        CMDEXEC::CmdRes res;
+        bool bret = CMDEXEC::Execute("systemctl restart gdm",res);
+        if (!bret)
+        {
+            XINFO("CNvControlEvents::init exec systemctl restart gdm end!");
+            exit(0);
+            //return false;
+        }
         return 1;
     }
 
@@ -117,8 +138,9 @@ bool CNvControlEvents::init()
     ret = XNVCTRLQueryExtension(m_display, &m_event_base, &error_base);
     if (ret != True)
     {
-        fprintf(stderr, "The NV-CONTROL X extension does not exist on '%s'.\n",
-                XDisplayName(dpy_name));
+        fprintf(stderr, "The NV-CONTROL X extension does not exist on '%s'.\n", XDisplayName(dpy_name));
+        XERROR("The NV-CONTROL X extension does not exist on '{}'.\n", XDisplayName(dpy_name));
+        XCloseDisplay(m_display);
         return 1;
     }
 
@@ -137,8 +159,9 @@ bool CNvControlEvents::init()
                                                &(tinfo->count));
             if (ret != True)
             {
-                fprintf(stderr, "Failed to query %s target count on '%s'.\n",
-                        target2str(tinfo->type), XDisplayName(dpy_name));
+                fprintf(stderr, "Failed to query %s target count on '%s'.\n", target2str(tinfo->type), XDisplayName(dpy_name));
+                XERROR("Failed to query {} target count on '{}'.\n", target2str(tinfo->type), XDisplayName(dpy_name));
+                XCloseDisplay(m_display);
                 return 1;
             }
             tinfo->count = tinfo->pIds[0];
@@ -148,14 +171,16 @@ bool CNvControlEvents::init()
             ret = XNVCTRLQueryTargetCount(m_display, tinfo->type, &tinfo->count);
             if (ret != True)
             {
-                fprintf(stderr, "Failed to query %s target count on '%s'.\n",
-                        target2str(tinfo->type), XDisplayName(dpy_name));
+                fprintf(stderr, "Failed to query %s target count on '%s'.\n", target2str(tinfo->type), XDisplayName(dpy_name));
+                XERROR("Failed to query {} target count on '{}'.\n", target2str(tinfo->type), XDisplayName(dpy_name));
+                XCloseDisplay(m_display);
                 return 1;
             }
         }
     }
 
     printf("Registering to receive events...\n");
+    XINFO("Registering to receive events...\n");
     fflush(stdout);
 
     /* Register to receive events on all targets */
@@ -194,9 +219,8 @@ bool CNvControlEvents::init()
                      */
                     if (!XNVCTRLIsNvScreen(m_display, target_id))
                     {
-                        printf("- The NV-CONTROL X not available on X screen "
-                               "%d of '%s'.\n",
-                               i, XDisplayName(dpy_name));
+                        printf("- The NV-CONTROL X not available on X screen %d of '%s'.\n", i, XDisplayName(dpy_name));
+                        XINFO("- The NV-CONTROL X not available on X screen {} of '{}'.\n", i, XDisplayName(dpy_name));
                         continue;
                     }
 
@@ -210,15 +234,13 @@ bool CNvControlEvents::init()
                                               True);
                     if (ret != True)
                     {
-                        printf("- Unable to register to receive NV-CONTROL"
-                               "events on '%s'.\n",
-                               XDisplayName(dpy_name));
+                        printf("- Unable to register to receive NV-CONTROL events on '%s'.\n", XDisplayName(dpy_name));
+                        XINFO("- Unable to register to receive NV-CONTROL events on '{}'.\n", XDisplayName(dpy_name));
                         continue;
                     }
 
-                    printf("+ Listening on X screen %d for "
-                           "ATTRIBUTE_CHANGED_EVENTs.\n",
-                           target_id);
+                    printf("+ Listening on X screen %d for ATTRIBUTE_CHANGED_EVENTs.\n", target_id);
+                    XINFO("+ Listening on X screen {} for ATTRIBUTE_CHANGED_EVENTs.\n", target_id);
                     sources++;
                 }
 
@@ -237,22 +259,22 @@ bool CNvControlEvents::init()
                                                 True);
                 if (ret != True)
                 {
-                    printf("- Unable to register on %s %d for %ss.\n",
-                           target2str(tinfo->type), target_id,
-                           eventTypes[k].description);
+                    printf("- Unable to register on %s %d for %ss.\n", target2str(tinfo->type), target_id, eventTypes[k].description);
+                    XINFO("- Unable to register on {} {} for {}s.\n", target2str(tinfo->type), target_id, eventTypes[k].description);
                     continue;
                 }
 
-                printf("+ Listening on %s %d for %ss.\n",
-                       target2str(tinfo->type), target_id, eventTypes[k].description);
+                printf("+ Listening on %s %d for %ss.\n", target2str(tinfo->type), target_id, eventTypes[k].description);
+                XINFO("+ Listening on {} {} for {}s.\n", target2str(tinfo->type), target_id, eventTypes[k].description);
 
                 sources++;
             }
         }
     }
 
-    printf("\n");
-    printf("Listening on %d sources for NV-CONTROL X Events...\n", sources);
+    //printf("\n");
+    //printf("Listening on %d sources for NV-CONTROL X Events...\n", sources);
+    XINFO("Listening on %d sources for NV-CONTROL X Events...\n", sources);
 
     return true;
 }
@@ -338,6 +360,7 @@ void * CNvControlEvents::xcb_Listen(void * p)
         xcb_generic_error_t* error = xcb_request_check(connection, cookie);
         if (error) {
             std::cerr << "Failed to select RANDR input event" << std::endl;
+            XERROR("Failed to select RANDR input event");
             //xcb_free_error(error);
             //delete error;
             free(error);

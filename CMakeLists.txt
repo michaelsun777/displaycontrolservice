@@ -207,6 +207,8 @@ if(USE_CEF_SWITCH)
         src/autoDelete.cpp
         src/UI/qcefwidget.cpp
         src/UI/qcefwidget.ui
+        src/IniReader.cpp
+        src/ini.cpp
 
         ${http_SRC}
         src/UI/dugiswidget.cpp
@@ -266,6 +268,8 @@ else()
         src/autoDelete.cpp
         # src/UI/qcefwidget.cpp
         # src/UI/qcefwidget.ui
+        src/IniReader.cpp
+        src/ini.cpp
 
         ${http_SRC}      
 

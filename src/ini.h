@@ -95,6 +95,8 @@
 #include <sys/stat.h>
 #include <cctype>
 
+#define MINI_CASE_SENSITIVE //key tolower（转小写）
+
 namespace mINI
 {
     namespace INIStringUtil
@@ -106,12 +108,12 @@ namespace mINI
             str.erase(0, str.find_first_not_of(whitespaceDelimiters));
         }
 #ifndef MINI_CASE_SENSITIVE
-        inline void toLower(std::string& str)
-        {
-            std::transform(str.begin(), str.end(), str.begin(), [](const char c) {
-                return static_cast<char>(std::tolower(c));
-            });
-        }
+        // inline void toLower(std::string& str)
+        // {
+        //     std::transform(str.begin(), str.end(), str.begin(), [](const char c) {
+        //         return static_cast<char>(std::tolower(c));
+        //     });
+        // }
 #endif
         inline void replace(std::string& str, std::string const& a, std::string const& b)
         {
@@ -411,6 +413,83 @@ namespace mINI
         std::ifstream fileReadStream;
         T_LineDataPtr lineData;
 
+        T_LineData readFile();
+        
+    public:
+        INIReader(std::filesystem::path const& filename, bool keepLineData = false);
+       
+        ~INIReader();
+
+        bool operator>>(INIStructure& data);
+        
+        T_LineDataPtr getLines();
+        
+    };
+
+    class INIGenerator
+    {
+    private:
+        std::ofstream fileWriteStream;
+
+    public:
+        bool prettyPrint = false;
+
+        INIGenerator(std::filesystem::path const& filename);
+       
+        ~INIGenerator();
+
+        bool operator<<(INIStructure const& data);
+
+    };
+
+    class INIWriter
+    {
+    private:
+        using T_LineData = std::vector<std::string>;
+        using T_LineDataPtr = std::shared_ptr<T_LineData>;
+        std::filesystem::path filename;
+
+        T_LineData getLazyOutput(T_LineDataPtr const& lineData, INIStructure& data, INIStructure& original);
+    public:
+        bool prettyPrint = false;
+
+        INIWriter(std::filesystem::path const& filename);
+        ~INIWriter();
+
+        bool operator<<(INIStructure& data);
+        
+    };
+
+    class INIFile
+    {
+    private:
+        std::filesystem::path _filename;
+
+    public:
+        INIFile(std::filesystem::path const& filename);
+
+        ~INIFile();
+
+        bool read(INIStructure& data)  const; 
+        bool generate(INIStructure const& data, bool pretty = false) const;
+        bool write(INIStructure& data, bool pretty = false) const; 
+    };
+
+
+    /*
+    
+    class INIReader
+    {
+    public:
+        using T_LineData = std::vector<std::string>;
+        using T_LineDataPtr = std::shared_ptr<T_LineData>;
+
+        bool isBOM = false;
+
+    private:
+        std::ifstream fileReadStream;
+        T_LineDataPtr lineData;
+
         T_LineData readFile()
         {
             fileReadStream.seekg(0, std::ios::end);
@@ -515,6 +594,8 @@ namespace mINI
         }
     };
 
+
+
     class INIGenerator
     {
     private:
@@ -584,6 +665,8 @@ namespace mINI
             return true;
         }
     };
+
+
 
     class INIWriter
     {
@@ -836,8 +919,10 @@ namespace mINI
             }
             return false;
         }
-    };
+    };*/
 
+
+    /*
     class INIFile
     {
     private:
@@ -884,6 +969,7 @@ namespace mINI
             return writer << data;
         }
     };
+    */
 }
 
 #endif // MINI_INI_H_

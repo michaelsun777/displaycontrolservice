@@ -156,7 +156,15 @@ void HttpResponse::write(QByteArray data, bool lastPart)
         }
         if(socket->isValid() && socket->state() == QAbstractSocket::ConnectedState)//QAbstractSocket::SocketState::ConnectedState
         {
-            socket->flush();
+            try
+            {
+                socket->flush();
+            }
+            catch(...)
+            {
+                ;
+            }            
+            
         }        
         sentLastPart=true;
     }
