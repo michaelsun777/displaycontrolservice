@@ -2,9 +2,8 @@
 #define CUSTOMCEFVIEW_H
 
 #include <QScreen>
-
 #include <QCefView.h>
-
+#include <QPoint>
 /// <summary>
 /// Represents the customized QCefView
 /// </summary>
@@ -41,8 +40,21 @@ protected:
 
 protected:
   void resizeEvent(QResizeEvent* event) override;
-
+  // 鼠标事件
   void mousePressEvent(QMouseEvent* event) override;
+  void mouseMoveEvent(QMouseEvent* event) override;
+  void mouseReleaseEvent(QMouseEvent* event) override;
+  void wheelEvent(QWheelEvent* event) override;
+  void mouseDoubleClickEvent(QMouseEvent* event) override;
+  // 键盘事件
+  void keyPressEvent(QKeyEvent* event) override;
+  void keyReleaseEvent(QKeyEvent* event) override;
+  // 焦点
+  void focusInEvent(QFocusEvent* event) override;
+  void focusOutEvent(QFocusEvent* event) override;
+
+  void inputMethodEvent(QInputMethodEvent* event) override;
+  // bool eventFilter(QObject* watched, QEvent* event) override;
 
 private:
   void updateMask();
