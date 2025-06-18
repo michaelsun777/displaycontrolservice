@@ -16,6 +16,8 @@ bool nvControlInfo::getGpuInfo(MGPUINFOEX & gpu)
     bool bRet = getGpuTempture(gpu.vgpus);
     if(!bRet)
         return bRet;
+    
+    return true;
 
     Bool ret;
     Display *dpy;

@@ -335,27 +335,27 @@ void RequestHandler::getOutputsInfo(const HttpRequest &req, HttpResponse &res)
         int nRet = pcdataProcess->GetOutputsInfo_shell(js);
         if (nRet == 0)
         {
-            //m_mutex.unlock();
-            //XINFO("{RequestHandler::getOutputsInfo unlock0}\n");
+            //m_mutex.unlock();            
             createRet(res, 200, js);
+            XINFO("{RequestHandler::getOutputsInfo unlock out0}\n");
             return;
 
             // res.set_content(strData, "application/json");
         }
         else if(nRet == -1)
         {
-            //m_mutex.unlock();
-            //XINFO("{RequestHandler::getOutputsInfo unlock1}\n");
+            //m_mutex.unlock();            
             //createRet(res, 500);
             createRet(res, 200, js);
+            XINFO("{RequestHandler::getOutputsInfo unlock out1}\n");
             return;
         }
         else
         {
-            //m_mutex.unlock();
-            //XINFO("{RequestHandler::getOutputsInfo unlock2}\n");
+            //m_mutex.unlock();           
             //createRet(res, 204);
             createRet(res, 500);
+            XINFO("{RequestHandler::getOutputsInfo unlock out2}\n");
             return;
         }
     }
@@ -430,7 +430,7 @@ void RequestHandler::resetOutputsInfo(const HttpRequest &req, HttpResponse& res)
         settings.setValue("layout_horizontal", "1");
         settings.setValue("layout_vertical", "1");
         settings.setValue("settingUsedOutputs", "false");
-        settings.setValue("allresolution", "1920x1080");
+        settings.setValue("allResolution", "1920x1080");
         
         settings.endGroup();
         settings.sync();

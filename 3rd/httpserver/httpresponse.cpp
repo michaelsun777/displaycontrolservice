@@ -93,6 +93,7 @@ bool HttpResponse::writeToSocket(QByteArray data)
         ptr+=written;
         remaining-=written;
     }
+    socket->waitForBytesWritten();
     return true;
 }
 
@@ -154,7 +155,7 @@ void HttpResponse::write(QByteArray data, bool lastPart)
         {
             writeToSocket("0\r\n\r\n");
         }
-        if(socket->isValid() && socket->state() == QAbstractSocket::ConnectedState)//QAbstractSocket::SocketState::ConnectedState
+        if(socket->isValid() && socket->isOpen() && socket->state() == QAbstractSocket::ConnectedState)//QAbstractSocket::SocketState::ConnectedState
         {
             try
             {
