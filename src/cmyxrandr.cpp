@@ -30,6 +30,15 @@ cmyxrandr::cmyxrandr(string strDisplayName, RROutput output) : m_screen(0), m_ou
         if(!m_pDpy)
         {
             XERROR("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!XOpenDisplay failed (:0),请检查是否未拨出VGA插头上的设备,拨出后重启计算机！\n");
+            XINFO("cmyxrandr exec systemctl restart gdm start!");
+            CMDEXEC::CmdRes res;
+            bool bret = CMDEXEC::Execute("systemctl restart gdm", res);
+            if (!bret)
+            {
+                XINFO("cmyxrandr exec systemctl restart gdm end!");
+                exit(0);
+                // return false;
+            }
         }
         else
         {
@@ -945,6 +954,7 @@ short cmyxrandr::getAllScreenInfoXrandr(vector<MOutputInfo> & vOutputInfo,CMYSIZ
 {
     try
     {
+        boost::lock_guard<boost::mutex> lock(m_mutexGetAllScreenInfoXrandr);
         CIniReader iniReader("config.ini");
         bool bSettingUsedOutputs = iniReader.ReadBoolean("screen", "settingUsedOutputs", false);
         string valueOutpusName = iniReader.ReadString("outputsSettings", "outputsUsed", "");
@@ -952,7 +962,7 @@ short cmyxrandr::getAllScreenInfoXrandr(vector<MOutputInfo> & vOutputInfo,CMYSIZ
     
         std::vector<std::string> _vOutputNames;
         
-        if(bSettingUsedOutputs)
+        if(bSettingUsedOutputs && !valueOutpusName.empty())
         {
 
             json joutputsNameArray = json::parse(valueOutpusName);
@@ -968,10 +978,8 @@ short cmyxrandr::getAllScreenInfoXrandr(vector<MOutputInfo> & vOutputInfo,CMYSIZ
             else
                 bSettingUsedOutputs = false;            
 
-        }
+        }       
         
-
-        boost::lock_guard<boost::mutex> lock(m_mutexGetAllScreenInfoXrandr);
         getCurrentConfigSizes();
         CMYSIZE min,max;
         getScreenSizeRange(min,max);
@@ -1498,7 +1506,15 @@ bool cmyxrandr::GetOutputAndGpuName(vector<MYGPUINTERFACE> & vgpu)
     if (!dpy) 
     {
         XERROR("Cannot open display {}.", XDisplayName(NULL));
-        XCloseDisplay(dpy);
+        XINFO("cmyxrandr::GetOutputAndGpuName exec systemctl restart gdm start!");
+        CMDEXEC::CmdRes res;
+        bool bret = CMDEXEC::Execute("systemctl restart gdm",res);
+        if (!bret)
+        {
+            XINFO("cmyxrandr::GetOutputAndGpuName exec systemctl restart gdm end!");
+            exit(0);
+            //return false;
+        }
         return false;
     }
     XINFO("GetOutputAndGpuName XOpenDisplay f\n");
@@ -1506,7 +1522,10 @@ bool cmyxrandr::GetOutputAndGpuName(vector<MYGPUINTERFACE> & vgpu)
     
     int screen = GetNvXScreen(dpy);
     if(screen < 0)
+    {
+        XCloseDisplay(dpy);
         return false;
+    }        
 
     Bool ret = XNVCTRLQueryVersion(dpy, &major, &minor);
     if (ret != True)

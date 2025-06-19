@@ -71,6 +71,9 @@ int main(int argc, char *argv[])
     int nRet = 0;
     std::shared_ptr<CSpdlog> splog(CSpdlog::GetInstance());
     dumpVersion();
+    char szDisplay[32] = {0};
+    strcpy(szDisplay, getenv("DISPLAY"));
+    XINFO("DISPLAY={}",szDisplay);
     try
     {
         QFile fileUser("./user.db");

@@ -225,6 +225,7 @@ void RequestHandler::login(const HttpRequest &req, HttpResponse &res)
         XINFO("{RequestHandler::login lock}\n");
         //m_mutex.lock();
         boost::lock_guard<boost::mutex> lock(m_mutex);
+        XINFO("{RequestHandler::login lock in}\n");
         QSettings config("user.db", QSettings::IniFormat);
         config.value("user/name", "admin");
         string localPwd = config.value("user/pwd", "admin").toString().toStdString();
@@ -265,6 +266,7 @@ void RequestHandler::getMonitorInfo(const HttpRequest &req, HttpResponse& res)
     XINFO("{RequestHandler::getMonitorInfo lock}\n");
     //m_mutex.lock();
     boost::lock_guard<boost::mutex> lock(m_mutex);
+    XINFO("{RequestHandler::getMonitorInfo lock in}\n");
     if(pcdataProcess->GetMonitorsInfo_shell(js))
     {
         //m_mutex.unlock();
@@ -333,27 +335,27 @@ void RequestHandler::getOutputsInfo(const HttpRequest &req, HttpResponse &res)
         int nRet = pcdataProcess->GetOutputsInfo_shell(js);
         if (nRet == 0)
         {
-            //m_mutex.unlock();
-            //XINFO("{RequestHandler::getOutputsInfo unlock0}\n");
+            //m_mutex.unlock();            
             createRet(res, 200, js);
+            XINFO("{RequestHandler::getOutputsInfo unlock out0}\n");
             return;
 
             // res.set_content(strData, "application/json");
         }
         else if(nRet == -1)
         {
-            //m_mutex.unlock();
-            //XINFO("{RequestHandler::getOutputsInfo unlock1}\n");
+            //m_mutex.unlock();            
             //createRet(res, 500);
             createRet(res, 200, js);
+            XINFO("{RequestHandler::getOutputsInfo unlock out1}\n");
             return;
         }
         else
         {
-            //m_mutex.unlock();
-            //XINFO("{RequestHandler::getOutputsInfo unlock2}\n");
+            //m_mutex.unlock();           
             //createRet(res, 204);
             createRet(res, 500);
+            XINFO("{RequestHandler::getOutputsInfo unlock out2}\n");
             return;
         }
     }
@@ -385,14 +387,16 @@ void RequestHandler::getGpusInfo(const HttpRequest &req, HttpResponse& res)
             //m_mutex.unlock();
             //XINFO("{RequestHandler::getGpusInfo unlock0}\n");
             createRet(res, 200, js);
+            XINFO("{RequestHandler::getGpusInfo unlock}\n");
             return;
         }
         else
         {
             createRet(res, 204);
+            XINFO("{RequestHandler::getGpusInfo unlock}\n");
         }
         //m_mutex.unlock();
-        XINFO("{RequestHandler::getGpusInfo unlock}\n");
+        
     }
     catch (...)
     {
@@ -415,8 +419,9 @@ void RequestHandler::resetOutputsInfo(const HttpRequest &req, HttpResponse& res)
         settings.beginGroup("outputsSettings");
         // settings.setValue("outputs", js.dump().c_str());
         settings.remove("outputs");
-        settings.remove("outputsused");
+        settings.remove("outputsUsed");
         settings.endGroup();
+        
         settings.beginGroup("screen");
         settings.setValue("isSetting", "false");
         settings.setValue("isSettingOutputs", "false");
@@ -424,6 +429,9 @@ void RequestHandler::resetOutputsInfo(const HttpRequest &req, HttpResponse& res)
         settings.setValue("width", "1920");
         settings.setValue("layout_horizontal", "1");
         settings.setValue("layout_vertical", "1");
+        settings.setValue("settingUsedOutputs", "false");
+        settings.setValue("allResolution", "1920x1080");
+        
         settings.endGroup();
         settings.sync();
 
@@ -506,6 +514,8 @@ void RequestHandler::setGpuInterface(const HttpRequest &req, HttpResponse &res)
 
         boost::lock_guard<boost::mutex> lock(m_mutex);
         XINFO("{RequestHandler::setGpuInterface lock in}\n");
+        emit sendCloseTitleWindowSignal();
+        XINFO("{ send send Close Title Window Signal...}\n");
         if(pcdataProcess->setGpuInterface(jbody))
         {
             
