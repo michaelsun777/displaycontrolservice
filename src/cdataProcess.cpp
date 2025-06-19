@@ -741,9 +741,44 @@ bool cdataProcess::GetMainOutputModes(json & js)
 
 bool cdataProcess::ResetOutputsInfo()
 {
-    cmyxrandr *pcmxrandr = cmyxrandr::GetInstance();
+    //cmyxrandr *pcmxrandr = cmyxrandr::GetInstance();
     //pcmxrandr->SetOutputIsChanged();
     //sleep(1);    
+    json jOutpusName;
+    CIniReader iniReader("config.ini");
+    bool bIsSetting = iniReader.ReadBoolean("screen", "isSetting", false);
+    if (!bIsSetting)
+    {
+        if (m_vGPUInterface.size() > 0)
+        {
+            for (size_t i = 0; i < m_vGPUInterface.size(); i++)
+            {
+                XINFO("{}\n", m_vGPUInterface[i].jsonStr);
+                json jnode = json::parse(m_vGPUInterface[i].jsonStr);
+                json jDisplaysArray = jnode["display"];
+                json jIsUsedArray = jnode["isUsed"];
+                for (auto &j : jnode["isUsed"])
+                {
+                    j = false;
+                }
+                int iloop = 0;
+                for (json::iterator it = jDisplaysArray.begin(); it != jDisplaysArray.end(); ++it, ++iloop)
+                {
+                    std::cout << *it << '\n';
+                    jnode["isUsed"].at(iloop) = true;
+                    jOutpusName.push_back(*it);
+                }
+                m_vGPUInterface[i].jsonStr = jnode.dump();
+                XINFO("{}\n", m_vGPUInterface[i].jsonStr);
+                // todo
+            }
+
+            XINFO("cdataProcess::setGpuInterface:{}\n", jOutpusName.dump());
+            iniReader.WriteBoolean("screen", "settingUsedOutputs", true);
+            iniReader.WriteString("outputsSettings", "outputsUsed", jOutpusName.dump());
+        }
+    }
+
     return true;
 }
 
@@ -1114,6 +1149,32 @@ bool cdataProcess::setOutputsXrandr(json & js)
         int _layout_horizontal = js["layout_horizontal"].get<int>();
         int _layout_vertical = js["layout_vertical"].get<int>();
 
+        vector<MOutputInfo> _supportvOutputInfo;
+
+        short shRetS = pcmxrandr->getSupportMode(_supportvOutputInfo);
+        MyModelInfoEX *pMode = NULL;
+        bool bIsFoundMode = false;
+        if(shRetS == 0 && _supportvOutputInfo.size() > 0)
+        {
+            for (size_t j = 0; j < _supportvOutputInfo[0].modes.size(); j++)
+            {
+                if(_supportvOutputInfo[0].modes[j].width == m_nWidth && _supportvOutputInfo[0].modes[j].height == m_nHight)
+                {
+                    pMode = &_supportvOutputInfo[0].modes[j];
+                    m_nWidth = _supportvOutputInfo[0].modes[j].width;
+                    m_nHight = _supportvOutputInfo[0].modes[j].height;
+                    bIsFoundMode = true;
+                    break;
+                }
+            }
+
+        }
+        else
+        {
+            XERROR("cdataProcess::setOutputsXrandr ERROR,Could not find this resolution!\n");
+            return false;
+        }
+
        
         
         CMYSIZE currentSize, maxSize;
@@ -1153,29 +1214,7 @@ bool cdataProcess::setOutputsXrandr(json & js)
                 }
             }
         }
-        vector<MOutputInfo> _supportvOutputInfo;
-
-        short shRetS = pcmxrandr->getSupportMode(_supportvOutputInfo);
-        MyModelInfoEX *pMode = NULL;
-        bool bIsFoundMode = false;
-        if(shRetS == 0 && _supportvOutputInfo.size() > 0)
-        {
-            for (size_t j = 0; j < _supportvOutputInfo[0].modes.size(); j++)
-            {
-                if(_supportvOutputInfo[0].modes[j].width == m_nWidth && _supportvOutputInfo[0].modes[j].height == m_nHight)
-                {
-                    pMode = &_supportvOutputInfo[0].modes[j];
-                    bIsFoundMode = true;
-                    break;
-                }
-            }
-
-        }
-        else
-        {
-            XERROR("cdataProcess::setOutputsXrandr ERROR,Could not find this resolution!\n");
-            return false;
-        }
+        
 
 
 
@@ -2070,6 +2109,7 @@ bool cdataProcess::Init()
     InitMainOutputModes();
     cmyxrandr * pcmxrandr = cmyxrandr::GetInstance();
     pcmxrandr->GetOutputAndGpuName(m_vGPUInterface);
+    json jOutpusName;
     CIniReader iniReader("config.ini");
     bool bIsSetting = iniReader.ReadBoolean("screen", "isSetting", false);
     if(!bIsSetting)
@@ -2091,11 +2131,16 @@ bool cdataProcess::Init()
                 {
                     std::cout << *it << '\n';
                     jnode["isUsed"].at(iloop) = true;
+                    jOutpusName.push_back(*it);
                 }
                 m_vGPUInterface[i].jsonStr = jnode.dump();
                 XINFO("{}\n", m_vGPUInterface[i].jsonStr);
                 // todo
             }
+            XINFO("cdataProcess::setGpuInterface:{}\n", jOutpusName.dump());
+            iniReader.WriteBoolean("screen", "settingUsedOutputs", true);
+            iniReader.WriteString("outputsSettings", "outputsUsed", jOutpusName.dump());
+        
         }
     }
 

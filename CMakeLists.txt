@@ -3,7 +3,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12)
 project(DisplayControlServer)
 
 # 定义一个CMake选项来控制是否使用CEF
-option(USE_CEF_SWITCH "" ON)
+#option(USE_CEF_SWITCH "" ON)
 
 # 添加自定义命令来运行Makefile???
 # add_custom_command(
@@ -243,9 +243,190 @@ if(USE_CEF_SWITCH)
 
         )
 
+
+            
+    #add_subdirectory(3rd/nvidia-settings)
+
+
+
+
+
+    #file(GLOB infer_lib  ${PROJECT_SOURCE_DIR}/src/infer_lib/*)
+    #file(COPY ${infer_lib} DESTINATION infer_lib)
+
+    #file(GLOB include_hk  ${PROJECT_SOURCE_DIR}/src/include_hk/*)
+    #file(COPY ${include_hk} DESTINATION include_hk)
+
+    #file(GLOB lib  ${PROJECT_SOURCE_DIR}/src/lib/MVS/64/*)
+    #file(COPY ${include_hk} DESTINATION lib/MVS/64/)
+
+    #configure_file(src/dlp/PixelConfig.ini PixelConfig.ini COPYONLY)
+    #configure_file(src/dlp/dlpConfig.ini dlpConfig.ini COPYONLY)
+
+    #~/code/fastdds/Fast-DDS-Gen/scripts/fastddsgen -example CMake testSecurity.idl
+
+    #configure_file(${CMAKE_SOURCE_DIR}/dpcs.service.in ${CMAKE_CURRENT_BINARY_DIR}/dpcs.service @ONLY)
+    #configure_file(${CMAKE_SOURCE_DIR}/dpcs_deb/etc/init.d/dpcs ${CMAKE_CURRENT_BINARY_DIR}/init/dpcs @ONLY)
+
+    INSTALL(TARGETS dpcs CONFIGURATIONS Debug RUNTIME DESTINATION /usr/src/dpcs/)
+    INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/dpcs.service DESTINATION /etc/systemd/system/)
+    #INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/dpcs DESTINATION /usr/src/dpcs)
+
+
+
+    #说明要生成的是deb包
+    SET(CPACK_GENERATOR "DEB")
+    # 指定deb包的版本号
+    set(_VERSION_MAJOR 0)
+    set(_VERSION_MINOR 0)
+    set(_VERSION_PATCH 1)
+    set(CPACK_PACKAGE_VERSION_MAJOR "${_VERSION_MAJOR}")
+    set(CPACK_PACKAGE_VERSION_MINOR "${_VERSION_MINOR}")
+    set(CPACK_PACKAGE_VERSION_PATCH "${_VERSION_PATCH}")
+    #设置架构
+    set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
+
+    # 指定程序名，就是程序安装后的名字
+    set(CPACK_DEBIAN_PACKAGE_NAME "dpcs")
+    #set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
+    set(CPACK_PACKAGE_NAME "dpcs")
+
+    #设置依赖
+    # SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.3.1-6)")
+    # SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.14), libgcc1 (>= 1:3.0)")
+    # SET(CPACK_DEBIAN_PACKAGE_DEPENDS qtbase5-dev)
+    # SET(CPACK_DEBIAN_PACKAGE_DEPENDS libboost-all-dev)
+    # SET(CPACK_DEBIAN_PACKAGE_DEPENDS qtcreator)
+    # SET(CPACK_DEBIAN_PACKAGE_DEPENDS qtwebengine5-dev)
+    # SET(CPACK_DEBIAN_PACKAGE_DEPENDS libspdlog-dev)
+    # SET(CPACK_DEBIAN_PACKAGE_DEPENDS libgtk2.0-dev)
+    # SET(CPACK_DEBIAN_PACKAGE_DEPENDS libgtk-3-dev)
+    # SET(CPACK_DEBIAN_PACKAGE_DEPENDS libxv-dev)
+    # SET(CPACK_DEBIAN_PACKAGE_DEPENDS libxrandr-dev)
+    # SET(CPACK_DEBIAN_PACKAGE_DEPENDS libgl1-mesa-dev libgtk-3-dev libxxf86vm-dev libvdpau-dev)
+    # SET(CPACK_DEBIAN_PACKAGE_DEPENDS cmake)
+    #SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt5core5a, libqt5widgets5, libqt5network5, libqt5gui5")
+
+    #设置description
+    SET(CPACK_PACKAGE_DESCRIPTION "dpcs description")
+
+    #设置联系方式
+    #SET(CPACK_PACKAGE_CONTACT "sunhaitao@amplesky.com")
+
+    #设置维护人
+    #set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Michael Sun")
+    SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Michael Sun <sunhaitao@amplesky.com>")
+
+    #获取编译时间
+    string(TIMESTAMP COMPILE_TIME %Y%m%d_%H%M%S)
+    set(build_time    ${COMPILE_TIME})
+    #设置打出来的包名
+    #set(CPACK_PACKAGE_FILE_NAME  xcl-${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${COMPILE_TIME}-${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}) 
+    set(CPACK_PACKAGE_FILE_NAME  ${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION_MAJOR}-${CPACK_PACKAGE_VERSION_MINOR}-${CPACK_PACKAGE_VERSION_PATCH}-${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}) 
+
+    #设置安装路径
+    #set(CPACK_PACKAGING_INSTALL_PREFIX  "/home/xcl/install")
+
+    #设置包的描述文件
+    #set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/INSTALL.md")
+
+
+
+    include(CPack)
+
+
+    ##############debian/control设置完成了，下面设置控制脚本，动态库，changelog等#################
+
+    #lib目录下保存这一些动态库和安装控制脚本（postinst、postrm、preinst、prerm）  
+    #doc目录下是changelog和copyright等文件
+
+    #SET(LIBS_DIR "$ENV{DBXML_DIR}/lib")
+    #将库文件安装到/usr/lib下
+    #INSTALL(FILES ${LIBS_DIR}/libdb-4.8.so ${LIBS_DIR}/libdbxml-2.5.so ${LIBS_DIR}/libxerces-c-3.0.so ${LIBS_DIR}/libxqilla.so.5 ${LIBS_DIR}/libxqilla.so.5.0.2  DESTINATION /usr/lib)
+
+    #SET(DOCS_DIR ${CMAKE_SOURCE_DIR}/doc)
+
+    #将pro-cc.conf文件安装时copy到/etc/init下
+    #INSTALL(FILES ${CMAKE_SOURCE_DIR}/pro-cc.conf DESTINATION /etc/init)
+
+
+
+    ##############################其他选项#############################
+    #设置section
+    set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
+
+    #设置priority
+    set(CPACK_DEBIAN_PACKAGE_PRIORITY "Optional")
+
+    # 获取Git提交哈希
+    execute_process(
+    COMMAND git rev-parse --short HEAD
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_COMMIT_ID
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+    )
+
+    # 设置默认值（无Git环境时）
+    if(NOT GIT_COMMIT_ID)
+    set(GIT_COMMIT_ID "unknown")
+    endif()
+
+    # 创建带版本号的打包目录
+    set(VERSIONED_BUILD_DIR "${CMAKE_BINARY_DIR}/dpcs_debug_${GIT_COMMIT_ID}")
+    file(MAKE_DIRECTORY ${VERSIONED_BUILD_DIR})
+
+    # 自动拷贝需要的文件到build目录下
+    set(COPY_SOURCE_DIR "${CMAKE_SOURCE_DIR}/3rd/QCefView/build/output/Debug/bin")
+
+    add_custom_command(
+        OUTPUT copied
+        COMMAND cp -r ${COPY_SOURCE_DIR}/* ${CMAKE_BINARY_DIR}
+        DEPENDS ${COPY_SOURCE_DIR}
+        COMMENT "Copying directory ${COPY_SOURCE_DIR} to ${CMAKE_BINARY_DIR}"
+    )
+
+    # 自动拷贝需要的文件到打包目录下
+    add_custom_command(
+        OUTPUT copied1
+        COMMAND cp -r ${COPY_SOURCE_DIR}/* ${VERSIONED_BUILD_DIR}
+        DEPENDS ${COPY_SOURCE_DIR}
+        COMMENT "Copying directory ${COPY_SOURCE_DIR} to ${VERSIONED_BUILD_DIR}"
+    )
+
+    # 自动拷贝编译后的可执行文件到打包目录
+    set(COPY_SOURCE_DIR1 "${CMAKE_BINARY_DIR}/3rd" "${CMAKE_BINARY_DIR}/dpcs_autogen" "${CMAKE_BINARY_DIR}/dpcs")
+
+    add_custom_command(
+        OUTPUT copied2
+        COMMAND cp -r ${COPY_SOURCE_DIR1} ${VERSIONED_BUILD_DIR}
+        DEPENDS ${COPY_SOURCE_DIR1}
+        COMMENT "Copying directory ${COPY_SOURCE_DIR1} to ${VERSIONED_BUILD_DIR}"
+    )
+
+    # 自动拷贝打包工具和打包需要的文件到build目录
+    set(COPY_SOURCE_DIR2 "${CMAKE_SOURCE_DIR}/dpcs_deb" "${CMAKE_SOURCE_DIR}/packetdeb")
+
+    foreach(FILE ${COPY_SOURCE_DIR2})
+        file(COPY ${FILE} DESTINATION ${CMAKE_BINARY_DIR})
+    endforeach()
+
+    # 自动拷贝配置文件到打包目录
+    set(COPY_SOURCE_DIR3 "${CMAKE_SOURCE_DIR}/config.ini" "${CMAKE_SOURCE_DIR}/dlgconfig.ini")
+
+    foreach(FILE ${COPY_SOURCE_DIR3})
+        file(COPY ${FILE} DESTINATION ${VERSIONED_BUILD_DIR})
+    endforeach()
+
+    # 编译后执行命令 copied copied1 copied2
+    add_custom_target(
+        CopyDirectory ALL
+        DEPENDS copied copied1 copied2
+    )
+
 else()
 
-        add_executable(dpcs
+    add_executable(dpcs
         main.cpp
         # ${SRC_SRC}
         src/build_date_time.cpp
@@ -274,9 +455,9 @@ else()
         ${http_SRC}      
 
         # ${spdlog_SRC} 
-        )
+    )
 
-        target_link_libraries(dpcs PRIVATE
+    target_link_libraries(dpcs PRIVATE
 
         #  -lusb -ludev -lhidapi-hidraw
         # -lboost_system -lboost_thread -lboost_filesystem -lboost_iostreams -lboost_chrono
@@ -293,189 +474,9 @@ else()
 
         # ${OpenCV_LIBS} 
         ${Boost_LIBRARIES}
-
-        )
+    )
 
 
 endif()
 
 
-
-#add_subdirectory(3rd/nvidia-settings)
-
-
-
-
-
-#file(GLOB infer_lib  ${PROJECT_SOURCE_DIR}/src/infer_lib/*)
-#file(COPY ${infer_lib} DESTINATION infer_lib)
-
-#file(GLOB include_hk  ${PROJECT_SOURCE_DIR}/src/include_hk/*)
-#file(COPY ${include_hk} DESTINATION include_hk)
-
-#file(GLOB lib  ${PROJECT_SOURCE_DIR}/src/lib/MVS/64/*)
-#file(COPY ${include_hk} DESTINATION lib/MVS/64/)
-
-#configure_file(src/dlp/PixelConfig.ini PixelConfig.ini COPYONLY)
-#configure_file(src/dlp/dlpConfig.ini dlpConfig.ini COPYONLY)
-
-#~/code/fastdds/Fast-DDS-Gen/scripts/fastddsgen -example CMake testSecurity.idl
-
-#configure_file(${CMAKE_SOURCE_DIR}/dpcs.service.in ${CMAKE_CURRENT_BINARY_DIR}/dpcs.service @ONLY)
-#configure_file(${CMAKE_SOURCE_DIR}/dpcs_deb/etc/init.d/dpcs ${CMAKE_CURRENT_BINARY_DIR}/init/dpcs @ONLY)
-
-INSTALL(TARGETS dpcs CONFIGURATIONS Debug RUNTIME DESTINATION /usr/src/dpcs/)
-INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/dpcs.service DESTINATION /etc/systemd/system/)
-#INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/dpcs DESTINATION /usr/src/dpcs)
-
-
-
-#说明要生成的是deb包
-SET(CPACK_GENERATOR "DEB")
-# 指定deb包的版本号
-set(_VERSION_MAJOR 0)
-set(_VERSION_MINOR 0)
-set(_VERSION_PATCH 1)
-set(CPACK_PACKAGE_VERSION_MAJOR "${_VERSION_MAJOR}")
-set(CPACK_PACKAGE_VERSION_MINOR "${_VERSION_MINOR}")
-set(CPACK_PACKAGE_VERSION_PATCH "${_VERSION_PATCH}")
-#设置架构
-set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
-
-# 指定程序名，就是程序安装后的名字
-set(CPACK_DEBIAN_PACKAGE_NAME "dpcs")
-#set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
-set(CPACK_PACKAGE_NAME "dpcs")
-
-#设置依赖
-# SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.3.1-6)")
-# SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.14), libgcc1 (>= 1:3.0)")
-# SET(CPACK_DEBIAN_PACKAGE_DEPENDS qtbase5-dev)
-# SET(CPACK_DEBIAN_PACKAGE_DEPENDS libboost-all-dev)
-# SET(CPACK_DEBIAN_PACKAGE_DEPENDS qtcreator)
-# SET(CPACK_DEBIAN_PACKAGE_DEPENDS qtwebengine5-dev)
-# SET(CPACK_DEBIAN_PACKAGE_DEPENDS libspdlog-dev)
-# SET(CPACK_DEBIAN_PACKAGE_DEPENDS libgtk2.0-dev)
-# SET(CPACK_DEBIAN_PACKAGE_DEPENDS libgtk-3-dev)
-# SET(CPACK_DEBIAN_PACKAGE_DEPENDS libxv-dev)
-# SET(CPACK_DEBIAN_PACKAGE_DEPENDS libxrandr-dev)
-# SET(CPACK_DEBIAN_PACKAGE_DEPENDS libgl1-mesa-dev libgtk-3-dev libxxf86vm-dev libvdpau-dev)
-# SET(CPACK_DEBIAN_PACKAGE_DEPENDS cmake)
-#SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt5core5a, libqt5widgets5, libqt5network5, libqt5gui5")
-
-#设置description
-SET(CPACK_PACKAGE_DESCRIPTION "dpcs description")
-
-#设置联系方式
-#SET(CPACK_PACKAGE_CONTACT "sunhaitao@amplesky.com")
-
-#设置维护人
-#set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Michael Sun")
-SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Michael Sun <sunhaitao@amplesky.com>")
-
-#获取编译时间
-string(TIMESTAMP COMPILE_TIME %Y%m%d_%H%M%S)
-set(build_time    ${COMPILE_TIME})
-#设置打出来的包名
-#set(CPACK_PACKAGE_FILE_NAME  xcl-${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${COMPILE_TIME}-${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}) 
-set(CPACK_PACKAGE_FILE_NAME  ${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION_MAJOR}-${CPACK_PACKAGE_VERSION_MINOR}-${CPACK_PACKAGE_VERSION_PATCH}-${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}) 
-
-#设置安装路径
-#set(CPACK_PACKAGING_INSTALL_PREFIX  "/home/xcl/install")
-
-#设置包的描述文件
-#set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/INSTALL.md")
-
-
-
-include(CPack)
-
-
-##############debian/control设置完成了，下面设置控制脚本，动态库，changelog等#################
-
-#lib目录下保存这一些动态库和安装控制脚本（postinst、postrm、preinst、prerm）  
-#doc目录下是changelog和copyright等文件
-
-#SET(LIBS_DIR "$ENV{DBXML_DIR}/lib")
-#将库文件安装到/usr/lib下
-#INSTALL(FILES ${LIBS_DIR}/libdb-4.8.so ${LIBS_DIR}/libdbxml-2.5.so ${LIBS_DIR}/libxerces-c-3.0.so ${LIBS_DIR}/libxqilla.so.5 ${LIBS_DIR}/libxqilla.so.5.0.2  DESTINATION /usr/lib)
-
-#SET(DOCS_DIR ${CMAKE_SOURCE_DIR}/doc)
-
-#将pro-cc.conf文件安装时copy到/etc/init下
-#INSTALL(FILES ${CMAKE_SOURCE_DIR}/pro-cc.conf DESTINATION /etc/init)
-
-
-
-##############################其他选项#############################
-#设置section
-set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
-
-#设置priority
-set(CPACK_DEBIAN_PACKAGE_PRIORITY "Optional")
-
-# 获取Git提交哈希
-execute_process(
-  COMMAND git rev-parse --short HEAD
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-  OUTPUT_VARIABLE GIT_COMMIT_ID
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-  ERROR_QUIET
-)
-
-# 设置默认值（无Git环境时）
-if(NOT GIT_COMMIT_ID)
-  set(GIT_COMMIT_ID "unknown")
-endif()
-
-# 创建带版本号的打包目录
-set(VERSIONED_BUILD_DIR "${CMAKE_BINARY_DIR}/dpcs_debug_${GIT_COMMIT_ID}")
-file(MAKE_DIRECTORY ${VERSIONED_BUILD_DIR})
-
-# 自动拷贝需要的文件到build目录下
-set(COPY_SOURCE_DIR "${CMAKE_SOURCE_DIR}/3rd/QCefView/build/output/Debug/bin")
-
-add_custom_command(
-    OUTPUT copied
-    COMMAND cp -r ${COPY_SOURCE_DIR}/* ${CMAKE_BINARY_DIR}
-    DEPENDS ${COPY_SOURCE_DIR}
-    COMMENT "Copying directory ${COPY_SOURCE_DIR} to ${CMAKE_BINARY_DIR}"
-)
-
-# 自动拷贝需要的文件到打包目录下
-add_custom_command(
-    OUTPUT copied1
-    COMMAND cp -r ${COPY_SOURCE_DIR}/* ${VERSIONED_BUILD_DIR}
-    DEPENDS ${COPY_SOURCE_DIR}
-    COMMENT "Copying directory ${COPY_SOURCE_DIR} to ${VERSIONED_BUILD_DIR}"
-)
-
-# 自动拷贝编译后的可执行文件到打包目录
-set(COPY_SOURCE_DIR1 "${CMAKE_BINARY_DIR}/3rd" "${CMAKE_BINARY_DIR}/dpcs_autogen" "${CMAKE_BINARY_DIR}/dpcs")
-
-add_custom_command(
-    OUTPUT copied2
-    COMMAND cp -r ${COPY_SOURCE_DIR1} ${VERSIONED_BUILD_DIR}
-    DEPENDS ${COPY_SOURCE_DIR1}
-    COMMENT "Copying directory ${COPY_SOURCE_DIR1} to ${VERSIONED_BUILD_DIR}"
-)
-
-# 自动拷贝打包工具和打包需要的文件到build目录
-set(COPY_SOURCE_DIR2 "${CMAKE_SOURCE_DIR}/dpcs_deb" "${CMAKE_SOURCE_DIR}/packetdeb")
-
-foreach(FILE ${COPY_SOURCE_DIR2})
-    file(COPY ${FILE} DESTINATION ${CMAKE_BINARY_DIR})
-endforeach()
-
-# 自动拷贝配置文件到打包目录
-set(COPY_SOURCE_DIR3 "${CMAKE_SOURCE_DIR}/config.ini" "${CMAKE_SOURCE_DIR}/dlgconfig.ini")
-
-foreach(FILE ${COPY_SOURCE_DIR3})
-    file(COPY ${FILE} DESTINATION ${VERSIONED_BUILD_DIR})
-endforeach()
-
-# 编译后执行命令 copied copied1 copied2
-add_custom_target(
-    CopyDirectory ALL
-    DEPENDS copied copied1 copied2
-)

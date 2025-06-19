@@ -954,6 +954,7 @@ short cmyxrandr::getAllScreenInfoXrandr(vector<MOutputInfo> & vOutputInfo,CMYSIZ
 {
     try
     {
+        boost::lock_guard<boost::mutex> lock(m_mutexGetAllScreenInfoXrandr);
         CIniReader iniReader("config.ini");
         bool bSettingUsedOutputs = iniReader.ReadBoolean("screen", "settingUsedOutputs", false);
         string valueOutpusName = iniReader.ReadString("outputsSettings", "outputsUsed", "");
@@ -977,10 +978,8 @@ short cmyxrandr::getAllScreenInfoXrandr(vector<MOutputInfo> & vOutputInfo,CMYSIZ
             else
                 bSettingUsedOutputs = false;            
 
-        }
+        }       
         
-
-        boost::lock_guard<boost::mutex> lock(m_mutexGetAllScreenInfoXrandr);
         getCurrentConfigSizes();
         CMYSIZE min,max;
         getScreenSizeRange(min,max);
