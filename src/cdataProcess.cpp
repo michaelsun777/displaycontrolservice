@@ -572,6 +572,10 @@ int cdataProcess::GetOutputsInfo_shell(json & js)
                 bfirstOne = true;
                 sortBuf[id] = 1;
             }
+            else
+            {
+                sortBuf[id] = 1;
+            }
            
             node["id"] = id;
             node["primary"] = vOutputInfo[i].primary;
