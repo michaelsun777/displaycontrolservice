@@ -3,7 +3,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12)
 project(DisplayControlServer)
 
 # 定义一个CMake选项来控制是否使用CEF
-#option(USE_CEF_SWITCH "" ON)
+option(USE_CEF_SWITCH "" ON)
 
 # 添加自定义命令来运行Makefile???
 # add_custom_command(
@@ -147,6 +147,7 @@ INCLUDE_DIRECTORIES(src/UI)
 
 INCLUDE_DIRECTORIES(src)
 
+aux_source_directory(src/CDController SRC_CDCONTROLLER_SRC)
 
 aux_source_directory(3rd/httpserver http_SRC)
 
@@ -209,13 +210,14 @@ if(USE_CEF_SWITCH)
         src/UI/qcefwidget.ui
         src/IniReader.cpp
         src/ini.cpp
-
+        
         ${http_SRC}
         src/UI/dugiswidget.cpp
         src/UI/dugiswidget.ui
 
         # 3rd/QCefView/example/QCefViewTest/CefViewWidget.cpp
         # 3rd/QCefView/example/QCefViewTest/DownloadManager.cpp
+        ${SRC_CDCONTROLLER_SRC}
         )
 
         target_link_libraries(dpcs PRIVATE
@@ -231,7 +233,7 @@ if(USE_CEF_SWITCH)
         ${QT_LIBRARIES}
         -lspdlog 
         -lX11 -lXrandr -lm -lXext #-lXNVCtrl #  // 
-        -lxcb -lxcb-randr
+        -lxcb -lxcb-randr -lXcursor
         -lsystemd
         #-LXNVCtrl
         #-L/usr/lib/x86_64-linux-gnu/libXNVCtrl.so.0
@@ -452,7 +454,8 @@ else()
         src/IniReader.cpp
         src/ini.cpp
 
-        ${http_SRC}      
+        ${http_SRC}
+        ${SRC_CDCONTROLLER_SRC}     
 
         # ${spdlog_SRC} 
     )
@@ -465,7 +468,7 @@ else()
         ${QT_LIBRARIES}
         -lspdlog 
         -lX11 -lXrandr -lm -lXext #-lXNVCtrl #  // 
-        -lxcb -lxcb-randr
+        -lxcb -lxcb-randr -lXcursor
         -lsystemd
         #-LXNVCtrl
         #-L/usr/lib/x86_64-linux-gnu/libXNVCtrl.so.0
