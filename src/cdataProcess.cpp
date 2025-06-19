@@ -36,6 +36,7 @@ void * cdataProcess::workerThreadListen(void * p)
 
 cdataProcess::cdataProcess(/* args */)
 {
+    m_bRunning = false;
     m_nWidth = 0,m_nHight = 0;
     m_layout_vertical = 0,m_layout_horizontal = 0;
 
@@ -1126,6 +1127,81 @@ bool cdataProcess::setOutputsXrandr(json & js)
     }
 
     updateUnderManagementOutputs(js);
+    //////////////////////转Xrandr shell逻辑//////////////////////////////////
+    {
+        std::vector<std::string> vWidthAndHight = CMDEXEC::Split(resolution, 'x');
+        int _width = std::stoi(vWidthAndHight[0]);
+        int _hight = std::stoi(vWidthAndHight[1]);
+        if(_width <= 0 || _hight <= 0)
+        {
+            return false;
+        }
+        int _layout_horizontal = js["layout_horizontal"].get<int>();
+        int _layout_vertical = js["layout_vertical"].get<int>();
+        
+        std::shared_ptr<CDController::Settings> pSettings = make_shared<CDController::Settings>();
+        pSettings->width = _width;
+        pSettings->height = _hight;
+
+        for (size_t i = 0; i < m_underManagementOutputs.size(); i++) // vector<MOutputInfo>
+        {
+            pSettings->order.push_back(m_underManagementOutputs[i].name);
+            if (m_underManagementOutputs[i].primary)
+            {
+                pSettings->primary = m_underManagementOutputs[i].name;
+            }
+
+            shared_ptr<CDController::Pos> desiredPos;
+            desiredPos = make_shared<CDController::Pos>(m_underManagementOutputs[i].pos.xPos, m_underManagementOutputs[i].pos.yPos);          
+            desiredPos->outName = m_underManagementOutputs[i].name;
+            pSettings->outputsPos.push_back(desiredPos);
+           
+            //settings.outputsPos.push_back(make_shared<CDController::Pos>(desiredPos));
+        }
+        {
+            boost::lock_guard<boost::mutex> lock(m_settinglstMtx);
+            m_settinglst.push_back(pSettings);
+            m_nWidth = _width;
+            m_nHight = _hight;
+            m_layout_horizontal = _layout_horizontal;
+            m_layout_vertical = _layout_vertical;
+            m_allLayouts = allResolution;
+        }
+        {            
+            sleep(3);            
+            int status = CDController::layout_check(pSettings);
+            if (status == EXIT_SUCCESS)
+            {
+                return true;
+            }
+            else
+            {
+                XERROR("cdataProcess::setOutputsXrandr layout errno={}\n", status);
+                return false;
+            }
+        }
+           
+
+        // int status = CDController::layout(settings);
+        // if (status == EXIT_SUCCESS)
+        // {
+        //     return true;
+        // }
+        // else
+        // {
+        //     XERROR("cdataProcess::setOutputsXrandr layout errno={}\n",status);
+        //     return false;
+        // }
+
+
+    }
+    
+
+
+
+
+
+    /***********************旧逻辑********************** */
 
     // int nMaxId = 0;
     // for (json::iterator it = jarry.begin(); it != jarry.end(); it++)
@@ -2104,6 +2180,12 @@ std::string cdataProcess::get_cur_executable_path()
 
 bool cdataProcess::Init()
 {
+    m_bRunning = true;
+    if(pthread_create(&m_threadDeal, NULL, workerThread, (void *)this) != 0)
+    {
+        printf("Failed to create thread\n");
+    }
+
     boost::lock_guard<boost::mutex> lock(m_mutexSetOutput);
     InitOutputInfo(); 
     InitMainOutputModes();
@@ -2144,11 +2226,64 @@ bool cdataProcess::Init()
         }
     }
 
-    m_pEvents = new CNvControlEvents();
-    m_pEvents->init();
-    m_pEvents->start();
+    // m_pEvents = new CNvControlEvents();
+    // m_pEvents->init();
+    // m_pEvents->start();
+
+    
+
+    
+
     return true;
 }
+
+void * cdataProcess::workerThread(void * p)
+{
+    cdataProcess * pThis = (cdataProcess *)p;
+    try
+    {        
+        while (pThis->m_bRunning)
+        {
+            
+            if(pThis->m_settinglst.size() > 0)
+            {
+                boost::lock_guard<boost::mutex> lock(pThis->m_settinglstMtx);
+
+                std::shared_ptr<CDController::Settings> psettings = pThis->m_settinglst.front();
+                CDController::Settings settings;
+                swap(settings.order,psettings->order);
+                settings.outputsPos = psettings->outputsPos;
+                settings.primary = psettings->primary;
+                settings.width = psettings->width;
+                settings.height = psettings->height;
+
+
+                int status = CDController::layout(settings);
+                if (status == EXIT_SUCCESS)
+                {
+                    XCRITICAL("cdataProcess::setOutputsXrandr layout status={}\n",status);
+                    //return true;
+                }
+                else
+                {
+                    XERROR("cdataProcess::setOutputsXrandr layout status={}\n",status);
+                    //return false;
+                }
+                pThis->m_settinglst.pop_front();
+
+
+            }
+            usleep(10000);
+        }
+        return 0;
+    }
+    catch (...)
+    {
+        XERROR("cdataProcess::workerThread error,exit");
+    }
+    return 0;
+}
+
 
 bool cdataProcess::OnCheckAndUpdate()
 {

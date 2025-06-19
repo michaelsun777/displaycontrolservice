@@ -1,0 +1,282 @@
+/*
+   Copyright 2018 Alexander Courtis
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+#include "xrandrrutil.h"
+
+#include <sstream>
+#include <cstring>
+#include <cmath>
+#include <system_error>
+
+using namespace std;
+namespace CDController {
+// stolen from xrandr.c; assuming this works, as we're reliant on xrandr anyway
+unsigned int refreshFromModeInfo(const XRRModeInfo &modeInfo)
+{
+    double rate;
+    double vTotal = modeInfo.vTotal;
+
+    if (modeInfo.modeFlags & RR_DoubleScan)
+        /* doublescan doubles the number of lines */
+        vTotal *= 2;
+
+    if (modeInfo.modeFlags & RR_Interlace)
+        /* interlace splits the frame into two fields */
+        /* the field rate is what is typically reported by monitors */
+        vTotal /= 2;
+
+    if (modeInfo.hTotal && vTotal)
+        rate = ((double)modeInfo.dotClock / ((double)modeInfo.hTotal * vTotal));
+    else
+        rate = 0;
+
+    // round up
+    return static_cast<unsigned int>(round(rate));
+}
+
+const string renderXrandrCmd(const list<shared_ptr<Output>> &outputs, const shared_ptr<Output> &primary, const long &dpi, const long &rate)
+{
+    stringstream ss;
+    ss << "xrandr \\\n --dpi " << dpi;
+    for (const auto &output : outputs)
+    {
+        ss << " \\\n --output " << output->name;
+        if (output->desiredActive && output->desiredMode && output->desiredPos)
+        {
+            ss << " --mode " << output->desiredMode->width << "x" << output->desiredMode->height;
+            if (rate == 0)
+            {
+                ss << " --rate " << output->desiredMode->refresh;
+            }
+            else
+            {
+                ss << " --rate " << rate;
+            }
+            ss << " --pos ";
+            ss << output->desiredPos->x << "x" << output->desiredPos->y;
+            if (output == primary)
+            {
+                ss << " --primary";
+            }
+        }
+        else
+        {
+            ss << " --off";
+        }
+    }
+    return ss.str();
+}
+
+Mode *modeFromXRR(RRMode id, const XRRScreenResources *resources)
+{
+    if (resources == nullptr)
+        throw invalid_argument("cannot construct Mode: NULL XRRScreenResources");
+
+    XRRModeInfo *modeInfo = nullptr;
+    for (int i = 0; i < resources->nmode; i++)
+    {
+        if (id == resources->modes[i].id)
+        {
+            modeInfo = &(resources->modes[i]);
+            break;
+        }
+    }
+
+    if (modeInfo == nullptr)
+        throw invalid_argument("cannot construct Mode: cannot retrieve RRMode '" + to_string(id) + "'");
+
+    return new Mode(id, modeInfo->width, modeInfo->height, refreshFromModeInfo(*modeInfo));
+}
+
+// build a list of Output based on the current and possible state of the world
+const list<shared_ptr<Output>> discoverOutputs(std::vector<std::shared_ptr<Mode>> & vSupportModes)
+{
+    list<shared_ptr<Output>> outputs;
+
+    // get the display
+    Display *dpy = XOpenDisplay(nullptr);
+    if (!dpy)
+        throw domain_error(string("unable to open display '") + XDisplayName(nullptr) + "'");
+
+    // get the root window
+    int screen = DefaultScreen(dpy);
+    Window rootWindow = RootWindow(dpy, screen);
+
+    // get RandR resources
+    XRRScreenResources *screenResources = XRRGetScreenResources(dpy, rootWindow);
+
+    // iterate outputs
+    for (int i = 0; i < screenResources->noutput; i++)
+    {
+        Output::State state;
+        list<std::shared_ptr<const Mode>> modes;
+        std::shared_ptr<Mode> currentMode, preferredMode;
+        shared_ptr<Pos> currentPos;
+        shared_ptr<Edid> edid;
+
+        // current state
+        const RROutput rrOutput = screenResources->outputs[i];
+        const XRROutputInfo *outputInfo = XRRGetOutputInfo(dpy, screenResources, rrOutput);
+        const char *name = outputInfo->name;
+        std::string outputname = name;
+        if (outputname.find("VGA") != string::npos || outputname.find("Virtual") != string::npos)
+        {
+            continue;
+        }
+        RRMode rrMode = 0;
+        if (outputInfo->crtc != 0)
+        {
+            // active outputs have CRTC info
+            state = Output::active;
+
+            // current position and mode
+            XRRCrtcInfo *crtcInfo = XRRGetCrtcInfo(dpy, screenResources, outputInfo->crtc);
+            currentPos = make_shared<Pos>(crtcInfo->x, crtcInfo->y);
+            rrMode = crtcInfo->mode;
+            currentMode = shared_ptr<Mode>(modeFromXRR(rrMode, screenResources));
+
+            if (outputInfo->nmode == 0)
+            {
+                // output is active but has been disconnected
+                state = Output::disconnected;
+            }
+        }
+        else if (outputInfo->nmode != 0)
+        {
+            // inactive connected outputs have modes available
+            state = Output::connected;
+        }
+        else
+        {
+            state = Output::disconnected;
+        }
+
+        // iterate all properties to find EDID; XRRQueryOutputProperty fails when queried with XInternAtom
+        int nprop;
+        Atom *atoms = XRRListOutputProperties(dpy, rrOutput, &nprop);
+        for (int j = 0; j < nprop; j++)
+        {
+            Atom atom = atoms[j];
+            char *atomName = XGetAtomName(dpy, atom);
+
+            // drill down on Edid
+            if (strcmp(atomName, RR_PROPERTY_RANDR_EDID) == 0)
+            {
+
+                // retrieve property specifics
+                Atom actualType;
+                int actualFormat;
+                unsigned long nitems, bytesAfter;
+                unsigned char *prop;
+                XRRGetOutputProperty(dpy, rrOutput, atom,
+                                     0,     // offset
+                                     64,    // length in CARD32 - EDID 2.0 max length is 256 bytes
+                                     false, // delete
+                                     false, // pending
+                                     AnyPropertyType, &actualType, &actualFormat, &nitems, &bytesAfter, &prop);
+
+                // record Edid
+                edid = make_shared<Edid>(prop, nitems, name);
+            }
+        }
+
+        // add available modes
+        for (int j = 0; j < outputInfo->nmode; j++)
+        {
+
+            // add to modes
+            const auto &mode = shared_ptr<Mode>(modeFromXRR(outputInfo->modes[j], screenResources));
+            modes.push_back(mode);
+
+            // (optional) preferred mode based on outputInfo->modes indexed by 1
+            if (outputInfo->npreferred == j + 1)
+                preferredMode = mode;
+
+            // replace currentMode with the one from the list
+            if (mode->rrMode == rrMode)
+                currentMode = mode;
+        }
+
+        // add the output
+        outputs.push_back(make_shared<Output>(name, state, modes, currentMode, preferredMode, currentPos, edid));
+    }
+
+    /////////////////
+
+    
+
+
+    for (int loop = 0; loop < screenResources->nmode; loop++)
+    {
+        bool bfound = true;
+        for (const auto &output : outputs)
+        {
+            //printf("output:%s,output->modes.size()=%d\n", output->name.c_str(),output->modes.size());
+            //for (size_t j = 0; j < _vOutputInfo[i].modes.size(); j++)
+            if(output->state == Output::active)
+            {
+                bool bTmpFound = false;
+                for (const auto &mode : output->modes)
+                {
+                    if (mode->rrMode == screenResources->modes[loop].id)
+                    {
+                        bTmpFound = true;
+                        break;
+                    }
+                }
+                
+                if (!bTmpFound)
+                {
+                    bfound = false;
+                    break;
+                }
+            }
+          
+        }
+        if (bfound)
+        {
+            bool bIsPushed = false;
+            for (size_t itmp = 0; itmp < vSupportModes.size(); itmp++)
+            {
+                if (vSupportModes[itmp]->rrMode == screenResources->modes[loop].id)
+                {
+                    bIsPushed = true;
+                    break;
+                }
+            }
+            if (!bIsPushed)
+            {                
+                const auto &mode = shared_ptr<Mode>(modeFromXRR(screenResources->modes[loop].id, screenResources));
+
+                vSupportModes.push_back(mode);
+            }
+        }
+
+        // XRRModeInfo *mode = &m_pRes->modes[i];
+        // MyModelInfoEX modex(mode);
+        //
+    }
+    
+
+    ///////////////////////////////////////
+
+    XRRFreeScreenResources(screenResources);
+
+    XCloseDisplay(dpy);
+
+    return outputs;
+}
+
+}

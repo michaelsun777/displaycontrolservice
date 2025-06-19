@@ -40,6 +40,7 @@
 #include <semaphore.h>
 #include "CNvControlEvents.h"
 
+#include "CDController/layout.h"
 
 //#include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -92,6 +93,10 @@ private:
 
     vector<MOutputInfo> m_underManagementOutputs;
     boost::mutex m_mutexUnderManagementOutputs;
+    bool m_bRunning;
+    pthread_t m_threadDeal;
+    list<std::shared_ptr<CDController::Settings>> m_settinglst;
+    boost::mutex m_settinglstMtx;
 
 private:
     cdataProcess(/* args */);
@@ -149,6 +154,7 @@ public://xrandr
     std::string getCpuName();
     std::string get_cur_executable_path();
     bool OnCheckAndUpdate();
+    static void * workerThread(void * p);
 public:
     
 

@@ -437,7 +437,7 @@ void * CNvControlEvents::workerThread(void * p)
             {
                 usleep(5000 * 1000);
                 cdataProcess * pcdataProcess = cdataProcess::GetInstance();
-                pcdataProcess->OnCheckAndUpdate();                
+                //pcdataProcess->OnCheckAndUpdate();                
                 pThis->m_AtomicCounter = 0;                
             }           
         }
