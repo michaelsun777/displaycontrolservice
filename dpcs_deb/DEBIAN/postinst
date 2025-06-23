@@ -20,8 +20,6 @@ sudo chown amplesk:amplesky -R /usr/local/dpcs
 
 sudo ufw allow dpcs
 
-sudo ufw allow 18180
-
 sudo systemctl daemon-reload
 
 sudo systemctl enable colbp.service

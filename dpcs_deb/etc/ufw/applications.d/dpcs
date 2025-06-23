@@ -1,4 +1,4 @@
 [dpcs]
 title=Dpcs Server
 description=Dpcs Server Firewall Rules
-ports=18180|3000|1719|1720|5060|5061|8800|16384:32768/udp|40000:65000/tcp|40000:65000/udp
+ports=18180|18186

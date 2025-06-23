@@ -1,0 +1,18 @@
+[Unit]
+Description=The Display Control colbp Server
+After=network.target gdm3.service
+
+[Service]
+Type=forking
+PIDFile=/usr/local/dpcs/colbp.pid  # 会在启动ngnix服务时会创建并将其进程信息保存到该文件
+ExecStart=/usr/local/dpcs/colbp
+ExecStop=/bin/kill -s QUIT $MAINPID
+PrivateTmp=true
+RestartSec=5s
+Restart=always
+WorkingDirectory=/usr/local/dpcs
+User=root
+
+[Install]
+WantedBy=multi-user.target
+
