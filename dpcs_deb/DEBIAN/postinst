@@ -4,9 +4,15 @@
 echo "install dpcs !"
 
 sudo mv etc/systemd/system/dpcs.service /etc/systemd/system/
+
 sudo mv etc/init.d/dpcs /etc/init.d/
 
+sudo mv etc/systemd/system/colbp.service /etc/systemd/system/
+
+
+
 sudo chmod 644 /usr/local/dpcs/dpcs.service
+sudo chmod 644 /usr/local/dpcs/colbp.service
 
 sudo chmod 777 /etc/init.d/dpcs
 
@@ -14,8 +20,14 @@ sudo chown amplesk:amplesky -R /usr/local/dpcs
 
 sudo ufw allow dpcs
 
+sudo ufw allow 18180
+
 sudo systemctl daemon-reload
 
+sudo systemctl enable colbp.service
+
 sudo systemctl enable dpcs.service
+
+sudo service colbp start
 
 sudo service dpcs start

@@ -5,14 +5,21 @@
 
 //#include <logging/filelogger.h>
 
+#include <QCoreApplication>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
+#include <QUrl>
+
 #include "requesthandler.h"
 #include "cdataProcess.h"
 
 #include "IniReader.h"
 
-
 #ifdef USE_CEF_SWITCH
 #include "dialogController.h"
+
+
 
 RequestHandler::RequestHandler(MainWindow * pMain,QObject* parent)
     :HttpRequestHandler(parent)
@@ -32,6 +39,7 @@ RequestHandler::RequestHandler(MainWindow * pMain,QObject* parent)
     m_mCodeMsg[405] = "Method Not Allowed";//不允许使用的方法
     m_mCodeMsg[500] = "Internal Server Error";//服务器内部错误
     m_mCodeMsg[503] = "Service Unavailable";//服务器暂时不可用‌
+    m_nCounter.store(0);
 }
 #endif
 
@@ -52,6 +60,7 @@ RequestHandler::RequestHandler(QObject* parent)
     m_mCodeMsg[405] = "Method Not Allowed";//不允许使用的方法
     m_mCodeMsg[500] = "Internal Server Error";//服务器内部错误
     m_mCodeMsg[503] = "Service Unavailable";//服务器暂时不可用‌
+    m_nCounter.store(0);
 }
 
 RequestHandler::~RequestHandler()
@@ -412,6 +421,21 @@ void RequestHandler::resetOutputsInfo(const HttpRequest &req, HttpResponse& res)
     json js;
     try
     {
+        
+
+        // QNetworkAccessManager manager = new QNetworkAccessManager(this)
+        // QUrl url("http://localhost:18186/displaycontrol/resartx11");
+        // QNetworkRequest request;
+        // request.setUrl(url);
+        // //设置需要设置响应报头
+        // request.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("application/json"));        
+        // //发送请求
+        // QNetworkReply *reply = manager->post(request);
+
+        //httplib::Client cli("http://localhost:18186");
+        //auto res = cli.Get("/displaycontrol/resartx11");
+
+
         //m_mutex.unlock();
         //m_mutex.unlock();
         XINFO("{RequestHandler::resetOutputsInfo unlock0}\n");
@@ -434,6 +458,28 @@ void RequestHandler::resetOutputsInfo(const HttpRequest &req, HttpResponse& res)
         
         settings.endGroup();
         settings.sync();
+
+        m_nCounter.fetch_add(1, std::memory_order_relaxed); // 原子加操作
+
+        if(m_nCounter.load(std::memory_order_relaxed) > 50)
+        {
+            m_nCounter.store(0, std::memory_order_relaxed);
+            QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+            QNetworkReply *reply = manager->get(QNetworkRequest(QUrl("http://localhost:18186/displaycontrol/resartx11")));
+            if (reply->error() == QNetworkReply::NoError)
+            {
+                QByteArray data = reply->readAll();
+                qDebug() << "GET Response:" << data;
+            }
+            else
+            {
+                qDebug() << "GET Error:" << reply->errorString();
+            }
+            reply->deleteLater();
+
+            sleep(5);
+        }
+        
 
         //cdataProcess dataprocess;       
         cdataProcess *pcdataProcess = cdataProcess::GetInstance();
@@ -625,6 +671,7 @@ void RequestHandler::setOutputsInfo(const HttpRequest &req, HttpResponse &res)
 {
     try
     {
+        m_nCounter.fetch_add(1, std::memory_order_relaxed);
         
         QByteArray barray = req.getBody();
         std::string body = barray.data();

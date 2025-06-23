@@ -96,6 +96,8 @@ int main(int argc, char *argv[])
             QSettings config("config.ini", QSettings::IniFormat);
             //config.setValue("common/ip", "");
             config.setValue("common/port", "18180");
+            config.setValue("common/colbPort", "18186");
+            
             config.setValue("screen/width", 1920);
             config.setValue("screen/height", 1080);
             config.setValue("screen/layout_horizontal", 1);
