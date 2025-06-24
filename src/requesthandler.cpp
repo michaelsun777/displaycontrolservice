@@ -463,9 +463,13 @@ void RequestHandler::resetOutputsInfo(const HttpRequest &req, HttpResponse& res)
 
         if(m_nCounter.load(std::memory_order_relaxed) > 50)
         {
+            std::string strPort = settings.value("common/colbPort", "18185").toString().toStdString();
+            std::string strUrl = "http://localhost:" + strPort + "/displaycontrol/resartx11";   
+
             m_nCounter.store(0, std::memory_order_relaxed);
             QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-            QNetworkReply *reply = manager->get(QNetworkRequest(QUrl("http://localhost:18186/displaycontrol/resartx11")));
+            //QNetworkReply *reply = manager->get(QNetworkRequest(QUrl("http://localhost:18186/displaycontrol/resartx11")));
+            QNetworkReply *reply = manager->get(QNetworkRequest(QUrl(QString::fromStdString(strUrl))));
             if (reply->error() == QNetworkReply::NoError)
             {
                 QByteArray data = reply->readAll();

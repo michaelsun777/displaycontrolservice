@@ -40,6 +40,7 @@ done
 #debname="dpcs_"$subname"_amd64.deb"
 #sudo dpkg -b dpcs_deb $debname
 cd dpcs_deb
+rm -rf usr/local/dpcs
 mkdir usr/local/dpcs -p
 road='usr/local/dpcs'
 cp -rf ../$1/* ${road}
