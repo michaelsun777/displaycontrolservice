@@ -59,6 +59,8 @@ void * http_server(void *arg)
     CIniReader iniReader("config.ini");
     int nPort = iniReader.ReadInteger("common", "colbPort", 18186);///port
     XINFO("read config http server port {}\n",nPort);
+    if(nPort <= 0)
+        nPort = 18186;
 
     Server svr;
     svr.Get("/displaycontrol/reboot", [](const Request& req, Response& res) {
@@ -95,7 +97,7 @@ void * http_server(void *arg)
     res.status = 200;
   });
 
-    svr.listen("localhost", 18186);
+    svr.listen("localhost", nPort);
     return 0;
 }
 
