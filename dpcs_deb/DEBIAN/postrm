@@ -3,10 +3,13 @@
 
 echo "delete dpcs"
 
+sudo systemctl stop colbp
 sudo systemctl stop dpcs
 
+sudo systemctl disable colbp
 sudo systemctl disable dpcs
 
+sudo rm /etc/systemd/system/colbp.service
 sudo rm /etc/systemd/system/dpcs.service
 
 sudo rm /etc/init.d/dpcs

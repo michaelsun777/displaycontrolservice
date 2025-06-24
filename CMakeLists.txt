@@ -92,7 +92,7 @@ endif()
 
 #set(QT_PATH "/opt/Qt5.14.2/5.14.2/gcc_64/")
 #set(CMAKE_PREFIX_PATH ${QT_PATH}/lib/cmake)
-
+find_package(Qt5 COMPONENTS Network REQUIRED)
 find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Widgets REQUIRED)
@@ -138,6 +138,7 @@ INCLUDE_DIRECTORIES(/usr/include)
 INCLUDE_DIRECTORIES(3rd/nvidia-settings/src/libXNVCtrl)
 INCLUDE_DIRECTORIES(3rd/nvidia-settings/src/libXNVCtrlAttributes)
 INCLUDE_DIRECTORIES(3rd/httpserver/)
+INCLUDE_DIRECTORIES(3rd/cpp-httplib)
 
 if(USE_CEF_SWITCH)
         INCLUDE_DIRECTORIES(3rd/QCefView/include)
@@ -165,7 +166,7 @@ if(USE_CEF_SWITCH)
 endif()
 
 
-aux_source_directory(src/ SRC_SRC)
+#aux_source_directory(src/ SRC_SRC)
 # aux_source_directory(src/UI SRC_SRC_UI)
 
 # test network
@@ -181,7 +182,7 @@ add_subdirectory(3rd/spdlog)
 
 if(USE_CEF_SWITCH)
 
-        add_executable(dpcs
+    add_executable(dpcs
         main.cpp
         # ${SRC_SRC}
         src/build_date_time.cpp
@@ -228,9 +229,9 @@ if(USE_CEF_SWITCH)
         # 3rd/QCefView/example/QCefViewTest/CefViewWidget.cpp
         # 3rd/QCefView/example/QCefViewTest/DownloadManager.cpp
         ${SRC_CDCONTROLLER_SRC}
-        )
+    )
 
-        target_link_libraries(dpcs PRIVATE
+    target_link_libraries(dpcs PRIVATE
         # "-Wl,--no-as-needed /home/amplesky/ccc/displaycontrolservice/3rd/QCefView/build/output/Debug/bin/libQCefView.so"
         # "-Wl,--no-as-needed /home/amplesky/ccc/displaycontrolservice/3rd/QCefView/build/output/Debug/bin/libcef.so"
 
@@ -253,6 +254,21 @@ if(USE_CEF_SWITCH)
         # ${OpenCV_LIBS} 
         ${Boost_LIBRARIES}
 
+    )
+
+    add_executable(colbp 
+        collaborativeProcess.cpp
+        src/cspdlog.cpp
+        src/IniReader.cpp
+        src/ini.cpp
+        )
+
+    target_link_libraries(colbp PRIVATE 
+        -lspdlog
+        -lsystemd 
+        pthread
+        -ldl
+        ${Boost_LIBRARIES}
         )
 
 
@@ -280,8 +296,10 @@ if(USE_CEF_SWITCH)
     #configure_file(${CMAKE_SOURCE_DIR}/dpcs.service.in ${CMAKE_CURRENT_BINARY_DIR}/dpcs.service @ONLY)
     #configure_file(${CMAKE_SOURCE_DIR}/dpcs_deb/etc/init.d/dpcs ${CMAKE_CURRENT_BINARY_DIR}/init/dpcs @ONLY)
 
-    INSTALL(TARGETS dpcs CONFIGURATIONS Debug RUNTIME DESTINATION /usr/src/dpcs/)
+    INSTALL(TARGETS dpcs CONFIGURATIONS Debug RUNTIME DESTINATION /usr/local/dpcs/)
+    INSTALL(TARGETS colbp CONFIGURATIONS Debug RUNTIME DESTINATION /usr/local/dpcs/)
     INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/dpcs.service DESTINATION /etc/systemd/system/)
+    INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/colbp.service DESTINATION /etc/systemd/system/)
     #INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/dpcs DESTINATION /usr/src/dpcs)
 
 
@@ -407,7 +425,7 @@ if(USE_CEF_SWITCH)
     )
 
     # 自动拷贝编译后的可执行文件到打包目录
-    set(COPY_SOURCE_DIR1 "${CMAKE_BINARY_DIR}/3rd" "${CMAKE_BINARY_DIR}/dpcs_autogen" "${CMAKE_BINARY_DIR}/dpcs")
+    set(COPY_SOURCE_DIR1 "${CMAKE_BINARY_DIR}/3rd" "${CMAKE_BINARY_DIR}/dpcs_autogen" "${CMAKE_BINARY_DIR}/dpcs" "${CMAKE_BINARY_DIR}/colbp")
 
     add_custom_command(
         OUTPUT copied2
@@ -476,7 +494,7 @@ else()
         # -lboost_system -lboost_thread -lboost_filesystem -lboost_iostreams -lboost_chrono
         # -lMvCameraControl -luuid -lcurl -lstdc++fs
         ${QT_LIBRARIES}
-        -lspdlog 
+        -lspdlog
         -lX11 -lXrandr -lm -lXext #-lXNVCtrl #  // 
         -lxcb -lxcb-randr -lXcursor
         -lsystemd
@@ -486,6 +504,21 @@ else()
         -ldl
 
         # ${OpenCV_LIBS} 
+        ${Boost_LIBRARIES}
+    )
+
+    add_executable(colbp 
+        collaborativeProcess.cpp
+        src/cspdlog.cpp
+        src/IniReader.cpp
+        src/ini.cpp
+        )
+
+    target_link_libraries(colbp PRIVATE 
+        -lspdlog
+        -lsystemd 
+        pthread
+        -ldl
         ${Boost_LIBRARIES}
     )
 

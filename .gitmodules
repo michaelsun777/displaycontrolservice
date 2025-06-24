@@ -16,3 +16,6 @@
 [submodule "3rd/QCefView"]
 	path = 3rd/QCefView
 	url = https://github.com/CefView/QCefView.git
+[submodule "3rd/cpp-httplib"]
+	path = 3rd/cpp-httplib
+	url = https://github.com/yhirose/cpp-httplib.git

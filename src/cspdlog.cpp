@@ -185,12 +185,13 @@ void CSpdlog::SetFileLogLevel(spdlog::level::level_enum log_level)
 
 CSpdlog* CSpdlog::m_instance = NULL;
 
-CSpdlog* CSpdlog::GetInstance()
+CSpdlog* CSpdlog::GetInstance(std::string name)
 {
     if ( m_instance == NULL )
     {
         m_instance = new CSpdlog;
-        m_instance->Init("dpc","./var"); //初始化日志
+        //m_instance->Init("dpc","./var"); //初始化日志
+        m_instance->Init(name,"./var"); //初始化日志
         m_instance->SetConsoleLogLevel(spdlog::level::trace); //设置终端界面输出级别
         m_instance->SetFileLogLevel(spdlog::level::trace);     //设置log文件输出级别
 

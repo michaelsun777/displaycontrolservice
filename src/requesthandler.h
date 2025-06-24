@@ -20,6 +20,8 @@
 #include <boost/thread/lock_guard.hpp>
 #include <boost/thread/mutex.hpp>
 
+#include <atomic>
+
 using namespace stefanfrings;
 using namespace std;
 /**
@@ -33,6 +35,7 @@ class RequestHandler : public HttpRequestHandler
 private:
   std::map<int, std::string> m_mCodeMsg;
   boost::mutex m_mutex;
+  std::atomic<int> m_nCounter;
 
 public:
   /**

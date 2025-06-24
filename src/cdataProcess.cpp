@@ -745,7 +745,7 @@ bool cdataProcess::GetMainOutputModes(json & js)
 }
 
 bool cdataProcess::ResetOutputsInfo()
-{
+{    
     //cmyxrandr *pcmxrandr = cmyxrandr::GetInstance();
     //pcmxrandr->SetOutputIsChanged();
     //sleep(1);    

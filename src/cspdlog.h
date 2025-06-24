@@ -26,7 +26,7 @@ protected:
 public:
         ~CSpdlog();
 
-        static CSpdlog *GetInstance();
+        static CSpdlog *GetInstance(std::string name = "dpcs");
         static std::shared_ptr<spdlog::logger> getLogger();
         void Init(const std::string & name,const std::string &logPath, std::size_t max_size=10*1024*1024, std::size_t max_file = 1000);
         void SetConsoleLogLevel(spdlog::level::level_enum log_level);
