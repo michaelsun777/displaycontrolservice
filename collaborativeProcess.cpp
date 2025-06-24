@@ -11,6 +11,7 @@
 #include <boost/thread/thread.hpp>
 
 #include "src/IniReader.h"
+#include "src/networkmanager.h"
 
 
 using namespace std;
@@ -24,7 +25,9 @@ enum MsgCmd
     MSG_CMD_NONE = 0,
     MSG_CMD_REBOOT = 1,
     MSG_CMD_RESTARTX11 = 2,
-    MSG_CMD_SETIP = 3,
+    MSG_CMD_SETNETWORK = 3,
+    MSG_CMD_GETNETWORK,
+    MSG_CMD_GETALLNETWORK,
 };
 
 struct MsgInfo
@@ -56,6 +59,7 @@ std::string dump_headers(const Headers &headers)
 
 void * http_server(void *arg)
 {
+    NetworkManager manager;
     CIniReader iniReader("config.ini");
     int nPort = iniReader.ReadInteger("common", "colbPort", 18186);///port
     XINFO("read config http server port {}\n",nPort);
@@ -82,20 +86,82 @@ void * http_server(void *arg)
     //res.set_content("Hello World!", "application/json");
   });
 
-    svr.Post("/displaycontrol/setip", [](const Request& req, Response& res) {
+    svr.Post("/displaycontrol/setnetwork", [&](const Request& req, Response& res) {
         XINFO("receive /displaycontrol/resartx11\n");
-        auto headers = dump_headers(req.headers);
+        // auto headers = dump_headers(req.headers);
         auto body = req.body;
-    MsgInfo msg;
-    msg.msgCmd = MSG_CMD_SETIP;
-    msg.msgJson = body;
-    boost::lock_guard<boost::mutex> lock(m_msglstMtx);
-    msgList.push_back(msg);
-    //sleep等待修改IP完成后，是否可以返回200？
-    res.status = 200;
+    
+    bool ret = false;
+    try
+    {
+        json jdata = json::parse(body);
+        ret = manager.setNetwork(jdata);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+    if (ret)
+    {
+        res.set_content("{\"code\":0,\"msg\":\"success\"}", "application/json");
+    }
+    else
+    {
+        res.set_content("{\"code\":1,\"msg\":\"failed\"}", "application/json");
+    }
+    
+  });
+
+  svr.Get("/displaycontrol/getnetwork", [&](const Request& req, Response& res) {
+        XINFO("receive /displaycontrol/getnetwork\n");
+
+    auto body = req.body;
+    bool ret = false;
+    json jNetwork;
+
+    try
+    {
+        json jdata = json::parse(body);
+        ret = manager.getNetwork(jdata["device"].get<std::string>(), jNetwork);
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+    json retJson;
+    if (ret)
+    {
+        retJson["code"] = 0;
+        retJson["msg"] = jNetwork;
+        res.set_content(retJson.dump().c_str(), "application/json");
+    }
+    else
+    {
+        res.set_content("{\"code\":1,\"msg\":\"failed\"}", "application/json");
+    }
+    
+  });
+
+  svr.Get("/displaycontrol/getallnetwork", [&](const Request& req, Response& res) {
+        XINFO("receive /displaycontrol/getallnetwork\n");
+    
+    json jNetwork;
+    bool ret = manager.getallNetwork(jNetwork);
+    json retJson;
+    if (ret)
+    {
+        retJson["code"] = 0;
+        retJson["msg"] = jNetwork;
+        res.set_content(retJson.dump().c_str(), "application/json");
+    }
+    else
+    {
+        res.set_content("{\"code\":1,\"msg\":\"failed\"}", "application/json");
+    }
   });
 
     svr.listen("localhost", 18186);
+    // svr.listen("0.0.0.0", 18186);
     return 0;
 }
 
@@ -153,7 +219,7 @@ void * msgThread(void *arg)
                 
             }
                 break;
-            case MSG_CMD_SETIP:
+            case MSG_CMD_SETNETWORK:
             {
                 try
                 {                    

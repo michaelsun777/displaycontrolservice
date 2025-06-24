@@ -261,6 +261,8 @@ if(USE_CEF_SWITCH)
         src/cspdlog.cpp
         src/IniReader.cpp
         src/ini.cpp
+        src/networkmanager.cpp
+        src/networkmanager.h
         )
 
     target_link_libraries(colbp PRIVATE 
@@ -268,6 +270,7 @@ if(USE_CEF_SWITCH)
         -lsystemd 
         pthread
         -ldl
+        yaml-cpp::yaml-cpp
         ${Boost_LIBRARIES}
         )
 
