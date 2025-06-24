@@ -100,6 +100,7 @@ find_package(Qt5Network REQUIRED)
 find_package(Qt5Gui REQUIRED)
 find_package(Qt5OpenGL REQUIRED)
 find_package(Qt5WebEngineWidgets REQUIRED)
+find_package(yaml-cpp)
 ## Set the QT_LIBRARIES variable for Qt5, so it can be used below.
 # set(QT_LIBRARIES Qt5::Core Qt5::Widgets Qt5::Network)
 SET(QT_LIBRARIES ${Qt5Core_LIBRARIES} ${Qt5Gui_LIBRARIES} ${Qt5Widgets_LIBRARIES} ${Qt5OpenGL_LIBRARIES}
@@ -167,6 +168,15 @@ endif()
 
 #aux_source_directory(src/ SRC_SRC)
 # aux_source_directory(src/UI SRC_SRC_UI)
+
+# test network
+# add_executable(networkTest
+# src/networkmanager.h
+# src/networkmanager.cpp)
+
+# target_link_libraries(networkTest PRIVATE
+# ${Boost_LIBRARIES}
+# yaml-cpp::yaml-cpp)
 
 add_subdirectory(3rd/spdlog)
 
@@ -251,6 +261,8 @@ if(USE_CEF_SWITCH)
         src/cspdlog.cpp
         src/IniReader.cpp
         src/ini.cpp
+        src/networkmanager.cpp
+        src/networkmanager.h
         )
 
     target_link_libraries(colbp PRIVATE 
@@ -258,6 +270,7 @@ if(USE_CEF_SWITCH)
         -lsystemd 
         pthread
         -ldl
+        yaml-cpp::yaml-cpp
         ${Boost_LIBRARIES}
         )
 
