@@ -451,6 +451,15 @@ if(USE_CEF_SWITCH)
         file(COPY ${FILE} DESTINATION ${VERSIONED_BUILD_DIR})
     endforeach()
 
+    # 自动拷贝配置文件到打包目录
+    set(COPY_SOURCE_DIR4 "${CMAKE_SOURCE_DIR}/dpcs_deb/etc/init.d/dpcs" "${CMAKE_SOURCE_DIR}/dpcs_deb/etc/init.d/colbp" "${CMAKE_SOURCE_DIR}/dpcs_deb/etc/systemd/system/dpcs.service" "${CMAKE_SOURCE_DIR}/dpcs_deb/etc/systemd/system/colbp.service")
+
+    foreach(FILE ${COPY_SOURCE_DIR4})
+        file(COPY ${FILE} DESTINATION ${VERSIONED_BUILD_DIR}/tmp)
+    endforeach()
+    
+    
+
     # 编译后执行命令 copied copied1 copied2
     add_custom_target(
         CopyDirectory ALL

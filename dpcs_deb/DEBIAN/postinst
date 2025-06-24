@@ -3,8 +3,8 @@
 
 echo "install dpcs !"
 
-sudo mv /usr/local/dpcs/dpcs.service /etc/systemd/system/
-sudo mv /usr/local/dpcs/colbp.service /etc/systemd/system/
+sudo mv /usr/local/dpcs/tmp/dpcs.service /etc/systemd/system/
+sudo mv /usr/local/dpcs/tmp/colbp.service /etc/systemd/system/
 sudo mv /usr/local/dpcs/tmp/dpcs /etc/init.d/
 sudo mv /usr/local/dpcs/tmp/colbp /etc/init.d/
 
