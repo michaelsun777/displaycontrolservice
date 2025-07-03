@@ -1131,7 +1131,9 @@ bool cdataProcess::setOutputsXrandr(json & js)
     }
 
     updateUnderManagementOutputs(js);
+
     //////////////////////转Xrandr shell逻辑//////////////////////////////////
+    /*
     {
         std::vector<std::string> vWidthAndHight = CMDEXEC::Split(resolution, 'x');
         int _width = std::stoi(vWidthAndHight[0]);
@@ -1197,9 +1199,8 @@ bool cdataProcess::setOutputsXrandr(json & js)
         //     return false;
         // }
 
-
     }
-    
+    */
 
 
 

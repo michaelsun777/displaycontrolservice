@@ -270,7 +270,7 @@ if(USE_CEF_SWITCH)
         -lsystemd 
         pthread
         -ldl
-        yaml-cpp::yaml-cpp
+        -lyaml-cpp
         ${Boost_LIBRARIES}
         )
 
