@@ -1239,7 +1239,7 @@ bool cdataProcess::setOutputsXrandr(json & js)
         {
             for (size_t j = 0; j < _supportvOutputInfo[0].modes.size(); j++)
             {
-                if(_supportvOutputInfo[0].modes[j].width == m_nWidth && _supportvOutputInfo[0].modes[j].height == m_nHight)
+                if(_supportvOutputInfo[0].modes[j].width == _width && _supportvOutputInfo[0].modes[j].height == _hight)
                 {
                     pMode = &_supportvOutputInfo[0].modes[j];
                     m_nWidth = _supportvOutputInfo[0].modes[j].width;
