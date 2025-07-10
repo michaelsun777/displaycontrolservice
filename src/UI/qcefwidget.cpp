@@ -87,3 +87,11 @@ void QCefWidget::updateWindow(QtDlgInfo *dlg)
     else
         hide();
 }
+
+void QCefWidget::setDlgStatus(bool show)
+{
+    if (show)
+        showNormal();
+    else
+        hide();
+}

@@ -421,3 +421,31 @@ bool MainWindow::checkOrder(int order, std::string id)
     }
     return true;
 }
+
+void MainWindow::setDlgStatus(bool show, std::string dlgId)
+{
+    if (dlgId == "")
+    {
+        for (std::map<std::string, QtDlgInfo *>::iterator it = m_mDlgProperty.begin(); it != m_mDlgProperty.end(); it++)
+        {
+            it->second->show = show;
+        }
+        for (std::map<std::string, QCefWidget *>::iterator dit = m_mDlgs.begin(); dit != m_mDlgs.end(); dit++)
+        {
+            dit->second->setDlgStatus(show);
+        }
+    }
+    else
+    {
+        std::map<std::string, QtDlgInfo *>::iterator itp = m_mDlgProperty.find(dlgId);
+        if (itp != m_mDlgProperty.end())
+        {
+            std::map<std::string, QCefWidget *>::iterator it = m_mDlgs.find(dlgId);
+            if (it != m_mDlgs.end())
+            {
+                it->second->setDlgStatus(show);
+                return;
+            }
+        }
+    }
+}

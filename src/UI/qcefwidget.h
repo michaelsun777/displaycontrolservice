@@ -25,6 +25,7 @@ public:
     void UpdateSetting(QtDlgInfo *dlg);
     void updateUrl(QString url);
     void updateWindow(QtDlgInfo *dlg);
+    void setDlgStatus(bool show);
 
 protected:
     void createRightCefView();

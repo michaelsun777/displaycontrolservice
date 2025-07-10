@@ -43,17 +43,18 @@ public:
     bool addDlg(QtDlgInfo & info);
     bool delDlg(QtDlgInfo & info);
     bool modifyDlg(QtDlgInfo & info);
-    bool getDlgInfo(string dlgId,QtDlgInfo & info);
+    bool getDlgInfo(std::string dlgId,QtDlgInfo & info);
     bool getAllDlgInfo(std::vector<QtDlgInfo> & vInfo);
     void removeTitleWindow(std::string name){m_titleWindows.erase(name);}
     bool checkOrder(int order, std::string id = "");
     bool getTitleStatus() {return m_isOpen;}
+    void setDlgStatus(bool show, std::string dlgId = "");
 private:
     bool parseJsonToDlgInfo(QtDlgInfo * info,string str);
     bool dlgInfoToJson(QtDlgInfo * info,string & str);
     bool readSettings();
-    bool writeSettings(string key,string value);
-    bool deleteSettings(string key);
+    bool writeSettings(std::string key,std::string value);
+    bool deleteSettings(std::string key);
     
 
 private slots:
