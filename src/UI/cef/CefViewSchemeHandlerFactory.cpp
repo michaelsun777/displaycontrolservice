@@ -49,7 +49,7 @@ CefViewSchemeHandlerFactory::Create(CefRefPtr<CefBrowser> browser,
          "center;}</style></head><body><div class=\"text\">";
     s += url;
     s += "</div><div class=\" number \">";
-    s += number;
+    // s += number;
     s += "</div></body></html>";
 
     std::string mime_type_ = "text/html";
