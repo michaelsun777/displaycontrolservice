@@ -454,8 +454,16 @@ void RequestHandler::resetOutputsInfo(const HttpRequest &req, HttpResponse& res)
         settings.setValue("layout_horizontal", "1");
         settings.setValue("layout_vertical", "1");
         settings.setValue("settingUsedOutputs", "false");
-        settings.setValue("allResolution", "1920x1080");
-        
+        // settings.setValue("allResolution", "1920x1080");
+        cmyxrandr* pcmxrandr =  cmyxrandr::GetInstance();
+        XRRScreenSize * psize = pcmxrandr->getCurrentConfigSizes();
+        std::string allResolution;
+        if (psize->width <= 0 || psize->height <= 0)
+            allResolution = "";
+        else
+            allResolution = std::to_string(psize->width) + "x" + std::to_string(psize->height);
+        settings.setValue("allResolution", allResolution.c_str());
+
         settings.endGroup();
         settings.sync();
 
@@ -494,6 +502,7 @@ void RequestHandler::resetOutputsInfo(const HttpRequest &req, HttpResponse& res)
         if (pcdataProcess->InitOutputInfoLock())
         {
             pcdataProcess->ResetOutputsInfo();
+            m_pMain->setDlgStatus(false);
             createRet(res, 200);
             return;
         }
