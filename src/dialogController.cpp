@@ -113,6 +113,13 @@ int DialogController::dlgAdd(RequestHandler* pRequestHandler,MainWindow * pMain,
     {
         cdataProcess* pcdataProcess = cdataProcess::GetInstance();
         std::string resolution = pcdataProcess->GetAllResolution();
+        if(resolution.empty())
+        {
+            json js;
+            js["error"] = "no resolution set!";
+            createRet(response, 404, js);
+            return 0;
+        }
         int allWidth = std::stoi(resolution.substr(0, resolution.find("x")));
         int allHeight = std::stoi(resolution.substr(resolution.find("x") + 1));
 
@@ -353,6 +360,13 @@ int DialogController::dlgModify(RequestHandler *pRequestHandler,MainWindow * pMa
 
     cdataProcess* pcdataProcess = cdataProcess::GetInstance();
     std::string resolution = pcdataProcess->GetAllResolution();
+    if(resolution.empty())
+    {
+        json js;
+        js["error"] = "no resolution set!";
+        createRet(response, 404, js);
+        return 0;
+    }
     int allWidth = std::stoi(resolution.substr(0, resolution.find("x")));
     int allHeight = std::stoi(resolution.substr(resolution.find("x") + 1));
 
@@ -595,6 +609,13 @@ int DialogController::dlgSearch(RequestHandler *pRequestHandler,MainWindow * pMa
         {
             cdataProcess* pcdataProcess = cdataProcess::GetInstance();
             std::string resolution = pcdataProcess->GetAllResolution();
+            if(resolution.empty())
+            {
+                json js;
+                js["error"] = "no resolution set!";
+                createRet(response, 404, js);
+                return 0;
+            }
             int allWidth = std::stoi(resolution.substr(0, resolution.find("x")));
             int allHeight = std::stoi(resolution.substr(resolution.find("x") + 1));
             cmyxrandr* pcmyxrandr = cmyxrandr::GetInstance();
