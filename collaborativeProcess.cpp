@@ -116,15 +116,18 @@ void * http_server(void *arg)
 
   svr.Get("/displaycontrol/getnetwork", [&](const Request& req, Response& res) {
         XINFO("receive /displaycontrol/getnetwork\n");
-
-    auto body = req.body;
+    std::string name = req.get_param_value("name");
+    if(name.empty())
+    {
+        res.set_content("{\"code\":1,\"msg\":\"no params\"}", "application/json");
+        return;
+    }
     bool ret = false;
     json jNetwork;
 
     try
     {
-        json jdata = json::parse(body);
-        ret = manager.getNetwork(jdata["device"].get<std::string>(), jNetwork);
+        ret = manager.getNetwork(name, jNetwork);
     }
     catch(const std::exception& e)
     {
