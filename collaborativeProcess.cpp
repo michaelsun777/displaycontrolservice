@@ -124,16 +124,9 @@ void * http_server(void *arg)
     }
     bool ret = false;
     json jNetwork;
-
-    try
-    {
-        ret = manager.getNetwork(name, jNetwork);
-    }
-    catch(const std::exception& e)
-    {
-        std::cerr << e.what() << '\n';
-    }
     json retJson;
+
+    ret = manager.getNetwork(name, jNetwork);
     if (ret)
     {
         retJson["code"] = 0;
