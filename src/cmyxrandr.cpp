@@ -1036,6 +1036,10 @@ short cmyxrandr::getAllScreenInfoXrandr(vector<MOutputInfo> & vOutputInfo,CMYSIZ
                         }
                     }
                 }
+                else
+                {
+                    moutputinfo.bIsUsed = true;
+                }
 
                 moutputinfo.nIndex = ++nIndex;
 
@@ -1079,10 +1083,15 @@ short cmyxrandr::getAllScreenInfoXrandr(vector<MOutputInfo> & vOutputInfo,CMYSIZ
                     moutputinfo.pos.yPos = rcrtinfo->y;
                     moutputinfo.size.width = rcrtinfo->width;
                     moutputinfo.size.height = rcrtinfo->height;
-                    if(currentSize.width < rcrtinfo->width)
+                    // if(currentSize.width < rcrtinfo->width)
+                    //     currentSize.width = rcrtinfo->width;
+                    // if(currentSize.height < rcrtinfo->height)
+                    //     currentSize.height = rcrtinfo->height;
+                    if(moutputinfo.primary)
+                    {
                         currentSize.width = rcrtinfo->width;
-                    if(currentSize.height < rcrtinfo->height)
                         currentSize.height = rcrtinfo->height;
+                    }
 
                     moutputinfo.current_rotation = rcrtinfo->rotation;
                     if((unsigned long)rcrtinfo->mode > 0)//当前分辨率id
@@ -1678,8 +1687,8 @@ bool cmyxrandr::GetOutputAndGpuName(vector<MYGPUINTERFACE> & vgpu)
 
 }
 
-bool cmyxrandr::GetOutputAndGpuName(json & js)
-{
+//bool cmyxrandr::GetOutputAndGpuName(json & js)
+//{
     // if(m_vGPUInterface.size() == 0)
     // {
     //     if(!GetOutputAndGpuName(m_vGPUInterface))
@@ -1703,5 +1712,5 @@ bool cmyxrandr::GetOutputAndGpuName(json & js)
     // }
 
 
-    return true;
-}
+ //   return true;
+//}
