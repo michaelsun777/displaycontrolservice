@@ -501,8 +501,10 @@ void RequestHandler::resetOutputsInfo(const HttpRequest &req, HttpResponse& res)
         XINFO("{RequestHandler::resetOutputsInfo lock in}\n");
         if (pcdataProcess->InitOutputInfoLock())
         {
-            pcdataProcess->ResetOutputsInfo();
+            //pcdataProcess->ResetOutputsInfo();
+#ifdef USE_CEF_SWITCH
             m_pMain->setDlgStatus(false);
+#endif //USE_CEF_SWITCH
             createRet(res, 200);
             return;
         }
@@ -573,11 +575,15 @@ void RequestHandler::setGpuInterface(const HttpRequest &req, HttpResponse &res)
 
         boost::lock_guard<boost::mutex> lock(m_mutex);
         XINFO("{RequestHandler::setGpuInterface lock in}\n");
+#ifdef USE_CEF_SWITCH
         emit sendCloseTitleWindowSignal();
+#endif
         XINFO("{ send send Close Title Window Signal...}\n");
         if(pcdataProcess->setGpuInterface(jbody))
         {
+#ifdef USE_CEF_SWITCH
             m_pMain->setDlgStatus(false);
+#endif
             XINFO("{RequestHandler::setGpuInterface unlock0}\n");
             createRet(res,200);
             return;
@@ -771,14 +777,15 @@ void RequestHandler::setOutputsInfo(const HttpRequest &req, HttpResponse &res)
 
             CIniReader iniReader("config.ini");
             iniReader.WriteString("outputsSettings", "outputs", js.dump());
-            iniReader.WriteString("screen", "isSetting", "true");
+            iniReader.ReadBoolean("screen", "isSetting", true);
             iniReader.WriteInteger("screen", "width", _width);
             iniReader.WriteInteger("screen", "height", _hight);
             iniReader.WriteInteger("screen", "layout_horizontal", _layout_h);
             iniReader.WriteInteger("screen", "layout_vertical", _layout_w);
             iniReader.WriteString("screen", "allResolution", allResolution);
-            
+#ifdef USE_CEF_SWITCH
             m_pMain->setDlgStatus(false);
+#endif //USE_CEF_SWITCH
             createRet(res, 200);
             return;
             

@@ -91,7 +91,7 @@ public:
     CMYSIZE             getPreferredMode();
     bool                isPrimary       ();
     void                setPrimary      ();
-    XRRCrtcInfo *       getCrtcInfo();
+    //XRRCrtcInfo *       getCrtcInfo();
 
 
    
@@ -118,7 +118,7 @@ public:
     int GetNvXScreen(Display *dpy);
     void print_display_id_and_name(Display *dpy, int target_id, const char *tab);
     bool GetOutputAndGpuName(vector<MYGPUINTERFACE> & vgpu);
-    bool GetOutputAndGpuName(json & js);
+    //bool GetOutputAndGpuName(json & js);
 };
 
 
