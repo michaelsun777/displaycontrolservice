@@ -126,7 +126,7 @@ public:
     void print_display_id_and_name(Display *dpy, int target_id, const char *tab);
     bool GetOutputAndGpuName(json & js);
 public://xrandr
-    bool GetMonitorsInfo(string & strInfo);
+    //bool GetMonitorsInfo(string & strInfo);
     bool GetMonitorsInfo_shell(json & js);
     int GetOutputsInfo_shell(json & js);
     bool GetMainOutputModes(json & js);

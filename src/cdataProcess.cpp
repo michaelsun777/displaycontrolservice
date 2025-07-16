@@ -184,9 +184,10 @@ void cdataProcess::print_display_id_and_name(Display *dpy, int target_id, const 
     print_display_name(dpy, target_id, NV_CTRL_STRING_DISPLAY_DEVICE_NAME,name_str,strDisplayName);
 }
 
-
+/*
 bool cdataProcess::GetMonitorsInfo(string & strInfo)
 {
+    
     json js;
     //string strDisplayName = ":0";
     //cmyxrandr cxr(strDisplayName);
@@ -309,7 +310,7 @@ bool cdataProcess::GetMonitorsInfo(string & strInfo)
 
     return true;
 }
-
+*/
 bool cdataProcess::GetMonitorsInfo_shell(json & js)
 {
     //json js;
@@ -554,37 +555,64 @@ int cdataProcess::GetOutputsInfo_shell(json & js)
 
         for (size_t i = 0; i < vOutputInfo.size(); i++)
         {
-            json node;
-            node["name"] = vOutputInfo[i].name;
-            node["coordinateOrderX"] = (vOutputInfo[i].pos.xPos / m_nWidth);
-            node["coordinateOrderY"] = (vOutputInfo[i].pos.yPos / m_nHight);
-            int id = (vOutputInfo[i].pos.xPos / m_nWidth) + (vOutputInfo[i].pos.yPos / m_nHight) * m_layout_vertical;
-            if(id == 0 && bfirstOne)
+            if(vOutputInfo[i].bIsUsed)
             {
-                //bfirstOne = false;
-                firstOneTime++;
-                id = m_layout_horizontal * m_layout_vertical - firstOneTime;
-                sortBuf[id] = 1;
+                json node;
+                node["name"] = vOutputInfo[i].name;
+                node["coordinateOrderX"] = (vOutputInfo[i].pos.xPos / m_nWidth);
+                node["coordinateOrderY"] = (vOutputInfo[i].pos.yPos / m_nHight);
+                int id = (vOutputInfo[i].pos.xPos / m_nWidth) + (vOutputInfo[i].pos.yPos / m_nHight) * m_layout_vertical;
+                if(id == 0 && bfirstOne)
+                {
+                    //bfirstOne = false;
+                    firstOneTime++;
+                    id = m_layout_horizontal * m_layout_vertical - firstOneTime;
+                    sortBuf[id] = 1;
 
-            }
-            else if (id == 0 && (!bfirstOne))
+                }
+                else if (id == 0 && (!bfirstOne))
+                {
+                    bfirstOne = true;
+                    sortBuf[id] = 1;
+                }
+                else
+                {
+                    sortBuf[id] = 1;
+                }
+            
+                node["id"] = id;
+                node["primary"] = vOutputInfo[i].primary;
+                node["index"] = vOutputInfo[i].nIndex;
+                if(vOutputInfo[i].connected)
+                {
+                    node["connected"] = true;                
+                }
+                jsdata.push_back(node);
+            }            
+        }
+
+        for (size_t i = 0; i < vOutputInfo.size(); i++)
+        {
+            if(!vOutputInfo[i].bIsUsed)
             {
-                bfirstOne = true;
-                sortBuf[id] = 1;
+                json node;
+                for (size_t j = 0; j < sizeof(sortBuf)/sizeof(int); j++)
+                {
+                    if(sortBuf[j] == 0)
+                    {
+                        node["id"] = j;
+                        sortBuf[j] = 1;
+                        break;
+                    }
+                }
+                node["name"] = vOutputInfo[i].name;
+                node["coordinateOrderX"] = 0;
+                node["coordinateOrderY"] = 0;
+                node["primary"] = false;
+                node["index"] = vOutputInfo[i].nIndex;
+                jsdata.push_back(node);
             }
-            else
-            {
-                sortBuf[id] = 1;
-            }
-           
-            node["id"] = id;
-            node["primary"] = vOutputInfo[i].primary;
-            node["index"] = vOutputInfo[i].nIndex;
-            if(vOutputInfo[i].connected)
-            {
-                node["connected"] = true;                
-            }
-            jsdata.push_back(node);
+
         }
 
         if(vOutputInfo.size() < m_layout_vertical * m_layout_horizontal)
@@ -1224,7 +1252,7 @@ bool cdataProcess::setOutputsXrandr(json & js)
     //         nMaxId = nId;
     //     }
     // }
-    bool bIsChange = false;
+    bool bIsChange = false;   
 
     cmyxrandr *pcmxrandr = cmyxrandr::GetInstance();
     list<RROutput> outputs = pcmxrandr->getOutputs();
@@ -1233,12 +1261,10 @@ bool cdataProcess::setOutputsXrandr(json & js)
         std::vector<std::string> vWidthAndHight = CMDEXEC::Split(resolution, 'x');
         int _width = std::stoi(vWidthAndHight[0]);
         int _hight = std::stoi(vWidthAndHight[1]);
-        
         int _layout_horizontal = js["layout_horizontal"].get<int>();
-        int _layout_vertical = js["layout_vertical"].get<int>();
+        int _layout_vertical = js["layout_vertical"].get<int>();        
 
         vector<MOutputInfo> _supportvOutputInfo;
-
         short shRetS = pcmxrandr->getSupportMode(_supportvOutputInfo);
         MyModelInfoEX *pMode = NULL;
         bool bIsFoundMode = false;
@@ -1262,7 +1288,6 @@ bool cdataProcess::setOutputsXrandr(json & js)
             XERROR("cdataProcess::setOutputsXrandr ERROR,Could not find this resolution!\n");
             return false;
         }
-
        
         
         CMYSIZE currentSize, maxSize;
@@ -1277,30 +1302,33 @@ bool cdataProcess::setOutputsXrandr(json & js)
         //enable all
         for (vector<MOutputInfo>::iterator it = vOutputInfo.begin(); it != vOutputInfo.end(); it++)
         {
-            if (it->crtc == 0)
+            if(it->bIsUsed)
             {
-                int size_w = 0, size_h = 0;
-                for (size_t i = 0; i < it->modes.size(); i++)
+                if (it->crtc == 0)
                 {
-                    if (it->modes[i].width == m_nWidth && it->modes[i].height == m_nHight)
+                    int size_w = 0, size_h = 0;
+                    for (size_t i = 0; i < it->modes.size(); i++)
                     {
-                        size_w = m_nWidth;
-                        size_h = m_nHight;
-                        break;
+                        if (it->modes[i].width == m_nWidth && it->modes[i].height == m_nHight)
+                        {
+                            size_w = m_nWidth;
+                            size_h = m_nHight;
+                            break;
+                        }
+                    }
+                    pcmxrandr->setOutPut(it->outputId);
+                    if (size_w == m_nWidth && size_h == m_nHight)
+                    {
+                        MYCOMMON::CMYSIZE size(m_nWidth, m_nHight);
+                        pcmxrandr->enable(size);
+                    }
+                    else
+                    {
+                        MYCOMMON::CMYSIZE size(it->modes[0].width, it->modes[0].height);
+                        pcmxrandr->enable(size);
                     }
                 }
-                pcmxrandr->setOutPut(it->outputId);
-                if (size_w == m_nWidth && size_h == m_nHight)
-                {
-                    MYCOMMON::CMYSIZE size(m_nWidth, m_nHight);
-                    pcmxrandr->enable(size);
-                }
-                else
-                {
-                    MYCOMMON::CMYSIZE size(it->modes[0].width, it->modes[0].height);
-                    pcmxrandr->enable(size);
-                }
-            }
+            }            
         }
         
 
@@ -1320,34 +1348,14 @@ bool cdataProcess::setOutputsXrandr(json & js)
             bool primary = (*it)["primary"].template get<bool>();
             for (size_t i = 0; i < vOutputInfo.size(); i++)
             {
-                if (outputName.compare(vOutputInfo[i].name) == 0) // 找到显示器,未找的话不处理
+                if (vOutputInfo[i].bIsUsed && (outputName.compare(vOutputInfo[i].name) == 0)) // 找到显示器,未找的话不处理
                 {
                     vOutputInfo[i].bIsSeted = true;
                     
-                    bool bIsNeedSetMode = true;
-                    
+                    bool bIsNeedSetMode = true;                    
                     bool bIsNeedSetPos = false;
-                    
-                    // MyModelInfoEX *pMode = &vOutputInfo[i].currentMode;
-                    // {
-                    //     bIsNeedSetMode = true;
-                    //     for (size_t l = 0; l < vOutputInfo[i].modes.size(); l++)
-                    //     {
-                    //         if (vOutputInfo[i].modes[l].name.compare(resolution) == 0)
-                    //         {
-                    //             bIsFoundMode = true;              
-                    //             pMode = &vOutputInfo[i].modes[l];                               
-                    //             break;
-                    //         }
-                    //     }
-                    // }
-
-                    //if (vOutputInfo[i].pos.xPos != nCoordinateX || vOutputInfo[i].pos.yPos != nCoordinateY)
-                    {
-                        bIsNeedSetPos = true;                        
-                    }
-
-                    //for (list<RROutput>::iterator itOut = outputs.begin(); itOut != outputs.end(); itOut++)
+                    bIsNeedSetPos = true;
+                
                     {
                         //RROutput rroutput = *itOut;
                         //pcmxrandr->setOutPut(rroutput);
@@ -1370,8 +1378,8 @@ bool cdataProcess::setOutputsXrandr(json & js)
                             if (xrroutinfo->crtc > 0)
                             {
                                 pcmxrandr->setCrtc(xrroutinfo->crtc);
-                            }
-                            _crtc = xrroutinfo->crtc;
+                                _crtc = xrroutinfo->crtc;
+                            }                            
                             XRRFreeOutputInfo(xrroutinfo);
                         }
             
@@ -1382,7 +1390,7 @@ bool cdataProcess::setOutputsXrandr(json & js)
                             if(bIsNeedSetMode && bIsFoundMode)
                             {
                                 bIsChange = true;          
-                                MYCOMMON::CMYSIZE size(pMode->width,pMode->height);
+                                MYCOMMON::CMYSIZE size(pMode->width,pMode->height);                                
                                 if(_crtc > 0)
                                 {
                                     pcmxrandr->setMode(size,pMode->id);
@@ -1528,8 +1536,8 @@ bool cdataProcess::InitOutputInfo()
    
     m_nWidth = iniReader.ReadInteger("screen", "width", 0);
     m_nHight = iniReader.ReadInteger("screen", "height", 0);
-    m_layout_horizontal = iniReader.ReadInteger("screen", "layout_horizontal", 0);
-    m_layout_vertical = iniReader.ReadInteger("screen", "layout_vertical", 0);    
+    //m_layout_horizontal = iniReader.ReadInteger("screen", "layout_horizontal", 0);
+    //m_layout_vertical = iniReader.ReadInteger("screen", "layout_vertical", 0);    
     m_allLayouts = iniReader.ReadString("screen", "allResolution", "");
 
     bool bSettingUsedOutputs = iniReader.ReadBoolean("screen", "settingUsedOutputs", false);
@@ -1561,11 +1569,11 @@ bool cdataProcess::InitOutputInfo()
         m_nHight = 1080;
     }
   
-    if(m_layout_vertical ==  0 || m_layout_horizontal == 0)
-    {
-        XERROR("请先在config.ini中配置layout_horizontal和layout_vertical");
-        exit(0);
-    }
+    // if(m_layout_vertical ==  0 || m_layout_horizontal == 0)
+    // {
+    //     XERROR("请先在config.ini中配置layout_horizontal和layout_vertical");
+    //     exit(0);
+    // }
 
     
 
@@ -1600,27 +1608,28 @@ bool cdataProcess::InitOutputInfo()
             it--;
             continue;
         }
+        /*
         else
         {
-            bool bTmpFound = false;
-            for (size_t sloop = 0; sloop < _vOutputNames.size(); sloop++)
-            {
-                if (_vOutputNames[sloop].compare(it->name) == 0)
-                {
-                    bTmpFound = true;                    
-                }
-            }
+            // bool bTmpFound = false;
+            // for (size_t sloop = 0; sloop < _vOutputNames.size(); sloop++)
+            // {
+            //     if (_vOutputNames[sloop].compare(it->name) == 0)
+            //     {
+            //         bTmpFound = true;                    
+            //     }
+            // }
 
-            if(!bTmpFound)
-            {
-                if(it->crtc > 0 && (it->size.width > 0 || it->size.height > 0))
-                {
-                    pcmxrandr->setOutPut(it->outputId);
-                    pcmxrandr->setCrtc(it->crtc);
-                    pcmxrandr->disable();
-                    continue;
-                }
-            }
+            // if(!bTmpFound)
+            // {
+            //     if(it->crtc > 0 && (it->size.width > 0 || it->size.height > 0))
+            //     {
+            //         pcmxrandr->setOutPut(it->outputId);
+            //         pcmxrandr->setCrtc(it->crtc);
+            //         pcmxrandr->disable();
+            //         continue;
+            //     }
+            // }
 
             if(it->crtc == 0)
             {
@@ -1647,12 +1656,12 @@ bool cdataProcess::InitOutputInfo()
                 }
             }            
         }
+        */
     }
 
     vOutputInfo.clear();
     shRet = pcmxrandr->getAllScreenInfoXrandr(vOutputInfo,currentSize,maxSize);
-
-
+    
 
     unsigned long currentModeId = 0,preferredModeId = 0,lastDeterminedModeId = 0;
     string lastDeterminedModeName = "",lastDeterminedModeRate = "";
@@ -1732,6 +1741,8 @@ bool cdataProcess::InitOutputInfo()
             {
                 //pMode = &_supportvOutputInfo[0].modes[j];
                 lastDeterminedModeId = _supportvOutputInfo[0].modes[j].id;
+                size_w = m_nWidth;
+                size_h = m_nHight;
                 break;
             }
         }
@@ -1743,10 +1754,134 @@ bool cdataProcess::InitOutputInfo()
     }
 
     int start_x = 0,start_y = 0;
-    if (m_layout_vertical == 1 && m_layout_horizontal == 1)
+    //if (m_layout_vertical == 1 && m_layout_horizontal == 1)
+    {
+        m_layout_horizontal = 1; 
         m_layout_vertical = vOutputInfo.size();
+        iniReader.WriteInteger("screen", "layout_horizontal", 1);
+        iniReader.WriteInteger("screen", "layout_vertical", m_layout_vertical);
+    }
 
-    
+    //设置主显示
+    {
+        if(bSettingUsedOutputs)
+        {
+            bool firstScrren = false;
+            for (size_t i = 0; i < vOutputInfo.size(); i++)
+            {
+                bool bTmpFound = false;
+                for (size_t sloop = 0; sloop < _vOutputNames.size(); sloop++)
+                {
+                    if (_vOutputNames[sloop].compare(vOutputInfo[i].name) == 0)
+                    {
+                        bTmpFound = true;
+                    }
+                }
+                if(bTmpFound)
+                {
+                    if(!firstScrren)
+                    { 
+                        pcmxrandr->setOutPut(vOutputInfo[i].outputId);
+                        if(vOutputInfo[i].crtc == 0)
+                        {
+                            int size_w = 0, size_h = 0;
+                            for (size_t i = 0; i < vOutputInfo[i].modes.size(); i++)
+                            {
+                                if (vOutputInfo[i].modes[i].width == m_nWidth && vOutputInfo[i].modes[i].height == m_nHight)
+                                {
+                                    size_w = m_nWidth;
+                                    size_h = m_nHight;                                   
+                                    break;
+                                }
+                            }
+
+                            if (size_w == m_nWidth && size_h == m_nHight)
+                            {
+                                MYCOMMON::CMYSIZE size(m_nWidth, m_nHight);
+                                pcmxrandr->enable(size);
+                            }
+                            else
+                            {
+                                MYCOMMON::CMYSIZE size(vOutputInfo[i].modes[0].width, vOutputInfo[i].modes[0].height);
+                                pcmxrandr->enable(size);
+                            }
+                            CMYPOINT offset(0, 0);
+                            pcmxrandr->setOffset(offset);
+                            pcmxrandr->setPrimary();
+                        }
+                        else
+                        {                            
+                            pcmxrandr->setCrtc(vOutputInfo[i].crtc);
+                            MYCOMMON::CMYSIZE size(0, 0);
+                            pcmxrandr->setMode(size, lastDeterminedModeId);
+
+                            CMYPOINT offset(0, 0);
+                            pcmxrandr->setOffset(offset);
+                            pcmxrandr->setPrimary();
+                        }
+                        firstScrren = true;
+                        
+                    }
+                    else if(vOutputInfo[i].crtc == 0)
+                    {
+                        int size_w = 0, size_h = 0;
+                        for (size_t i = 0; i < vOutputInfo[i].modes.size(); i++)
+                        {
+                            if (vOutputInfo[i].modes[i].width == m_nWidth && vOutputInfo[i].modes[i].height == m_nHight)
+                            {
+                                size_w = m_nWidth;
+                                size_h = m_nHight;
+                                break;
+                            }
+                        }
+                        pcmxrandr->setOutPut(vOutputInfo[i].outputId);
+                        if (size_w == m_nWidth && size_h == m_nHight)
+                        {
+                            MYCOMMON::CMYSIZE size(m_nWidth, m_nHight);
+                            pcmxrandr->enable(size);
+                        }
+                        else
+                        {
+                            MYCOMMON::CMYSIZE size(vOutputInfo[i].modes[0].width, vOutputInfo[i].modes[0].height);
+                            pcmxrandr->enable(size);
+                        }
+                    }
+                    
+                }
+            }
+        }
+        else
+        {
+            for (size_t i = 0; i < vOutputInfo.size(); i++)
+            {
+                if(vOutputInfo[i].crtc == 0)
+                {
+                    int size_w = 0, size_h = 0;
+                    for (size_t i = 0; i < vOutputInfo[i].modes.size(); i++)
+                    {
+                        if (vOutputInfo[i].modes[i].width == m_nWidth && vOutputInfo[i].modes[i].height == m_nHight)
+                        {
+                            size_w = m_nWidth;
+                            size_h = m_nHight;
+                            break;
+                        }
+                    }
+                    pcmxrandr->setOutPut(vOutputInfo[i].outputId);
+                    if (size_w == m_nWidth && size_h == m_nHight)
+                    {
+                        MYCOMMON::CMYSIZE size(m_nWidth, m_nHight);
+                        pcmxrandr->enable(size);
+                    }
+                    else
+                    {
+                        MYCOMMON::CMYSIZE size(vOutputInfo[i].modes[0].width, vOutputInfo[i].modes[0].height);
+                        pcmxrandr->enable(size);
+                    }
+                }
+            }
+        }
+
+    }
 
 
     if(bSettingUsedOutputs)
@@ -1817,12 +1952,12 @@ bool cdataProcess::InitOutputInfo()
             if (vOutputInfo[i].preferredMode.id > 0)
             {
 
-                MYCOMMON::CMYSIZE size(size_w, size_h);
+                MYCOMMON::CMYSIZE size(0, 0);
                 pcmxrandr->setMode(size, lastDeterminedModeId);
             }
             else
             {
-                MYCOMMON::CMYSIZE size(size_w, size_h);
+                MYCOMMON::CMYSIZE size(0, 0);
                 if (_crtc > 0)
                 {
                     // pcmxrandr->setMode(size, vOutputInfo[i].modes[0].id);
@@ -2009,7 +2144,7 @@ bool cdataProcess::updateUnderManagementOutputs(json & js)
         json jarry = js["layout"];
         int num = jarry.size();
         if (num <= 0)
-        {            
+        {
             return false;
         }
 

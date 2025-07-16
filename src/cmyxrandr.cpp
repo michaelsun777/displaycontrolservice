@@ -189,19 +189,19 @@ RRMode cmyxrandr::getMode() const
     return mode;
 }
 
-XRRCrtcInfo *cmyxrandr::getCrtcInfo()
-{
-    RRMode mode = 0;
-    if (m_crtc)
-    {
-        XRRCrtcInfo *pInfo = XRRGetCrtcInfo(m_pDpy, m_pRes, m_crtc);
-        if (pInfo)
-        {
-            return pInfo;
-        }
-    }
-    return NULL;
-}
+// XRRCrtcInfo *cmyxrandr::getCrtcInfo()
+// {
+//     RRMode mode = 0;
+//     if (m_crtc)
+//     {
+//         XRRCrtcInfo *pInfo = XRRGetCrtcInfo(m_pDpy, m_pRes, m_crtc);
+//         if (pInfo)
+//         {
+//             return pInfo;
+//         }
+//     }
+//     return NULL;
+// }
 
 CMYSIZE cmyxrandr::getScreenSize() const
 {
@@ -500,6 +500,7 @@ int cmyxrandr::feedScreen()
                 }
             }
         }
+        XRRFreeCrtcInfo(pInfo);
     }
     this->setScreenSize(size.width, size.height, true);
     XINFO("cmyxrandr::feedScreen() Modo width={},height={}", size.width, size.height);
@@ -595,6 +596,7 @@ CMYSIZE cmyxrandr::getOutputSize()
                             break;
                         }
                     }
+                    XRRFreeCrtcInfo(pCrtcInfo);
                 }
             }
         }
@@ -727,36 +729,43 @@ int cmyxrandr::enable(CMYSIZE size)
         {
             RRCrtc rrcrtc = *it;
             XRRCrtcInfo *pInfo = XRRGetCrtcInfo(m_pDpy, m_pRes, rrcrtc);
-
-            for (int poss = 0; poss < pInfo->npossible; poss++)
+            if(pInfo)
             {
-                RROutput rr_output = pInfo->possible[poss];
-
-                if (pInfo->noutput == 0 && pInfo->possible[poss] == m_output)
+                for (int poss = 0; poss < pInfo->npossible; poss++)
                 {
+                    RROutput rr_output = pInfo->possible[poss];
 
-                    // XRROutputInfo *pOutInfo = XRRGetOutputInfo(m_pDpy,m_pRes,rr_output);
-                    // qDebug() << QString(pOutInfo->name);
+                    if (pInfo->noutput == 0 && pInfo->possible[poss] == m_output)
+                    {
 
-                    RROutput *rr_outputs;
-                    rr_outputs = (RROutput *)calloc(1, sizeof(RROutput));
-                    rr_outputs[0] = rr_output;
+                        // XRROutputInfo *pOutInfo = XRRGetOutputInfo(m_pDpy,m_pRes,rr_output);
+                        // qDebug() << QString(pOutInfo->name);
 
-                    setScreenSize(size.width, size.height);
+                        RROutput *rr_outputs;
+                        rr_outputs = (RROutput *)calloc(1, sizeof(RROutput));
+                        rr_outputs[0] = rr_output;
 
-                    ret = XRRSetCrtcConfig(m_pDpy,
-                                           m_pRes,
-                                           rrcrtc,
-                                           CurrentTime,
-                                           pInfo->x,
-                                           pInfo->y,
-                                           rrmode,
-                                           RR_Rotate_0,
-                                           rr_outputs,
-                                           1);
-                    return ret;
+                        setScreenSize(size.width, size.height);
+
+                        ret = XRRSetCrtcConfig(m_pDpy,
+                                               m_pRes,
+                                               rrcrtc,
+                                               CurrentTime,
+                                               pInfo->x,
+                                               pInfo->y,
+                                               rrmode,
+                                               RR_Rotate_0,
+                                               rr_outputs,
+                                               1);
+                        XRRFreeCrtcInfo(pInfo);
+                        m_crtc = rrcrtc;
+                        return ret;
+                    }
                 }
+                XRRFreeCrtcInfo(pInfo);
             }
+
+            
         }
     }
     return ret;

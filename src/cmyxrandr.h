@@ -91,7 +91,7 @@ public:
     CMYSIZE             getPreferredMode();
     bool                isPrimary       ();
     void                setPrimary      ();
-    XRRCrtcInfo *       getCrtcInfo();
+    //XRRCrtcInfo *       getCrtcInfo();
 
 
    
