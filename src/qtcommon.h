@@ -24,6 +24,7 @@ public:
     int order;
     bool show;
     std::string createTime;
+    std::string operationType;
     void operator=(QtDlgInfo & src)
     {
         name = src.name.c_str();
@@ -41,6 +42,7 @@ public:
         height = src.height;
         titleEnable = src.titleEnable;
         show = src.show;
+        operationType = src.operationType;
         if(src.order != 0)     
             order = src.order;
     }
@@ -74,6 +76,11 @@ public:
         if (jdata.find("param") != jdata.end())
         {
             param = jdata["param"].template get<std::string>();
+        }
+
+        if (jdata.find("operationType") != jdata.end())
+        {
+            param = jdata["operationType"].template get<std::string>();
         }
 
         if (jdata.find("type") != jdata.end())
@@ -178,6 +185,7 @@ public:
             jdata["order"] = order;
             jdata["show"] = show;
             jdata["createTime"] = createTime;
+            jdata["operationType"] = operationType;
             return true;
         }
         catch (...)

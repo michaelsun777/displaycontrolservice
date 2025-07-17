@@ -65,6 +65,7 @@ bool MainWindow::parseJsonToDlgInfo(QtDlgInfo * info,string str)
         info->width = jdata["width"].template get<int>();
         info->order = jdata["order"].template get<int>();
         info->show = jdata["show"].template get<bool>();
+        info->operationType = jdata["operationType"].template get<bool>();
 
     }
     catch(...)
@@ -92,6 +93,7 @@ bool MainWindow::dlgInfoToJson(QtDlgInfo * info,string & str)
     jdata["width"] = info->width;
     jdata["order"] = info->order;
     jdata["show"] = info->show;
+    jdata["operationType"] = info->operationType;
     str = jdata.dump();
     return true;
 }

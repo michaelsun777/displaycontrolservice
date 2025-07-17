@@ -148,6 +148,7 @@ int DialogController::dlgAdd(RequestHandler* pRequestHandler,MainWindow * pMain,
         string name = "";
         string path = "";
         string param = "";
+        string operationType = "";
         string url = "";
         int type = 0;
         int posType = 0;
@@ -177,6 +178,11 @@ int DialogController::dlgAdd(RequestHandler* pRequestHandler,MainWindow * pMain,
         if(jdata.find("param") != jdata.end())
         {
             param = jdata["param"].template get<std::string>();
+        }
+
+        if(jdata.find("operationType") != jdata.end())
+        {
+            operationType = jdata["operationType"].template get<std::string>();
         }
 
         if(jdata.find("type") != jdata.end())
@@ -322,6 +328,7 @@ int DialogController::dlgAdd(RequestHandler* pRequestHandler,MainWindow * pMain,
         dlg.width = width;
         dlg.order = order;
         dlg.show = show;
+        dlg.operationType = operationType;
 
         // QtDlgInfo dlg;
         // dlg.height = 1080;
@@ -391,6 +398,7 @@ int DialogController::dlgModify(RequestHandler *pRequestHandler,MainWindow * pMa
     string path = "";
     string param = "";
     string url = "";
+    string operationType = "";
     int type = 0;
     int posType = 0;
     int xVirtual = 0;
@@ -430,6 +438,11 @@ int DialogController::dlgModify(RequestHandler *pRequestHandler,MainWindow * pMa
     if (jdata.find("param") != jdata.end())
     {
         param = jdata["param"].template get<std::string>();
+    }
+
+    if (jdata.find("operationType") != jdata.end())
+    {
+        operationType = jdata["operationType"].template get<std::string>();
     }
 
     if (jdata.find("type") != jdata.end())
@@ -574,6 +587,7 @@ int DialogController::dlgModify(RequestHandler *pRequestHandler,MainWindow * pMa
     dlg.height = height;
     dlg.width = width;
     dlg.show = show;
+    dlg.operationType = operationType;
 
     // QtDlgInfo dlg;
     // dlg.height = 1080;
