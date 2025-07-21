@@ -3,7 +3,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12)
 project(DisplayControlServer)
 
 # 定义一个CMake选项来控制是否使用CEF
-option(USE_CEF_SWITCH "" ON)
+#option(USE_CEF_SWITCH "" ON)
 
 # 添加自定义命令来运行Makefile???
 # add_custom_command(
@@ -524,13 +524,16 @@ else()
         src/cspdlog.cpp
         src/IniReader.cpp
         src/ini.cpp
-        )
+        src/networkmanager.cpp
+        src/networkmanager.h
+    )
 
     target_link_libraries(colbp PRIVATE 
         -lspdlog
         -lsystemd 
         pthread
         -ldl
+        -lyaml-cpp
         ${Boost_LIBRARIES}
     )
 

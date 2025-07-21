@@ -1,14 +1,17 @@
 #include "cmyxrandr.h"
 #include "ini.h"
 #include "IniReader.h"
+#include <stdlib.h>
 
 cmyxrandr* cmyxrandr::m_instance = NULL;
 
 cmyxrandr* cmyxrandr::GetInstance()
 {
     if (m_instance == NULL )
-    {
-        string strDisplayName = ":0";
+    {        
+        //string strDisplayName = ":0";
+        char * Xstatus = getenv("DISPLAY");
+        string strDisplayName = Xstatus;
         m_instance = new cmyxrandr(strDisplayName);
         //m_instance->OnUpdate();
         //m_instance->Init();
@@ -1520,7 +1523,8 @@ bool cmyxrandr::GetOutputAndGpuName(vector<MYGPUINTERFACE> & vgpu)
     vector<MOutputInfo> _vOutputInfo;
     getAllScreenInfoXrandr(_vOutputInfo,currentSize,maxSize);
 
-    Display *dpy = XOpenDisplay(NULL);
+    //Display *dpy = XOpenDisplay(NULL);
+    Display *dpy = XOpenDisplay(m_strDisplayName.c_str());
     if (!dpy) 
     {
         XERROR("Cannot open display {}.", XDisplayName(NULL));

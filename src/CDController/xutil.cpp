@@ -15,11 +15,14 @@
 */
 #include <X11/Xcursor/Xcursor.h>
 #include <cstring>
+#include <stdlib.h>
 
 namespace CDController {
 
 void resetRootCursor() {
-    Display* dpy = XOpenDisplay(nullptr);
+    char * Xstatus = getenv("DISPLAY");
+    Display* dpy = XOpenDisplay(Xstatus);
+    //Display* dpy = XOpenDisplay(nullptr);
     int screen = DefaultScreen(dpy);
     Window root = RootWindow(dpy, screen);
     Cursor cursor = XcursorLibraryLoadCursor(dpy, "left_ptr");
