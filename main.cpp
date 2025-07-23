@@ -232,7 +232,10 @@ int main(int argc, char *argv[])
 
 
 #else
+        // std::string strPort = settings.value("common/colbPort", "18186").toString().toStdString();
+        // std::string strUrl = "http://127.0.0.1:" + strPort + "/displaycontrol/resartx11";
         RequestHandler * pRequestHandler = new RequestHandler(&app);
+        // pRequestHandler->ResetX11Server(strUrl);
         new HttpListener(&settings,pRequestHandler,&app);
         cdataProcess* pcdataProcess = cdataProcess::GetInstance();
         pcdataProcess->Init();

@@ -15,7 +15,7 @@
 #include "cdataProcess.h"
 
 #include "IniReader.h"
-
+#include "md5.h"
 #ifdef USE_CEF_SWITCH
 #include "dialogController.h"
 
@@ -220,7 +220,6 @@ std::string RequestHandler::getRetMessage(int code)
     return "未定义错误码";
 }
 
-#include "md5.h"
 void RequestHandler::login(const HttpRequest &req, HttpResponse &res)
 {
     QByteArray barray = req.getBody();
@@ -415,6 +414,20 @@ void RequestHandler::getGpusInfo(const HttpRequest &req, HttpResponse& res)
     }
 }
 
+void * RequestHandler::workerForResetOutput(void * p)
+{
+    RequestHandler * pThis = (RequestHandler *)p;
+    cdataProcess *pcdataProcess = cdataProcess::GetInstance();
+    XINFO("{RequestHandler::resetOutputsInfo InitOutputInfoLock start}\n");
+    int64_t timestart = pThis->gettimestamp();
+    pThis->m_bResetOutputStatus = pcdataProcess->InitOutputInfoLock();
+    pThis->m_cvResetOutput.notify_one();
+    int64_t timeEnd = pThis->gettimestamp();
+    XINFO("RequestHandler::resetOutputsInfo InitOutputInfoLock finished,spend time{}\n", timeEnd - timestart);
+    
+    return 0;
+}
+
 void RequestHandler::resetOutputsInfo(const HttpRequest &req, HttpResponse& res)
 {
     string strData;
@@ -438,7 +451,7 @@ void RequestHandler::resetOutputsInfo(const HttpRequest &req, HttpResponse& res)
 
         //m_mutex.unlock();
         //m_mutex.unlock();
-        XINFO("{RequestHandler::resetOutputsInfo unlock0}\n");
+        XINFO("{RequestHandler::resetOutputsInfo lock0}\n");
         QSettings settings("config.ini", QSettings::IniFormat);
         settings.beginGroup("outputsSettings");
         // settings.setValue("outputs", js.dump().c_str());
@@ -454,7 +467,8 @@ void RequestHandler::resetOutputsInfo(const HttpRequest &req, HttpResponse& res)
         settings.setValue("layout_horizontal", "1");
         settings.setValue("layout_vertical", "1");
         settings.setValue("settingUsedOutputs", "false");
-        // settings.setValue("allResolution", "1920x1080");
+        settings.setValue("allResolution", "1920x1080");
+        /*
         cmyxrandr* pcmxrandr =  cmyxrandr::GetInstance();
         XRRScreenSize * psize = pcmxrandr->getCurrentConfigSizes();
         std::string allResolution;
@@ -463,10 +477,10 @@ void RequestHandler::resetOutputsInfo(const HttpRequest &req, HttpResponse& res)
         else
             allResolution = std::to_string(psize->width) + "x" + std::to_string(psize->height);
         settings.setValue("allResolution", allResolution.c_str());
-
+        */
         settings.endGroup();
         settings.sync();
-
+/*
         m_nCounter.fetch_add(1, std::memory_order_relaxed); // 原子加操作
 
         if(m_nCounter.load(std::memory_order_relaxed) > 50)
@@ -492,10 +506,62 @@ void RequestHandler::resetOutputsInfo(const HttpRequest &req, HttpResponse& res)
             sleep(5);
         }
         
+*/
+        
+        XINFO("{RequestHandler::resetOutputsInfo lock1}\n");
+        boost::lock_guard<boost::mutex> lock(m_mutex);
+        XINFO("{RequestHandler::resetOutputsInfo lock in}\n");        
 
-        //cdataProcess dataprocess;       
+        //cdataProcess *pcdataProcess = cdataProcess::GetInstance();
+        
+        m_bResetOutputStatus = false;        
+        int64_t timestart = gettimestamp();
+        pthread_t threadDeal;
+        bool bRet = false;
+
+        std::unique_lock<std::mutex> tmplock(m_waitMtx);
+        XINFO("RequestHandler::resetOutputsInfo Consumer waiting for data...\n");
+        if(pthread_create(&threadDeal, NULL, workerForResetOutput, (void *)this) != 0)
+        {
+            XINFO("RequestHandler::resetOutputsInfo Failed to create thread\n");
+        }
+        
+        // 等待最多 3 秒
+        if (m_cvResetOutput.wait_for(tmplock, std::chrono::seconds(7), [this]
+                {
+                    return m_bResetOutputStatus;
+                    // XINFO("{RequestHandler::resetOutputsInfo InitOutputInfoLock start}\n");
+                    // bRet = pcdataProcess->InitOutputInfoLock();
+                    // int64_t timeEnd = gettimestamp();
+                    // XINFO("RequestHandler::resetOutputsInfo InitOutputInfoLock finished,spend time{}\n",timeEnd - timestart);
+                    // return bRet;                    
+                }))
+        {
+            
+            // 如果在 5 秒内 data_ready == true
+            XINFO("RequestHandler::resetOutputsInfo InitOutputInfoLock finished\n");
+#ifdef USE_CEF_SWITCH
+            m_pMain->setDlgStatus(false);
+#endif //USE_CEF_SWITCH
+            createRet(res, 200);
+        }
+        else
+        {
+#ifdef USE_CEF_SWITCH
+            m_pMain->setDlgStatus(false);
+#endif //USE_CEF_SWITCH
+            int64_t timeEnd = gettimestamp();
+            XINFO("RequestHandler::resetOutputsInfo InitOutputInfoLock timed out,spend time{}\n", timeEnd - timestart);
+            //XINFO("{RequestHandler::resetOutputsInfo InitOutputInfoLock timed out}\n");            
+            std::string strPort = settings.value("common/colbPort", "18186").toString().toStdString();
+            //http://127.0.0.1:18186/displaycontrol/resartx11
+            std::string strUrl = "http://127.0.0.1:" + strPort + "/displaycontrol/resartx11";
+            ResetX11Server(strUrl);
+            createRet(res, 200);
+        }
+    /*
         cdataProcess *pcdataProcess = cdataProcess::GetInstance();
-        //m_mutex.lock(); 
+       
         XINFO("{RequestHandler::resetOutputsInfo lock}\n");
         boost::lock_guard<boost::mutex> lock(m_mutex);
         XINFO("{RequestHandler::resetOutputsInfo lock in}\n");
@@ -514,6 +580,7 @@ void RequestHandler::resetOutputsInfo(const HttpRequest &req, HttpResponse& res)
         }        
         //m_mutex.unlock();
         XINFO("{RequestHandler::resetOutputsInfo unlock}\n");
+        */
     }
     catch (...)
     {
@@ -686,6 +753,22 @@ void RequestHandler::setMonitorInfo(const HttpRequest &req, HttpResponse& res)
 
 }
 
+void * RequestHandler::workerForSetOutputsInfo(void * p)
+{
+    SetOutputsParam * setparam = (SetOutputsParam *)p;
+    RequestHandler * pThis = (RequestHandler *)setparam->pThis;   
+    cdataProcess *pcdataProcess = cdataProcess::GetInstance();
+    XINFO("{RequestHandler::workerForSetOutputsInfo setOutputsXrandrLock start}\n");
+    int64_t timestart = pThis->gettimestamp();
+    pThis->m_bResetOutputStatus = pcdataProcess->setOutputsXrandrLock(setparam->js);
+    pThis->m_cvResetOutput.notify_one();
+    int64_t timeEnd = pThis->gettimestamp();
+    XINFO("RequestHandler::workerForSetOutputsInfo setOutputsXrandrLock finished,spend time{}\n", timeEnd - timestart);
+    
+    return 0;
+
+}
+
 void RequestHandler::setOutputsInfo(const HttpRequest &req, HttpResponse &res)
 {
     try
@@ -742,38 +825,76 @@ void RequestHandler::setOutputsInfo(const HttpRequest &req, HttpResponse &res)
         //m_mutex.lock();
         boost::lock_guard<boost::mutex> lock(m_mutex);
         XINFO("{RequestHandler::setOutputsInfo lock in}\n");
+
+        m_setparam.pThis = this;
+        m_setparam.js = js;
+        //SetOutputsParam *pTmp = &setparam;
+
+        int64_t timestart = gettimestamp();
+
+        pthread_t threadDeal;
+        m_bResetOutputStatus = false;
+        std::unique_lock<std::mutex> tmplock(m_waitMtx);
+        XINFO("RequestHandler::resetOutputsInfo Consumer waiting for data...\n");
+        if(pthread_create(&threadDeal, NULL, workerForSetOutputsInfo, (void *)&m_setparam)!= 0)
+        {
+            XINFO("RequestHandler::resetOutputsInfo Failed to create thread\n");
+        }
+
+        bool bRet = false;
+        
+        // 等待最多 3 秒
+        if (m_cvResetOutput.wait_for(tmplock, std::chrono::seconds(7), [this] { return m_bResetOutputStatus; }))
+        {
+            bRet = true;
+        }
+        else
+        {
+            bRet = false;
+        }
+        
+        // string layoutName = js["layoutName"].get<std::string>();
+        string resolution = js["resolution"].get<std::string>();
+        string allResolution = js["allResolution"].get<std::string>();
+
+        std::vector<std::string> vWidthAndHight = CMDEXEC::Split(resolution, 'x');
+        int _width = std::stoi(vWidthAndHight[0]);
+        int _hight = std::stoi(vWidthAndHight[1]);
+        
+        int _layout_h = js["layout_horizontal"].get<int>();
+        int _layout_w = js["layout_vertical"].get<int>();
+
+        CIniReader iniReader("config.ini");
+        iniReader.WriteString("outputsSettings", "outputs", js.dump());
+        iniReader.ReadBoolean("screen", "isSetting", true);
+        iniReader.WriteInteger("screen", "width", _width);
+        iniReader.WriteInteger("screen", "height", _hight);
+        iniReader.WriteInteger("screen", "layout_horizontal", _layout_h);
+        iniReader.WriteInteger("screen", "layout_vertical", _layout_w);
+        iniReader.WriteString("screen", "allResolution", allResolution);
+
+        std::string strPort = iniReader.ReadString("common", "colbPort", "18186");
+
+#ifdef USE_CEF_SWITCH
+            m_pMain->setDlgStatus(false);
+#endif //USE_CEF_SWITCH
+        /*
         bool bRet = pcdataProcess->setOutputsXrandrLock(js);
+        */
         if (bRet)
         {
-            //m_mutex.unlock();
+            /*
             XINFO("{RequestHandler::setOutputsInfo unlock}\n");
-            //string layoutName = js["layoutName"].get<std::string>();
+            
             string resolution = js["resolution"].get<std::string>();
             string allResolution = js["allResolution"].get<std::string>();
             
             std::vector<std::string> vWidthAndHight = CMDEXEC::Split(resolution, 'x');
             int _width = std::stoi(vWidthAndHight[0]);
             int _hight = std::stoi(vWidthAndHight[1]);
-            // std::vector<std::string> vLayout = CMDEXEC::Split(layoutName, 'x');
-            // int _layout_w = std::stoi(vLayout[0]);
-            // int _layout_h = std::stoi(vLayout[1]);
+
             int _layout_h = js["layout_horizontal"].get<int>();
             int _layout_w = js["layout_vertical"].get<int>();
- 
-
-            // QSettings settings("config.ini", QSettings::IniFormat);
-            // settings.beginGroup("outputsSettings");
-            // settings.setValue("outputs", js.dump().c_str());
-            // settings.endGroup();
-            // settings.beginGroup("screen");
-            // settings.setValue("isSetting", "true");
-            // settings.setValue("width", _width);
-            // settings.setValue("height", _hight);
-            // settings.setValue("layout_horizontal", _layout_h);
-            // settings.setValue("layout_vertical", _layout_w);
-            // settings.setValue("allResolution", allResolution.c_str());
-            // settings.endGroup();
-            // settings.sync();
 
             CIniReader iniReader("config.ini");
             iniReader.WriteString("outputsSettings", "outputs", js.dump());
@@ -783,19 +904,21 @@ void RequestHandler::setOutputsInfo(const HttpRequest &req, HttpResponse &res)
             iniReader.WriteInteger("screen", "layout_horizontal", _layout_h);
             iniReader.WriteInteger("screen", "layout_vertical", _layout_w);
             iniReader.WriteString("screen", "allResolution", allResolution);
-#ifdef USE_CEF_SWITCH
-            m_pMain->setDlgStatus(false);
-#endif //USE_CEF_SWITCH
+            */
             createRet(res, 200);
-            return;
-            
         }
         else
         {
-            //m_mutex.unlock();
-            XINFO("{RequestHandler::setOutputsInfo unlock0}\n");
+            int64_t timeEnd = gettimestamp();
+            XINFO("RequestHandler::setOutputsInfo timed out,spend time{}\n", timeEnd - timestart);
+            //std::string strPort = iniReader.ReadString("common", "colbPort", "18186");            
+            //http://127.0.0.1:18186/displaycontrol/resartx11
+            std::string strUrl = "http://127.0.0.1:" + strPort + "/displaycontrol/resartx11";
+            ResetX11Server(strUrl);
             createRet(res, 500);
         }
+        XINFO("{RequestHandler::setOutputsInfo unlock0}\n");
+        return;
 
     }
     catch(...)
@@ -839,6 +962,54 @@ void RequestHandler::getServerInfo(const HttpRequest &req, HttpResponse &res)
     }
     //m_mutex.unlock();
     XINFO("{RequestHandler::getServerInfo unlock0}\n");
+}
+
+int64_t RequestHandler::gettimestamp()
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    int64_t st = tv.tv_sec * 1000 + tv.tv_usec / 1000;
+    printf("当前时间戳：%ld\n", st);
+    return st;    
+}
+
+static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp) 
+{
+    ((std::string*)userp)->append((char*)contents, size * nmemb);
+    return size * nmemb;
+}
+
+void RequestHandler::ResetX11Server(string & strUrl)
+{
+    CURL *curl;
+    CURLcode res;
+    std::string readBuffer;
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+    curl = curl_easy_init();
+    if(curl) {////////////////////////////////////////"http://127.0.0.1:18186/displaycontrol/resartx11
+        curl_easy_setopt(curl, CURLOPT_URL, strUrl.c_str());//"http://127.0.0.1:18186/displaycontrol/resartx11"
+        //curl_easy_setopt(curl, CURLOPT_URL, "http://127.0.0.1:18186/displaycontrol/resartx11");
+        curl_easy_setopt(curl, CURLOPT_READFUNCTION, NULL);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback); // 设置回调函数
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer); // 设置回调函数的参数
+
+        curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
+        //连接超时设置10s,数据请求超时设置60s
+        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5);
+        // 执行GET请求
+        res = curl_easy_perform(curl);
+        if(res != CURLE_OK) {
+            XERROR("curl_easy_perform() failed: {}",curl_easy_strerror(res));
+        }
+        else
+        {
+            XINFO("ResetX11Server finished!");
+        }
+        // 清理
+        curl_easy_cleanup(curl);
+    }
+    curl_global_cleanup();
 }
 
 #ifdef USE_CEF_SWITCH

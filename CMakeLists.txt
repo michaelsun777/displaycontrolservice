@@ -246,6 +246,7 @@ if(USE_CEF_SWITCH)
         -lX11 -lXrandr -lm -lXext #-lXNVCtrl #  // 
         -lxcb -lxcb-randr -lXcursor
         -lsystemd
+        -lcurl
         #-LXNVCtrl
         #-L/usr/lib/x86_64-linux-gnu/libXNVCtrl.so.0
         pthread
@@ -510,6 +511,7 @@ else()
         -lX11 -lXrandr -lm -lXext #-lXNVCtrl #  // 
         -lxcb -lxcb-randr -lXcursor
         -lsystemd
+        -lcurl
         #-LXNVCtrl
         #-L/usr/lib/x86_64-linux-gnu/libXNVCtrl.so.0
         pthread

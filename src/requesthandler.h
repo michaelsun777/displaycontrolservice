@@ -21,12 +21,21 @@
 #include <boost/thread/mutex.hpp>
 
 #include <atomic>
+#include <condition_variable>
+#include <curl/curl.h>
 
 using namespace stefanfrings;
 using namespace std;
 /**
 The request handler receives incoming HTTP requests and generates responses.
 */
+
+struct SetOutputsParam
+{
+  void * pThis;
+  nlohmann::json js;
+};
+
 
 class RequestHandler : public HttpRequestHandler
 {
@@ -37,12 +46,25 @@ private:
   boost::mutex m_mutex;
   std::atomic<int> m_nCounter;
 
+  SetOutputsParam m_setparam;
+
+
+  std::mutex m_waitMtx;
+  std::condition_variable m_cvResetOutput;
+  bool m_bResetOutputStatus;
+
+private:
+  int64_t gettimestamp();
+  static void * workerForSetOutputsInfo(void * p);
+  static void * workerForResetOutput(void * p);
+
 public:
   /**
     Constructor.
     @param parent Parent object
   */
   RequestHandler(QObject *parent = 0);
+  void ResetX11Server(string & strUrl);
 
 #ifdef USE_CEF_SWITCH
 
@@ -58,6 +80,8 @@ private:
     Destructor
   */
   ~RequestHandler();
+
+  
 
  
  public:
@@ -78,6 +102,8 @@ private:
   void sendSignal(int type, QtDlgInfo &dlgInfo);
   void getServerInfo(const HttpRequest &req, HttpResponse &res);
   void login(const HttpRequest &req, HttpResponse &res);
+
+  
 
 signals:
   void sendDlgSignal(int type, QVariant dlgInfo);
