@@ -1393,11 +1393,19 @@ bool cdataProcess::setOutputsXrandr(json & js)
                                 MYCOMMON::CMYSIZE size(pMode->width,pMode->height);                                
                                 if(_crtc > 0)
                                 {
-                                    pcmxrandr->setMode(size,pMode->id);
+                                    int nRet = pcmxrandr->setMode(size,pMode->id);
+                                    if(nRet == -1)
+                                    {
+                                        return false;
+                                    }
                                 }
                                 else
                                 {
-                                    pcmxrandr->setMode(size,0);
+                                    int nRet = pcmxrandr->setMode(size,0);
+                                    if(nRet == -1)
+                                    {
+                                        return false;
+                                    }
                                     RRCrtc crtc = pcmxrandr->getCrtc();
                                     if(crtc == 0)
                                     {
@@ -1413,7 +1421,11 @@ bool cdataProcess::setOutputsXrandr(json & js)
                                 int _lswidth = std::stoi(vWidthAndHight[0]);
                                 int _lshight = std::stoi(vWidthAndHight[1]);
                                 MYCOMMON::CMYSIZE size(_lswidth,_lshight);
-                                pcmxrandr->setMode(size,0);
+                                int nRet = pcmxrandr->setMode(size,0);
+                                if (nRet == -1)
+                                {
+                                    return false;
+                                }
                             }                           
 
                             if(bIsNeedSetPos)
@@ -1981,7 +1993,14 @@ bool cdataProcess::InitOutputInfo()
                 pcmxrandr->setPrimary();
         }
 
+        XRRScreenSize *psize = pcmxrandr->getCurrentConfigSizes();
+        std::string allResolution;
+        if (psize->width <= 0 || psize->height <= 0)
+            allResolution = "";
+        else
+            allResolution = std::to_string(psize->width) + "x" + std::to_string(psize->height);
 
+        iniReader.WriteString("screen", "allResolution", allResolution);
     }
     else
     {
@@ -2084,7 +2103,20 @@ bool cdataProcess::InitOutputInfo()
                 }
                 */
             }
+
+        
+        
+            
+        
         }
+        XRRScreenSize *psize = pcmxrandr->getCurrentConfigSizes();
+        std::string allResolution;
+        if (psize->width <= 0 || psize->height <= 0)
+            allResolution = "";
+        else
+            allResolution = std::to_string(psize->width) + "x" + std::to_string(psize->height);
+
+        iniReader.WriteString("screen", "allResolution", allResolution);
 
         // 产品确认默认为所有显示器都是要使用的显示器
         // if (m_vGPUInterface.size() > 0)
@@ -2466,7 +2498,7 @@ bool cdataProcess::Init()
     m_bRunning = true;
     if(pthread_create(&m_threadDeal, NULL, workerThread, (void *)this) != 0)
     {
-        printf("Failed to create thread\n");
+        XINFO("cdataProcess::Init Failed to create thread\n");
     }
 
     boost::lock_guard<boost::mutex> lock(m_mutexSetOutput);

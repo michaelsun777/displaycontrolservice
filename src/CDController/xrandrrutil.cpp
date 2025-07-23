@@ -19,6 +19,7 @@
 #include <cstring>
 #include <cmath>
 #include <system_error>
+#include <stdlib.h>
 
 using namespace std;
 namespace CDController {
@@ -106,7 +107,9 @@ const list<shared_ptr<Output>> discoverOutputs(std::vector<std::shared_ptr<Mode>
     list<shared_ptr<Output>> outputs;
 
     // get the display
-    Display *dpy = XOpenDisplay(nullptr);
+    //Display *dpy = XOpenDisplay(nullptr);
+    char * Xstatus = getenv("DISPLAY");
+    Display *dpy = XOpenDisplay(Xstatus);
     if (!dpy)
         throw domain_error(string("unable to open display '") + XDisplayName(nullptr) + "'");
 

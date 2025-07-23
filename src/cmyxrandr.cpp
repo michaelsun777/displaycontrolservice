@@ -1,14 +1,17 @@
 #include "cmyxrandr.h"
 #include "ini.h"
 #include "IniReader.h"
+#include <stdlib.h>
 
 cmyxrandr* cmyxrandr::m_instance = NULL;
 
 cmyxrandr* cmyxrandr::GetInstance()
 {
     if (m_instance == NULL )
-    {
-        string strDisplayName = ":0";
+    {        
+        //string strDisplayName = ":0";
+        char * Xstatus = getenv("DISPLAY");
+        string strDisplayName = Xstatus;
         m_instance = new cmyxrandr(strDisplayName);
         //m_instance->OnUpdate();
         //m_instance->Init();
@@ -65,7 +68,8 @@ cmyxrandr::cmyxrandr(string strDisplayName, RROutput output) : m_screen(0), m_ou
 
 cmyxrandr::~cmyxrandr()
 {
-    XSync(m_pDpy, false);
+    /* 冲洗缓冲区，并传入参数来决定是否抛弃队列中的请求（True：抛弃为传输的请求，False：传输请求队列中的所有请求） */
+    XSync(m_pDpy, true);
     if (m_pRes)
         XRRFreeScreenResources(m_pRes);
 
@@ -338,6 +342,7 @@ int cmyxrandr::setMode(CMYSIZE size,RRMode rrmode)
             {
                 rrmode = getXRRModeInfo(size.width, size.height);
             }
+            
             //RRMode rrmode = getXRRModeInfo(size.width, size.height);
             if (rrmode)
             {
@@ -357,11 +362,95 @@ int cmyxrandr::setMode(CMYSIZE size,RRMode rrmode)
 
                 if (ret == RRSetConfigSuccess)
                     setPanning(size);
+                else if(ret == RRSetConfigFailed)
+                {
+                    XRRFreeCrtcInfo(crtc_info);
+                    crtc_info = nullptr;
+                    XSync(m_pDpy, true);
 
-                XRRFreeCrtcInfo(crtc_info);
+                    if (m_pRes)
+                        XRRFreeScreenResources(m_pRes);
+
+                    XRRFreeScreenConfigInfo(m_psConfig);
+                    m_psConfig = 0;
+                    XCloseDisplay(m_pDpy);
+
+                    return -1;
+
+/*
+                    m_pDpy = XOpenDisplay(m_strDisplayName.c_str());
+                    if(m_pDpy)
+                    {
+                        m_screen = DefaultScreen(m_pDpy);
+                        m_root = RootWindow(m_pDpy, m_screen);
+                        m_pRes = XRRGetScreenResources(m_pDpy, m_root);
+                        //m_crtc = getCrtc();
+
+                        crtc_info = XRRGetCrtcInfo(m_pDpy, m_pRes, m_crtc);
+
+                        setScreenSize(size.width, size.height);
+
+                        ret = XRRSetCrtcConfig(m_pDpy,
+                                       m_pRes,
+                                       m_crtc,
+                                       CurrentTime,
+                                       0, 0,
+                                       rrmode,
+                                       1,
+                                       crtc_info->outputs,
+                                       crtc_info->noutput);
+                        if (ret == RRSetConfigSuccess)
+                        {
+                            XRRFreeCrtcInfo(crtc_info);
+                            setPanning(size);
+                            this->feedScreen();
+                            XSync(m_pDpy, false);
+                            XINFO("cmyxrandr::setMode {} ret={}\n",m_outputName,ret);
+                            return (int)ret;
+                        }                            
+                        else
+                        {
+                            XINFO("cmyxrandr::setMode {} ret={}\n",m_outputName,ret);
+                            XRRFreeCrtcInfo(crtc_info);
+                            XSync(m_pDpy, true);
+                            crtc_info = nullptr;
+                            return -1;
+                        }
+                            
+
+                    }
+                    else
+                    {                                          
+                        return -1;
+                    }
+                    */                    
+                }
+                else
+                {
+                    if(crtc_info)
+                    {
+                        XRRFreeCrtcInfo(crtc_info);
+                        crtc_info = nullptr;
+                    }
+                    XSync(m_pDpy, true);                    
+                    return -1;
+                }
             }
             else
+            {
+                if(crtc_info)
+                {
+                    XRRFreeCrtcInfo(crtc_info);
+                    crtc_info = nullptr;
+                }                    
                 XINFO("cmyxrandr::setMode Modo width={},height={},No soportado", size.width, size.height);
+            }
+                
+        }
+        if (crtc_info)
+        {
+            XRRFreeCrtcInfo(crtc_info);
+            crtc_info = nullptr;
         }
     }
     this->feedScreen();
@@ -1520,7 +1609,8 @@ bool cmyxrandr::GetOutputAndGpuName(vector<MYGPUINTERFACE> & vgpu)
     vector<MOutputInfo> _vOutputInfo;
     getAllScreenInfoXrandr(_vOutputInfo,currentSize,maxSize);
 
-    Display *dpy = XOpenDisplay(NULL);
+    //Display *dpy = XOpenDisplay(NULL);
+    Display *dpy = XOpenDisplay(m_strDisplayName.c_str());
     if (!dpy) 
     {
         XERROR("Cannot open display {}.", XDisplayName(NULL));

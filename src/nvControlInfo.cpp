@@ -1,5 +1,6 @@
 
 #include "nvControlInfo.h"
+#include <stdlib.h>
 
 
 nvControlInfo::nvControlInfo(/* args */)
@@ -25,7 +26,9 @@ bool nvControlInfo::getGpuInfo(MGPUINFOEX & gpu)
      * open a connection to the X server indicated by the DISPLAY
      * environment variable
      */
-    dpy = XOpenDisplay(NULL);
+    //dpy = XOpenDisplay(NULL);
+    char * Xstatus = getenv("DISPLAY");
+    dpy = XOpenDisplay(Xstatus);        
     if (!dpy)
     {
         fprintf(stderr, "Cannot open display '%s'.\n", XDisplayName(NULL));

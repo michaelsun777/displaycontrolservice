@@ -3,6 +3,7 @@
 #include "CNvControlEvents.h"
 #include "cmyxrandr.h"
 #include <systemd/sd-journal.h>
+#include <stdlib.h>
 
 
 
@@ -73,6 +74,8 @@ bool CNvControlEvents::init()
 
     int c;
     char *dpy_name = NULL;
+    dpy_name = getenv("DISPLAY");
+    
     Bool anythingEnabled;
 
 #define EVENT_TYPE_ENTRY(_x) [_x] = {false, #_x}
