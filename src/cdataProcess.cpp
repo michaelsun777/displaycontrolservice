@@ -1899,9 +1899,11 @@ bool cdataProcess::InitOutputInfo()
     if(bSettingUsedOutputs)
     {
         size_t nofoundTimes = 0;
+        int _nMaxW = 0;
+        int _nMaxH = 0;
 
         for (size_t i = 0, j = 0; i < vOutputInfo.size(); i++)
-        {
+        {            
             bool bTmpFound = false;
             for (size_t sloop = 0; sloop < _vOutputNames.size(); sloop++)
             {
@@ -1933,6 +1935,15 @@ bool cdataProcess::InitOutputInfo()
 
             start_x = (i - nofoundTimes - (j * m_layout_vertical)) * m_nWidth;
             start_y = j * m_nHight;
+            if(_nMaxW < start_x + m_nWidth)
+            {
+                _nMaxW = start_x + m_nWidth;
+            }
+
+            if(_nMaxH < start_y + m_nHight)
+            {
+                _nMaxH = start_y + m_nHight;
+            }
 
             /////
             pcmxrandr->setOutPut(vOutputInfo[i].outputId);
@@ -1993,17 +2004,20 @@ bool cdataProcess::InitOutputInfo()
                 pcmxrandr->setPrimary();
         }
 
-        XRRScreenSize *psize = pcmxrandr->getCurrentConfigSizes();
+        //XRRScreenSize *psize = pcmxrandr->getCurrentConfigSizes();
+
         std::string allResolution;
-        if (psize->width <= 0 || psize->height <= 0)
+        if (_nMaxW <= 0 || _nMaxH <= 0)
             allResolution = "";
         else
-            allResolution = std::to_string(psize->width) + "x" + std::to_string(psize->height);
+            allResolution = std::to_string(_nMaxW) + "x" + std::to_string(_nMaxH);
 
         iniReader.WriteString("screen", "allResolution", allResolution);
     }
     else
     {
+        int _nMaxW = 0;
+        int _nMaxH = 0;
         for (size_t i = 0, j = 0; i < vOutputInfo.size(); i++)
         {
             {
@@ -2014,6 +2028,16 @@ bool cdataProcess::InitOutputInfo()
 
                 start_x = (i - (j * m_layout_vertical)) * m_nWidth;
                 start_y = j * m_nHight;
+
+                if(_nMaxW < start_x + m_nWidth)
+                {
+                    _nMaxW = start_x + m_nWidth;
+                }
+
+                if(_nMaxH < start_y + m_nHight)
+                {
+                    _nMaxH = start_y + m_nHight;
+                }
 
                 /////
                 pcmxrandr->setOutPut(vOutputInfo[i].outputId);
@@ -2109,12 +2133,13 @@ bool cdataProcess::InitOutputInfo()
             
         
         }
-        XRRScreenSize *psize = pcmxrandr->getCurrentConfigSizes();
+        //XRRScreenSize *psize = pcmxrandr->getCurrentConfigSizes();
         std::string allResolution;
-        if (psize->width <= 0 || psize->height <= 0)
+        //if (psize->width <= 0 || psize->height <= 0)
+        if (_nMaxW <= 0 || _nMaxH <= 0)
             allResolution = "";
         else
-            allResolution = std::to_string(psize->width) + "x" + std::to_string(psize->height);
+            allResolution = std::to_string(_nMaxW) + "x" + std::to_string(_nMaxH);
 
         iniReader.WriteString("screen", "allResolution", allResolution);
 
