@@ -68,6 +68,7 @@ public:
     bool                isEnabled       ();
     string             getName         ();
     list<CMYSIZE>        getModes        ();
+    int enable_test();
     int               enable          (CMYSIZE size);
     CMYSIZE               getOutputSize   ();
     RROutput            getOutputByName (string strName);
@@ -91,6 +92,7 @@ public:
     CMYSIZE             getPreferredMode();
     bool                isPrimary       ();
     void                setPrimary      ();
+    void                setNoPrimary();
     //XRRCrtcInfo *       getCrtcInfo();
 
 

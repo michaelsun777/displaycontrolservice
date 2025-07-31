@@ -30,6 +30,25 @@ cmyxrandr::cmyxrandr(string strDisplayName, RROutput output) : m_screen(0), m_ou
     try
     {
         m_pDpy = XOpenDisplay(m_strDisplayName.c_str());
+
+        // 检查 RandR 支持
+        int event_base, error_base;
+        if (!XRRQueryExtension(m_pDpy, &event_base, &error_base))
+        {
+            XINFO("服务器不支持 RandR 扩展\n");
+            return;
+        }
+
+        int major = 1, minor = 2;
+        XRRQueryVersion(m_pDpy, &major, &minor);
+
+        if (major < 1 || minor < 5)
+        {
+            XERROR("需要 XRandR 1.5 或更高版本，当前: {}.{}\n", major, minor);
+            return;
+        }
+        XINFO("使用 XRandR {}.{}\n", major, minor);
+
         if(!m_pDpy)
         {
             XERROR("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!XOpenDisplay failed (:0),请检查是否未拨出VGA插头上的设备,拨出后重启计算机！\n");
@@ -47,7 +66,7 @@ cmyxrandr::cmyxrandr(string strDisplayName, RROutput output) : m_screen(0), m_ou
         {
             m_screen = DefaultScreen(m_pDpy);
             m_root = RootWindow(m_pDpy, m_screen);
-            m_pRes = XRRGetScreenResources(m_pDpy, m_root);
+            m_pRes = XRRGetScreenResources(m_pDpy, m_root);            
 
             // vector<MOutputInfo> vOutputInfo;
             // getSupportMode(vOutputInfo);
@@ -58,11 +77,10 @@ cmyxrandr::cmyxrandr(string strDisplayName, RROutput output) : m_screen(0), m_ou
             XINFO("xrandr version:{}.{}", m_major, m_minor);
         }
     }
-    catch(const std::exception& e)
+    catch(...)
     {
-        std::cerr << e.what() << '\n';
-    }
-    
+        XERROR("cmyxrandr 初始化失败！！！\n");        
+    }    
     
 }
 
@@ -350,7 +368,22 @@ int cmyxrandr::setMode(CMYSIZE size,RRMode rrmode)
                 // disable();
                 setScreenSize(size.width, size.height);
 
-                ret = XRRSetCrtcConfig(m_pDpy,
+                if(crtc_info->noutput == 0)
+                {
+                    ret = XRRSetCrtcConfig(m_pDpy,
+                                       m_pRes,
+                                       m_crtc,
+                                       CurrentTime,
+                                       0, 0,
+                                       rrmode,
+                                       1,
+                                       &m_output,//crtc_info->outputs,
+                                       1);
+
+                }
+                else
+                {
+                    ret = XRRSetCrtcConfig(m_pDpy,
                                        m_pRes,
                                        m_crtc,
                                        CurrentTime,
@@ -360,8 +393,13 @@ int cmyxrandr::setMode(CMYSIZE size,RRMode rrmode)
                                        crtc_info->outputs,
                                        crtc_info->noutput);
 
+                }               
+
                 if (ret == RRSetConfigSuccess)
+                {
                     setPanning(size);
+                    XSync(m_pDpy, false);
+                }                    
                 else if(ret == RRSetConfigFailed)
                 {
                     XRRFreeCrtcInfo(crtc_info);
@@ -800,6 +838,71 @@ void cmyxrandr::setPrimary()
         XRRSetOutputPrimary(m_pDpy, m_root, m_output);
 }
 
+void cmyxrandr::setNoPrimary()
+{    
+    XRRSetOutputPrimary(m_pDpy, m_root, None);
+}
+
+
+
+int cmyxrandr::enable_test()
+{
+    int ret = -1;
+    if (m_output)
+    {
+        //list<RRCrtc> crtcs;
+        //crtcs = getCrtcs();
+
+        // for (int crtc=0; crtc<crtcs.count();crtc++){
+        //for (list<RRCrtc>::iterator it = crtcs.begin(); it != crtcs.end(); it++)
+
+        XRROutputInfo *outinfo = XRRGetOutputInfo(m_pDpy, m_pRes, m_output);        
+        printf("ncrtc = %d\n",outinfo->ncrtc);
+
+        // 查找空闲的CRTC控制器
+        RRCrtc target_crtc = 0;
+        XRRCrtcInfo *crtc_info = NULL;
+
+        for (int i = 0; i < outinfo->ncrtc; i++)
+        {
+            crtc_info = XRRGetCrtcInfo(m_pDpy, m_pRes, outinfo->crtcs[i]);
+            if (crtc_info->noutput == 0)
+            {
+                target_crtc = m_pRes->crtcs[i];
+                break;
+            }
+            XRRFreeCrtcInfo(crtc_info);
+        }
+
+        ret = XRRSetCrtcConfig(m_pDpy,
+                               m_pRes,
+                               target_crtc,
+                               CurrentTime,
+                               0,
+                               0,
+                               outinfo->modes[0],//rrmode,
+                               RR_Rotate_0,
+                               &m_output, // rr_outputs,
+                               1);
+
+        XRRFreeOutputInfo(outinfo);
+        if (ret == RRSetConfigSuccess)
+        {            
+            XSync(m_pDpy, false);
+            usleep(200*1000);
+            m_crtc = target_crtc;
+            XRRFreeCrtcInfo(crtc_info);
+            return ret;
+        }
+        else
+        {
+            XRRFreeCrtcInfo(crtc_info);            
+        }
+    }
+    return ret;
+}
+
+
 int cmyxrandr::enable(CMYSIZE size)
 {
     int ret = -1;
@@ -836,6 +939,8 @@ int cmyxrandr::enable(CMYSIZE size)
 
                         setScreenSize(size.width, size.height);
 
+                        //XRRCrtcInfo *pCrtcInfo = XRRGetCrtcInfo(m_pDpy, m_pRes, rrcrtc);
+
                         ret = XRRSetCrtcConfig(m_pDpy,
                                                m_pRes,
                                                rrcrtc,
@@ -844,11 +949,21 @@ int cmyxrandr::enable(CMYSIZE size)
                                                pInfo->y,
                                                rrmode,
                                                RR_Rotate_0,
-                                               rr_outputs,
-                                               1);
-                        XRRFreeCrtcInfo(pInfo);
-                        m_crtc = rrcrtc;
-                        return ret;
+                                               &m_output,//rr_outputs,
+                                               1);                        
+                        if (ret == RRSetConfigSuccess)
+                        {
+                            XSync(m_pDpy, false);
+                            m_crtc = rrcrtc;
+                            free(rr_outputs);
+                            XRRFreeCrtcInfo(pInfo);
+                            return ret;
+                        }
+                        else
+                        {
+                            free(rr_outputs);
+                        }
+                        
                     }
                 }
                 XRRFreeCrtcInfo(pInfo);

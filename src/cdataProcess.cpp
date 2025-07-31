@@ -1102,9 +1102,36 @@ bool cdataProcess::setGpuInterface(json & js)
         iniReader.WriteString("outputsSettings", "outputs", "");
 
         InitOutputInfo();
+        
+        sleep(1);
+        cmyxrandr *pcmxrandr = cmyxrandr::GetInstance();
+        for(int nSetTimes = 0;nSetTimes < 2;nSetTimes++)
+        {
+            vector<MOutputInfo> vOutputInfo;
+            CMYSIZE currentSize, maxSize;
+            short shRet = pcmxrandr->getAllScreenInfoXrandr(vOutputInfo, currentSize, maxSize, false);
+            for (size_t i = 0; i < vOutputInfo.size(); i++)
+            {
+                for (size_t sloop = 0; sloop < vOutputsName.size(); sloop++)
+                {
+                    if (vOutputsName[sloop].compare(vOutputInfo[i].name) == 0)
+                    {
+                        if (vOutputInfo[i].size.width == 0 || vOutputInfo[i].size.height == 0)
+                        {
+                            InitOutputInfo();
+                            usleep(500 * 1000);
+                            continue;
+                        }
+                    }
+                }
+            }
+        }
+        
+                
+
         boost::lock_guard<boost::mutex> gpuInterfacelock(m_mutexGPUInterface);
         m_vGPUInterface.clear();
-        cmyxrandr* pcmxrandr =  cmyxrandr::GetInstance();
+        //cmyxrandr* pcmxrandr =  cmyxrandr::GetInstance();
         pcmxrandr->GetOutputAndGpuName(m_vGPUInterface);
 
         return true;
@@ -1793,36 +1820,18 @@ bool cdataProcess::InitOutputInfo()
                 {
                     if(!firstScrren)
                     { 
+                        pcmxrandr->setNoPrimary();
                         pcmxrandr->setOutPut(vOutputInfo[i].outputId);
                         if(vOutputInfo[i].crtc == 0)
                         {
-                            int size_w = 0, size_h = 0;
-                            for (size_t i = 0; i < vOutputInfo[i].modes.size(); i++)
-                            {
-                                if (vOutputInfo[i].modes[i].width == m_nWidth && vOutputInfo[i].modes[i].height == m_nHight)
-                                {
-                                    size_w = m_nWidth;
-                                    size_h = m_nHight;                                   
-                                    break;
-                                }
-                            }
-
-                            if (size_w == m_nWidth && size_h == m_nHight)
-                            {
-                                MYCOMMON::CMYSIZE size(m_nWidth, m_nHight);
-                                pcmxrandr->enable(size);
-                            }
-                            else
-                            {
-                                MYCOMMON::CMYSIZE size(vOutputInfo[i].modes[0].width, vOutputInfo[i].modes[0].height);
-                                pcmxrandr->enable(size);
-                            }
-                            CMYPOINT offset(0, 0);
-                            pcmxrandr->setOffset(offset);
-                            pcmxrandr->setPrimary();
+                            pcmxrandr->setOutPutName(vOutputInfo[i].name);
+                            pcmxrandr->setPrimary();                           
+                            pcmxrandr->enable_test();
+                            
                         }
                         else
-                        {                            
+                        {
+                            pcmxrandr->setOutPutName(vOutputInfo[i].name);
                             pcmxrandr->setCrtc(vOutputInfo[i].crtc);
                             MYCOMMON::CMYSIZE size(0, 0);
                             pcmxrandr->setMode(size, lastDeterminedModeId);
@@ -1895,6 +1904,8 @@ bool cdataProcess::InitOutputInfo()
 
     }
 
+    vOutputInfo.clear();
+    shRet = pcmxrandr->getAllScreenInfoXrandr(vOutputInfo,currentSize,maxSize);
 
     if(bSettingUsedOutputs)
     {
